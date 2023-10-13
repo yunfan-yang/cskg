@@ -1,8 +1,8 @@
 from typing import Any
-from ast import NodeVisitor, Constant, Call, stmt, FunctionDef
+from ast import NodeVisitor, Constant, Call, stmt, FunctionDef, Name
 
 
-class LongParameterListAnalyzer(NodeVisitor):
+class ParameterListAnalyzer(NodeVisitor):
     def __init__(self):
         super().__init__()
 
@@ -19,7 +19,7 @@ class LongParameterListAnalyzer(NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node: Call):
-        if isinstance(node.func, ast.Name):
+        if isinstance(node.func, Name):
             print(f"  Calls function named {node.func.id} on line {node.lineno}")
         self.generic_visit(node)
 

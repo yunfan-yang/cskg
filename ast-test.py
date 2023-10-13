@@ -1,5 +1,5 @@
 import ast
-from long_parameter_list import LongParameterListAnalyzer
+from parameter_list import ParameterListAnalyzer
 
 code = """
 a = 111
@@ -33,7 +33,7 @@ tree = ast.parse(code)
 print(tree)
 
 
-class CodeAnalyzer(LongParameterListAnalyzer):
+class CodeAnalyzer(ParameterListAnalyzer):
     pass
 
 
