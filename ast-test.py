@@ -1,5 +1,5 @@
 import ast
-from ast import Constant, Call, stmt, FunctionDef
+from ast import Constant, Call, stmt, FunctionDef, NodeVisitor
 from typing import Any
 
 code = """
@@ -34,7 +34,7 @@ tree = ast.parse(code)
 print(tree)
 
 
-class CodeAnalyzer(ast.NodeVisitor):
+class LongParameterAnalyzer(NodeVisitor):
     def __init__(self):
         super().__init__()
 
@@ -85,6 +85,24 @@ def func_params(node: FunctionDef) -> list:
         print(f"  **{node.args.kwarg.arg} (Keyword Varargs)")
 
     return node.args
+
+
+class CodeAnalyzer2(NodeVisitor):
+    def __init__(self):
+        print("AAA")
+        super().__init__()
+    
+    def visit_stmt(self, node: stmt) -> None:
+        print("CodeAnalyzer2")
+        self.generic_visit(node)
+
+    def visit_Constant(self, node: Constant) -> Any:
+        print(f"CCCC")
+        return super().visit_Constant(node)
+
+
+class CodeAnalyzer(LongParameterAnalyzer, CodeAnalyzer2):
+    pass
 
 
 analyzer = CodeAnalyzer()
