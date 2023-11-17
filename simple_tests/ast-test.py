@@ -1,5 +1,5 @@
 import ast
-from parameter_list import ParameterListAnalyzer
+from simple_tests.parameter_list import ParameterListAnalyzer
 
 code = """
 a = 111
