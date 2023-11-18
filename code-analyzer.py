@@ -25,30 +25,30 @@ class CodeAnalyzer:
         with open(file_path, "r") as file:
             code = file.read()
             tree = astroid.parse(code, module_name, file_path)
-            entities = self.__visit_children(tree)
+            nodes = self.__visit_children(tree)
 
     def __visit_children(self, node: astroid.Module) -> list[neomodel.StructuredNode]:
-        entities = []
+        nodes = []
 
         children = node.get_children()
         for child in children:
             es = self.__visit_node(child)
-            entities.extend(es)
+            nodes.extend(es)
 
-        return entities
+        return nodes
 
     def __visit_node(self, node) -> list[neomodel.StructuredNode]:
-        entities = []
+        nodes = []
 
         if isinstance(node, astroid.ClassDef):
             c = self.__visit_class(node)
-            entities.append(c)
+            nodes.append(c)
 
         elif isinstance(node, astroid.FunctionDef):
             f = self.__visit_function(node)
-            entities.append(f)
+            nodes.append(f)
 
-        return entities
+        return nodes
 
     def __visit_class(self, node: astroid.ClassDef) -> Class:
         name = node.name
@@ -59,8 +59,8 @@ class CodeAnalyzer:
         c.save()
 
         # Visit children
-        children_entities = self.__visit_children(node)
-        for child_entity in children_entities:
+        children_nodes = self.__visit_children(node)
+        for child_entity in children_nodes:
             c.contains.connect(child_entity)
 
         return c
