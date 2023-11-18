@@ -1,31 +1,44 @@
+from os import environ
+
+from dotenv import load_dotenv
 from neomodel import (
     config,
     StructuredNode,
+    StructuredRel,
     StringProperty,
     IntegerProperty,
     UniqueIdProperty,
+    Relationship,
     RelationshipTo,
+    RelationshipFrom,
 )
 
 
-class Class(StructuredNode):
-    id = UniqueIdProperty()
-    name = StringProperty(required=True)
-    full_name = StringProperty(unique_index=True, required=True)
-    description = StringProperty(required=True)
-    file_path = StringProperty(required=True)
+load_dotenv()
 
-    ## Relationships
-    relates_to = RelationshipTo("Class", "RELATES_TO")
-    invokes = RelationshipTo("Function", "INVOKES")
+config.DATABASE_URL = environ.get("NEO4J_URL")
+
+
+class Calls(StructuredRel):
+    args = StringProperty(required=True)
+    keywords = StringProperty(required=True)
 
 
 class Function(StructuredNode):
-    id = UniqueIdProperty()
+    uid = UniqueIdProperty()
     name = StringProperty(required=True)
     full_name = StringProperty(unique_index=True, required=True)
-    description = StringProperty(required=True)
+    args = StringProperty(required=True)
+    returns = StringProperty(required=True)
 
     ## Relationships
-    invokes = RelationshipTo("Function", "INVOKES")
-    belongs_to = RelationshipTo("Class", "BELONGS_TO")
+    calls = RelationshipTo("Function", "CALLS", model=Calls)
+
+
+class Class(StructuredNode):
+    uid = UniqueIdProperty()
+    name = StringProperty(required=True)
+    full_name = StringProperty(unique_index=True, required=True)
+
+    ## Relationships
+    contains = Relationship("Function", "CONTAINS")

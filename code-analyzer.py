@@ -1,5 +1,8 @@
-import ast
 import os
+import ast
+from ast import NodeVisitor, Constant, Call, stmt, FunctionDef, Name
+
+from models import Class, Function
 
 
 class CodeAnalyzer:
@@ -19,16 +22,42 @@ class CodeAnalyzer:
         with open(file_path, "r") as file:
             code = file.read()
             tree = ast.parse(code)
-            self.visit_tree(tree)
+            node_visitor = CodeAnalyzerNodeVisitor()
+            node_visitor.visit(tree)
 
-    def visit_tree(self, tree):
-        entities = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                entities.append(node.name)
-            # elif isinstance(node, ast.FunctionDef):
-            #     entities.append(node.name)
-        print(entities)
+
+class CodeAnalyzerNodeVisitor(NodeVisitor):
+    def __init__(self):
+        self.current_class = None
+
+    def visit_ClassDef(self, node):
+        print(f"Class named {node.name} defined on line {node.lineno}")
+        c = Class(name=node.name, full_name=node.name)
+        c.save()
+
+        self.current_class = c
+        self.generic_visit(node)
+        self.current_class = None
+
+    def visit_FunctionDef(self, node: FunctionDef):
+        print(f"Function named {node.name} defined on line {node.lineno}")
+
+        # args = node.args.map(lambda arg: arg.arg.map(lambda arg_name: arg_name.id))
+        # returns = node.returns.map(lambda ret: ret.id)
+
+        # f = Function(name=node.name, full_name=node.name, args=args, returns=returns)
+        # if self.current_class:
+        #     self.current_class.contains.connect(f)
+
+        self.generic_visit(node)
+
+    def visit_Call(self, node: Call):
+        if isinstance(node.func, Name):
+            print(
+                f"  Calls function named {node.func.id} on line {node.lineno} with {node.args}"
+            )
+
+        self.generic_visit(node)
 
 
 ca = CodeAnalyzer("target/transformers")
