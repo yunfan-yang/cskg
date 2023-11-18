@@ -1,6 +1,5 @@
 import os
-import ast
-from ast import NodeVisitor, Constant, Call, stmt, FunctionDef, Name
+import astroid
 
 from models import Class, Function
 
@@ -15,49 +14,21 @@ class CodeAnalyzer:
                 if file.endswith(".py"):
                     file_path = os.path.join(root, file)
                     self.extract_file(file_path)
-            #     break
-            # break
 
     def extract_file(self, file_path):
         with open(file_path, "r") as file:
             code = file.read()
-            tree = ast.parse(code)
-            node_visitor = CodeAnalyzerNodeVisitor()
-            node_visitor.visit(tree)
+            tree = astroid.parse(code)
+            children = tree.get_children()
 
+            for node in children:
+                if isinstance(node, astroid.ClassDef):
+                    class_name = node.name
+                    class_full_name = node.qname()
+                    print(f"Class: {class_name} ({class_full_name})")
 
-class CodeAnalyzerNodeVisitor(NodeVisitor):
-    def __init__(self):
-        self.current_class = None
-
-    def visit_ClassDef(self, node):
-        print(f"Class named {node.name} defined on line {node.lineno}")
-        c = Class(name=node.name, full_name=node.name)
-        c.save()
-
-        self.current_class = c
-        self.generic_visit(node)
-        self.current_class = None
-
-    def visit_FunctionDef(self, node: FunctionDef):
-        print(f"Function named {node.name} defined on line {node.lineno}")
-
-        args = list(map(lambda arg: arg.arg, node.args.args))
-        f = Function(name=node.name, full_name=node.name, args=args)
-        f.save()
-
-        if self.current_class:
-            self.current_class.contains.connect(f)
-
-        self.generic_visit(node)
-
-    def visit_Call(self, node: Call):
-        if isinstance(node.func, Name):
-            print(
-                f"  Calls function named {node.func.id} on line {node.lineno} with {node.args}"
-            )
-
-        self.generic_visit(node)
+                    c = Class(name=class_name, full_name=class_full_name)
+                    c.save()
 
 
 ca = CodeAnalyzer("target/requests")
