@@ -16,29 +16,35 @@ class CodeAnalyzer:
                     self.extract_file(file_path)
 
     def extract_file(self, file_path):
+        module_name = file_path.split("/")[-1].split(".")[0]
+
         with open(file_path, "r") as file:
             code = file.read()
-            tree = astroid.parse(code)
+            tree = astroid.parse(code, module_name, file_path)
             children = tree.get_children()
 
             for node in children:
                 if isinstance(node, astroid.ClassDef):
                     class_name = node.name
-                    class_full_name = node.qname()
-                    print(f"Class: {class_name} ({class_full_name})")
+                    class_qualified_name = node.qname()
+                    print(f"Class: {class_name} ({class_qualified_name})")
 
-                    c = Class(name=class_name, full_name=class_full_name)
+                    c = Class(name=class_name, qualified_name=class_qualified_name)
                     c.save()
 
                     children = node.get_children()
                     for child in children:
                         if isinstance(child, astroid.FunctionDef):
                             function_name = child.name
-                            function_full_name = child.qname()
+                            function_qualified_name = child.qname()
                             args = child.args
-                            print(f"Function: {function_name} ({function_full_name})")
+                            print(f"Function: {function_name}")
 
-                            f = Function(name=function_name, full_name=function_full_name, args=args)
+                            f = Function(
+                                name=function_name,
+                                qualified_name=function_qualified_name,
+                                args=args,
+                            )
                             f.save()
 
                             c.contains.connect(f)

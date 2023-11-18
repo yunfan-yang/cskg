@@ -26,7 +26,7 @@ class Calls(StructuredRel):
 
 class Function(StructuredNode):
     name = StringProperty(required=True)
-    full_name = StringProperty(unique_index=True, required=True)
+    qualified_name = StringProperty(unique_index=True, required=True)
     args = StringProperty(required=True)
 
     ## Relationships
@@ -35,7 +35,7 @@ class Function(StructuredNode):
 
 class Class(StructuredNode):
     name = StringProperty(required=True)
-    full_name = StringProperty(unique_index=True, required=True)
+    qualified_name = StringProperty(unique_index=True, required=True)
 
     ## Relationships
     contains = Relationship("Function", "CONTAINS")
