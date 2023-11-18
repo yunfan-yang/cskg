@@ -43,8 +43,6 @@ class CodeAnalyzer:
         if isinstance(node, astroid.ClassDef):
             c = self.__visit_class(node)
             entities.append(c)
-            contain_entities = self.__visit_children(node)
-            entities.extend(contain_entities)
 
         elif isinstance(node, astroid.FunctionDef):
             f = self.__visit_function(node)
