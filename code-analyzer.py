@@ -15,8 +15,8 @@ class CodeAnalyzer:
                 if file.endswith(".py"):
                     file_path = os.path.join(root, file)
                     self.extract_file(file_path)
-                break
-            break
+            #     break
+            # break
 
     def extract_file(self, file_path):
         with open(file_path, "r") as file:
@@ -42,12 +42,12 @@ class CodeAnalyzerNodeVisitor(NodeVisitor):
     def visit_FunctionDef(self, node: FunctionDef):
         print(f"Function named {node.name} defined on line {node.lineno}")
 
-        # args = node.args.map(lambda arg: arg.arg.map(lambda arg_name: arg_name.id))
-        # returns = node.returns.map(lambda ret: ret.id)
+        args = list(map(lambda arg: arg.arg, node.args.args))
+        f = Function(name=node.name, full_name=node.name, args=args)
+        f.save()
 
-        # f = Function(name=node.name, full_name=node.name, args=args, returns=returns)
-        # if self.current_class:
-        #     self.current_class.contains.connect(f)
+        if self.current_class:
+            self.current_class.contains.connect(f)
 
         self.generic_visit(node)
 
@@ -60,5 +60,5 @@ class CodeAnalyzerNodeVisitor(NodeVisitor):
         self.generic_visit(node)
 
 
-ca = CodeAnalyzer("target/transformers")
+ca = CodeAnalyzer("target/requests")
 ca.traverse()

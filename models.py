@@ -25,18 +25,15 @@ class Calls(StructuredRel):
 
 
 class Function(StructuredNode):
-    uid = UniqueIdProperty()
     name = StringProperty(required=True)
     full_name = StringProperty(unique_index=True, required=True)
     args = StringProperty(required=True)
-    returns = StringProperty(required=True)
 
     ## Relationships
     calls = RelationshipTo("Function", "CALLS", model=Calls)
 
 
 class Class(StructuredNode):
-    uid = UniqueIdProperty()
     name = StringProperty(required=True)
     full_name = StringProperty(unique_index=True, required=True)
 
