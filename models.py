@@ -38,4 +38,4 @@ class Class(StructuredNode):
     qualified_name = StringProperty(unique_index=True, required=True)
 
     ## Relationships
-    contains = Relationship("Function", "CONTAINS")
+    contains = RelationshipTo(StructuredNode, "CONTAINS")
