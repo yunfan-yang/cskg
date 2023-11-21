@@ -111,5 +111,5 @@ class CodeAnalyzer:
         return f
 
 
-ca = CodeAnalyzer("target/requests")
-ca.analyze()
+# ca = CodeAnalyzer("target/requests")
+# ca.analyze()

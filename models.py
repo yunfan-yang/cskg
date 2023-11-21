@@ -12,11 +12,16 @@ from neomodel import (
     RelationshipTo,
     RelationshipFrom,
 )
-
+from sqlalchemy import create_engine
 
 load_dotenv()
 
-config.DATABASE_URL = environ.get("NEO4J_URL")
+NEO4J_URL = environ.get("NEO4J_URL")
+POSTGRES_URL = environ.get("POSTGRES_URL")
+
+config.DATABASE_URL = NEO4J_URL
+
+engine = create_engine(POSTGRES_URL)
 
 
 class Calls(StructuredRel):
