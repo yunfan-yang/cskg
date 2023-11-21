@@ -71,42 +71,40 @@ class CodeAnalyzer:
         args = node.args
         print(f"Function: {name} ({qualified_name})")
 
-        fs = Function.get_or_create(
-            {"name": name, "qualified_name": qualified_name, "args": args}
-        )
-        f = fs[0]
+        f = Function(name=name, qualified_name=qualified_name, args=args)
+        f.save()
 
-        # Visit body
-        body_nodes = [
-            body_node_children
-            for body_node in node.body
-            for body_node_children in body_node.get_children()
-        ]
-        for body_node in body_nodes:
-            if isinstance(body_node, astroid.Call):
-                try:
-                    inferred_nodes = body_node.func.infer()
+        # # Visit body
+        # body_nodes = [
+        #     body_node_children
+        #     for body_node in node.body
+        #     for body_node_children in body_node.get_children()
+        # ]
+        # for body_node in body_nodes:
+        #     if isinstance(body_node, astroid.Call):
+        #         try:
+        #             inferred_nodes = body_node.func.infer()
 
-                    for inferred_node in inferred_nodes:
-                        if isinstance(
-                            inferred_node, (astroid.FunctionDef, astroid.UnboundMethod)
-                        ):
-                            name = inferred_node.name
-                            qualified_name = inferred_node.qname()
-                            args = body_node.args
-                            keywords = body_node.keywords
+        #             for inferred_node in inferred_nodes:
+        #                 if isinstance(
+        #                     inferred_node, (astroid.FunctionDef, astroid.UnboundMethod)
+        #                 ):
+        #                     name = inferred_node.name
+        #                     qualified_name = inferred_node.qname()
+        #                     args = body_node.args
+        #                     keywords = body_node.keywords
 
-                            if not qualified_name.startswith("builtins."):
-                                print(f"  Calls: {name} ({qualified_name})")
+        #                     if not qualified_name.startswith("builtins."):
+        #                         print(f"  Calls: {name} ({qualified_name})")
 
-                                f_called = self.__visit_function(inferred_node)
+        #                         f_called = self.__visit_function(inferred_node)
 
-                                f.calls.connect(
-                                    f_called, {"args": args, "keywords": keywords}
-                                )
+        #                         f.calls.connect(
+        #                             f_called, {"args": args, "keywords": keywords}
+        #                         )
 
-                except astroid.exceptions.InferenceError:
-                    print(f"Error inferring function call in {name}")
+        #         except astroid.exceptions.InferenceError:
+        #             print(f"Error inferring function call in {name}")
 
         return f
 
