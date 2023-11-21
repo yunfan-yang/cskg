@@ -12,6 +12,7 @@ class CodeAnalyzer:
 
     def analyze(self):
         self.__traverse_files()
+        self.__hook_inferred_nodes()
 
     def __traverse_files(self):
         for root, dirs, files in os.walk(self.folder_path):
@@ -105,6 +106,21 @@ class CodeAnalyzer:
         ]
 
         return [inferred_node.qname() for inferred_node in inferred_nodes]
+
+    def __hook_inferred_nodes(self):
+        # Get all functions
+        functions = Function.nodes.all()
+
+        for function in functions:
+            print(f"Hooking inferred nodes for {function.qualified_name}")
+            
+            inferred_nodes = function.inferred_nodes
+            for inferred_node in inferred_nodes:
+                try:
+                    inferred_node = Function.nodes.get(qualified_name=inferred_node)
+                    function.calls.connect(inferred_node, {"args": "", "keywords": ""})
+                except neomodel.exceptions.DoesNotExist:
+                    pass
 
 
 ca = CodeAnalyzer("target/requests")
