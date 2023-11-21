@@ -23,21 +23,21 @@ config.DATABASE_URL = NEO4J_URL
 engine = create_engine(POSTGRES_URL)
 
 
-class Calls(StructuredRel):
+class CallsRel(StructuredRel):
     args = StringProperty(required=True)
     keywords = StringProperty(required=True)
 
 
-class Function(StructuredNode):
+class FunctionNode(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
     args = StringProperty(required=True)
 
     ## Relationships
-    calls = RelationshipTo("Function", "CALLS", model=Calls)
+    calls = RelationshipTo("Function", "CALLS", model=CallsRel)
 
 
-class Class(StructuredNode):
+class ClassNode(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
 

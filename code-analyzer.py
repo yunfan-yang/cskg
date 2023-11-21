@@ -2,7 +2,7 @@ import os
 import astroid
 import neomodel
 
-from models import Class, Function
+from models import ClassNode, FunctionNode
 
 
 class CodeAnalyzer:
@@ -50,12 +50,12 @@ class CodeAnalyzer:
 
         return nodes
 
-    def __visit_class(self, node: astroid.ClassDef) -> Class:
+    def __visit_class(self, node: astroid.ClassDef) -> ClassNode:
         name = node.name
         qualified_name = node.qname()
         print(f"Class: {name} ({qualified_name})")
 
-        c = Class(name=name, qualified_name=qualified_name)
+        c = ClassNode(name=name, qualified_name=qualified_name)
         c.save()
 
         # Visit children
@@ -65,13 +65,13 @@ class CodeAnalyzer:
 
         return c
 
-    def __visit_function(self, node: astroid.FunctionDef) -> Function:
+    def __visit_function(self, node: astroid.FunctionDef) -> FunctionNode:
         name = node.name
         qualified_name = node.qname()
         args = node.args
         print(f"Function: {name} ({qualified_name})")
 
-        fs = Function.get_or_create(
+        fs = FunctionNode.get_or_create(
             {"name": name, "qualified_name": qualified_name, "args": args}
         )
         f = fs[0]
