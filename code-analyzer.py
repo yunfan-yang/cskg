@@ -20,8 +20,6 @@ class CodeAnalyzer:
                     self.current_file_path = os.path.join(root, file)
                     self.__extract_file()
 
-        self.__visit_function_calls()
-
     def __extract_file(self):
         module_name = self.current_file_path.split("/")[-1].split(".")[0]
 
@@ -82,7 +80,11 @@ class CodeAnalyzer:
             args=args,
             file_path=self.current_file_path,
         )
+        f.inferred_nodes = self.__visit_function_inferred_nodes(node)
+        f.save()
+        return f
 
+    def __visit_function_inferred_nodes(self, node: astroid.FunctionDef):
         # Visit body and write down function calls
         body_nodes = [
             body_node_child
@@ -102,53 +104,7 @@ class CodeAnalyzer:
             if inferred_node is not astroid.Uninferable
         ]
 
-        f.inferred_nodes = [inferred_node.qname() for inferred_node in inferred_nodes]
-
-        f.save()
-        return f
-
-    def __visit_function_calls(self):
-        # Get all functions
-        functions = Function.nodes.all()
-
-        # for f in functions:
-        # # Visit body
-        # body_nodes = [
-        #     body_node_children
-        #     for body_node in f.body
-        #     for body_node_children in body_node.get_children()
-        #     if isinstance(body_node, astroid.Call)
-        # ]
-
-        # for body_node in body_nodes:
-        #     try:
-        #         inferred_nodes = [
-        #             inferred_node
-        #             for inferred_node in body_node.func.infer()
-        #             if isinstance(
-        #                 inferred_node, (astroid.FunctionDef, astroid.UnboundMethod)
-        #             )
-        #         ]
-
-        #         for inferred_node in inferred_nodes:
-        #             name = inferred_node.name
-        #             qualified_name = inferred_node.qname()
-        #             args = body_node.args
-        #             keywords = body_node.keywords
-
-        #             if not qualified_name.startswith("builtins."):
-        #                 print(f"  Calls: {name} ({qualified_name})")
-
-        #                 f_called = Function.nodes.get(
-        #                     qualified_name=qualified_name
-        #                 )
-
-        #                 f.calls.connect(
-        #                     f_called, {"args": args, "keywords": keywords}
-        #                 )
-
-        #     except astroid.exceptions.InferenceError:
-        #         print(f"Error inferring function call in {name}")
+        return [inferred_node.qname() for inferred_node in inferred_nodes]
 
 
 ca = CodeAnalyzer("target/requests")
