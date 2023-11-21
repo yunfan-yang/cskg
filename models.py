@@ -20,7 +20,6 @@ NEO4J_URL = environ.get("NEO4J_URL")
 POSTGRES_URL = environ.get("POSTGRES_URL")
 
 config.DATABASE_URL = NEO4J_URL
-
 engine = create_engine(POSTGRES_URL)
 
 
