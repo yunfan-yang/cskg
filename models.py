@@ -6,6 +6,7 @@ from neomodel import (
     StructuredNode,
     StructuredRel,
     StringProperty,
+    ArrayProperty,
     IntegerProperty,
     UniqueIdProperty,
     Relationship,
@@ -29,6 +30,8 @@ class Function(StructuredNode):
     qualified_name = StringProperty(unique_index=True, required=True)
     args = StringProperty(required=True)
     file_path = StringProperty(required=True)
+
+    inferred_nodes = ArrayProperty()
 
     ## Relationships
     calls = RelationshipTo("Function", "CALLS", model=Calls)
