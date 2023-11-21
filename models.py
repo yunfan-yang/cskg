@@ -28,6 +28,7 @@ class Function(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
     args = StringProperty(required=True)
+    file_path = StringProperty(required=True)
 
     ## Relationships
     calls = RelationshipTo("Function", "CALLS", model=Calls)
@@ -36,6 +37,7 @@ class Function(StructuredNode):
 class Class(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
+    file_path = StringProperty(required=True)
 
     ## Relationships
     contains = RelationshipTo(StructuredNode, "CONTAINS")

@@ -8,6 +8,7 @@ from models import Class, Function
 class CodeAnalyzer:
     def __init__(self, folder_path):
         self.folder_path = folder_path
+        self.current_file_path = None
 
     def analyze(self):
         self.__traverse_files()
@@ -16,15 +17,15 @@ class CodeAnalyzer:
         for root, dirs, files in os.walk(self.folder_path):
             for file in files:
                 if file.endswith(".py"):
-                    file_path = os.path.join(root, file)
-                    self.__extract_file(file_path)
+                    self.current_file_path = os.path.join(root, file)
+                    self.__extract_file()
 
-    def __extract_file(self, file_path):
-        module_name = file_path.split("/")[-1].split(".")[0]
+    def __extract_file(self):
+        module_name = self.current_file_path.split("/")[-1].split(".")[0]
 
-        with open(file_path, "r") as file:
+        with open(self.current_file_path, "r") as file:
             code = file.read()
-            tree = astroid.parse(code, module_name, file_path)
+            tree = astroid.parse(code, module_name, self.current_file_path)
             nodes = self.__visit_children(tree)
 
     def __visit_children(self, node: astroid.Module) -> list[neomodel.StructuredNode]:
@@ -55,7 +56,7 @@ class CodeAnalyzer:
         qualified_name = node.qname()
         print(f"Class: {name} ({qualified_name})")
 
-        c = Class(name=name, qualified_name=qualified_name)
+        c = Class(name=name, qualified_name=qualified_name, file_path=self.current_file_path)
         c.save()
 
         # Visit children
@@ -71,7 +72,7 @@ class CodeAnalyzer:
         args = node.args
         print(f"Function: {name} ({qualified_name})")
 
-        f = Function(name=name, qualified_name=qualified_name, args=args)
+        f = Function(name=name, qualified_name=qualified_name, args=args, file_path=self.current_file_path)
         f.save()
 
         # # Visit body
