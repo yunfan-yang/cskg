@@ -29,8 +29,6 @@ class CodeAnalyzer:
                     self.__extract_file()
 
     def __create_node(self, cls: astroid.Module, **kwargs) -> neomodel.StructuredNode:
-        print(f"Creating {cls} with kwargs {kwargs}")
-
         # Create node
         try:
             node = cls(**kwargs)
@@ -38,6 +36,7 @@ class CodeAnalyzer:
         except neomodel.exceptions.UniqueProperty or neo4j.exceptions.ConstraintError:
             node = cls.nodes.get_or_none(**kwargs)
 
+        print(f"Creating {cls} with kwargs {kwargs}", node)
         return node
 
     def __extract_file(self):
@@ -48,7 +47,7 @@ class CodeAnalyzer:
             tree = astroid.parse(code, module_name, self.current_file_path)
             nodes = self.__visit_children(tree)
 
-    def __visit_children(self, node: astroid.Module) -> list[neomodel.StructuredNode]:
+    def __visit_children(self, node: astroid.NodeNG) -> list[neomodel.StructuredNode]:
         nodes = []
 
         children = node.get_children()
@@ -100,7 +99,6 @@ class CodeAnalyzer:
             Function,
             name=name,
             qualified_name=qualified_name,
-            args=args,
             file_path=self.current_file_path,
         )
 
@@ -145,6 +143,15 @@ class CodeAnalyzer:
                     params_objects = inferred_node.args.args
                     params_names = [param.name for param in params_objects]
                     print(f"Params: {params_names}")
+
+                    # function_qualified_name = node.qname()
+                    # called_function_qualified_name = inferred_node.qname()
+
+                    # crr = CallsRelRow(
+                    #     function_qualified_name=function_qualified_name,
+                    #     called_function_qualified_name=called_function_qualified_name,
+                    # )
+                    # postgres_session.add(crr)
 
         # try:
         #     for call in calls:

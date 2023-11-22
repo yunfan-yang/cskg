@@ -32,7 +32,7 @@ postgres_session = Session(bind=postgres_engine)
 class Function(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
-    args = StringProperty(required=True)
+    args = StringProperty(required=False)
     file_path = StringProperty(required=True)
 
     ## Relationships
