@@ -30,15 +30,6 @@ class CallsRel(StructuredRel):
     keywords = StringProperty(required=True)
 
 
-class CallsRelRow(DeclarativeBase):
-    __tablename__ = "calls_rel"
-    id = Column(Integer, primary_key=True)
-    function_qualified_name = Column(String)
-    called_function_qualified_name = Column(String)
-    args = Column(String)
-    keywords = Column(String)
-
-
 class FunctionNode(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
@@ -58,3 +49,17 @@ class ClassNode(StructuredNode):
 
     ## Relationships
     contains = RelationshipTo(StructuredNode, "CONTAINS")
+
+
+class PostgresBase(DeclarativeBase):
+    __abstract__ = True
+    __table_args__ = {"schema": "public"}
+
+
+class CallsRelRow(PostgresBase):
+    __tablename__ = "calls_rel"
+    id = Column(Integer, primary_key=True)
+    function_qualified_name = Column(String)
+    called_function_qualified_name = Column(String)
+    args = Column(String)
+    keywords = Column(String)
