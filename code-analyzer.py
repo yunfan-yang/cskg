@@ -84,6 +84,7 @@ class CodeAnalyzer:
         f.save()
 
         self.__visit_function_inferred_nodes(node)
+        self.__visit_children(node)
         return f
 
     def __visit_function_inferred_nodes(self, node: astroid.FunctionDef):
