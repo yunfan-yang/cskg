@@ -14,7 +14,7 @@ from neomodel import (
     RelationshipFrom,
 )
 from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
 
 load_dotenv()
 
@@ -22,7 +22,8 @@ NEO4J_URL = environ.get("NEO4J_URL")
 POSTGRES_URL = environ.get("POSTGRES_URL")
 
 config.DATABASE_URL = NEO4J_URL
-engine = create_engine(POSTGRES_URL)
+postgres_engine = create_engine(POSTGRES_URL, echo=True)
+postgres_session = Session(bind=postgres_engine)
 
 
 class CallsRel(StructuredRel):
@@ -39,7 +40,7 @@ class FunctionNode(StructuredNode):
     inferred_nodes = ArrayProperty()
 
     ## Relationships
-    calls = RelationshipTo("Function", "CALLS", model=CallsRel)
+    calls = RelationshipTo("FunctionNode", "CALLS", model=CallsRel)
 
 
 class ClassNode(StructuredNode):

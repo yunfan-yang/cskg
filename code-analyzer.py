@@ -2,7 +2,7 @@ import os
 import astroid
 import neomodel
 
-from models import ClassNode, FunctionNode, CallsRelRow
+from models import ClassNode, FunctionNode, CallsRelRow, postgres_session
 
 
 class CodeAnalyzer:
@@ -115,7 +115,8 @@ class CodeAnalyzer:
                 args="",
                 keywords="",
             )
-            crr.save()
+            postgres_session.add(crr)
+            postgres_session.commit()
 
     def __hook_inferred_nodes(self):
         # Get all functions
@@ -133,5 +134,5 @@ class CodeAnalyzer:
                     pass
 
 
-# ca = CodeAnalyzer("target/requests")
-# ca.analyze()
+ca = CodeAnalyzer("target/requests")
+ca.analyze()
