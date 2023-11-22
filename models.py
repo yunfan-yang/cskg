@@ -31,17 +31,17 @@ class CallsRel(StructuredRel):
     keywords = StringProperty(required=True)
 
 
-class FunctionNode(StructuredNode):
+class Function(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
     args = StringProperty(required=True)
     file_path = StringProperty(required=True)
 
     ## Relationships
-    calls = RelationshipTo("FunctionNode", "CALLS", model=CallsRel)
+    calls = RelationshipTo("Function", "CALLS", model=CallsRel)
 
 
-class ClassNode(StructuredNode):
+class Class(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
     file_path = StringProperty(required=True)

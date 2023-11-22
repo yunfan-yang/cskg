@@ -2,7 +2,7 @@ import os
 import astroid
 import neomodel
 
-from models import ClassNode, FunctionNode, CallsRelRow, postgres_session
+from models import Class, Function, CallsRelRow, postgres_session
 
 
 class CodeAnalyzer:
@@ -52,12 +52,12 @@ class CodeAnalyzer:
 
         return nodes
 
-    def __visit_class(self, node: astroid.ClassDef) -> ClassNode:
+    def __visit_class(self, node: astroid.ClassDef) -> Class:
         name = node.name
         qualified_name = node.qname()
         print(f"Class: {name} ({qualified_name})")
 
-        c = ClassNode(
+        c = Class(
             name=name, qualified_name=qualified_name, file_path=self.current_file_path
         )
         c.save()
@@ -69,13 +69,13 @@ class CodeAnalyzer:
 
         return c
 
-    def __visit_function(self, node: astroid.FunctionDef) -> FunctionNode:
+    def __visit_function(self, node: astroid.FunctionDef) -> Function:
         name = node.name
         qualified_name = node.qname()
         args = node.args
         print(f"Function: {name} ({qualified_name})")
 
-        f = FunctionNode(
+        f = Function(
             name=name,
             qualified_name=qualified_name,
             args=args,
@@ -129,10 +129,10 @@ class CodeAnalyzer:
                 calls_rel_row.called_function_qualified_name
             )
 
-            function_node = FunctionNode.nodes.get_or_none(
+            function_node = Function.nodes.get_or_none(
                 qualified_name=function_qualified_name
             )
-            called_function_node = FunctionNode.nodes.get_or_none(
+            called_function_node = Function.nodes.get_or_none(
                 qualified_name=called_function_qualified_name
             )
 
