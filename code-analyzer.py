@@ -163,5 +163,5 @@ postgres_session.commit()
 neomodel.db.cypher_query("MATCH (n) DETACH DELETE n")
 
 # Analyze codebase
-ca = CodeAnalyzer("target/requests")
+ca = CodeAnalyzer("target/simple")
 ca.analyze()
