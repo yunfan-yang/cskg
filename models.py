@@ -13,7 +13,7 @@ from neomodel import (
     RelationshipTo,
     RelationshipFrom,
 )
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import UniqueConstraint, create_engine, Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Session
 
 load_dotenv()
@@ -22,7 +22,7 @@ NEO4J_URL = environ.get("NEO4J_URL")
 POSTGRES_URL = environ.get("POSTGRES_URL")
 
 config.DATABASE_URL = NEO4J_URL
-postgres_engine = create_engine(POSTGRES_URL, echo=True)
+postgres_engine = create_engine(POSTGRES_URL)
 postgres_session = Session(bind=postgres_engine)
 
 
@@ -62,3 +62,14 @@ class CallsRelRow(PostgresBase):
     called_function_qualified_name = Column(String)
     args = Column(String)
     keywords = Column(String)
+
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint(
+            "function_qualified_name",
+            "called_function_qualified_name",
+            "args",
+            "keywords",
+            name="unique_calls_rel",
+        ),
+    )

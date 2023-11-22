@@ -116,22 +116,36 @@ class CodeAnalyzer:
                 keywords="",
             )
             postgres_session.add(crr)
-            postgres_session.commit()
+
+        postgres_session.commit()
 
     def __hook_inferred_nodes(self):
         # Get all functions
-        functions = FunctionNode.nodes.all()
+        calls_rel_rows = postgres_session.query(CallsRelRow).all()
 
-        for function in functions:
-            print(f"Hooking inferred nodes for {function.qualified_name}")
+        for calls_rel_row in calls_rel_rows:
+            function_qualified_name = calls_rel_row.function_qualified_name
+            called_function_qualified_name = (
+                calls_rel_row.called_function_qualified_name
+            )
 
-            inferred_nodes = function.inferred_nodes
-            for inferred_node in inferred_nodes:
-                try:
-                    inferred_node = FunctionNode.nodes.get(qualified_name=inferred_node)
-                    function.calls.connect(inferred_node, {"args": "", "keywords": ""})
-                except neomodel.exceptions.DoesNotExist:
-                    pass
+            function_node = FunctionNode.nodes.get_or_none(
+                qualified_name=function_qualified_name
+            )
+            called_function_node = FunctionNode.nodes.get_or_none(
+                qualified_name=called_function_qualified_name
+            )
+
+            if function_node is None or called_function_node is None:
+                continue
+
+            print(
+                f"Function {function_qualified_name} calls {called_function_qualified_name}"
+            )
+            function_node.calls.connect(
+                called_function_node,
+                {"args": calls_rel_row.args, "keywords": calls_rel_row.keywords},
+            )
 
 
 ca = CodeAnalyzer("target/requests")
