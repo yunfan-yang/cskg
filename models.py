@@ -37,8 +37,6 @@ class FunctionNode(StructuredNode):
     args = StringProperty(required=True)
     file_path = StringProperty(required=True)
 
-    inferred_nodes = ArrayProperty()
-
     ## Relationships
     calls = RelationshipTo("FunctionNode", "CALLS", model=CallsRel)
 
