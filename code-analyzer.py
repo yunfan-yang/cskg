@@ -1,5 +1,6 @@
 import os
 import astroid
+import neo4j
 import neomodel
 from typing import Union
 
@@ -26,6 +27,18 @@ class CodeAnalyzer:
                 if file.endswith(".py"):
                     self.current_file_path = os.path.join(root, file)
                     self.__extract_file()
+
+    def __create_node(self, cls: astroid.Module, **kwargs) -> neomodel.StructuredNode:
+        print(f"Creating {cls} with kwargs {kwargs}")
+
+        # Create node
+        try:
+            node = cls(**kwargs)
+            node.save()
+        except neomodel.exceptions.UniqueProperty or neo4j.exceptions.ConstraintError:
+            node = cls.nodes.get_or_none(**kwargs)
+
+        return node
 
     def __extract_file(self):
         module_name = self.current_file_path.split("/")[-1].split(".")[0]
@@ -63,10 +76,12 @@ class CodeAnalyzer:
         qualified_name = node.qname()
         print(f"Class: {name} ({qualified_name})")
 
-        c = Class(
-            name=name, qualified_name=qualified_name, file_path=self.current_file_path
+        c = self.__create_node(
+            Class,
+            name=name,
+            qualified_name=qualified_name,
+            file_path=self.current_file_path,
         )
-        c.save()
 
         # Visit children
         children_nodes = self.__visit_children(node)
@@ -81,13 +96,13 @@ class CodeAnalyzer:
         args = node.args
         print(f"Function: {name} ({qualified_name})")
 
-        f = Function(
+        f = self.__create_node(
+            Function,
             name=name,
             qualified_name=qualified_name,
             args=args,
             file_path=self.current_file_path,
         )
-        f.save()
 
         self.__visit_function_inferred_nodes(node)
         self.__visit_children(node)
