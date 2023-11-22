@@ -148,5 +148,11 @@ class CodeAnalyzer:
             )
 
 
+# Clean database
+postgres_session.query(CallsRelRow).delete()
+postgres_session.commit()
+neomodel.db.cypher_query("MATCH (n) DETACH DELETE n")
+
+# Analyze codebase
 ca = CodeAnalyzer("target/requests")
 ca.analyze()
