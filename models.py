@@ -12,6 +12,7 @@ from neomodel import (
     Relationship,
     RelationshipTo,
     RelationshipFrom,
+    install_all_labels,
 )
 from sqlalchemy import UniqueConstraint, create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import DeclarativeBase, Session
@@ -22,6 +23,8 @@ NEO4J_URL = environ.get("NEO4J_URL")
 POSTGRES_URL = environ.get("POSTGRES_URL")
 
 config.DATABASE_URL = NEO4J_URL
+config.AUTO_INSTALL_LABELS = True
+
 postgres_engine = create_engine(POSTGRES_URL)
 postgres_session = Session(bind=postgres_engine)
 
@@ -45,6 +48,9 @@ class Class(StructuredNode):
     contains = RelationshipTo(StructuredNode, "CONTAINS")
 
 
+install_all_labels()
+
+
 class PostgresBase(DeclarativeBase):
     __abstract__ = True
     __table_args__ = {"schema": "public"}
@@ -56,4 +62,3 @@ class CallsRelRow(PostgresBase):
     function_qualified_name = Column(String)
     called_function_qualified_name = Column(String)
     is_linked = Column(Boolean, default=False)
-    
