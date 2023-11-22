@@ -133,15 +133,15 @@ class CodeAnalyzer:
 
             # All arguments values passed to the inferred functions
             args_objects = call.args
-            args_values = [arg.value for arg in args_objects]
-            print(f"Call {node.qname()} calls {inferred_nodes} with {args_values}")
+            # args_values = [arg.value for arg in args_objects]
+            print(f"Call {node.qname()} calls {inferred_nodes} with {args_objects}")
 
             # All parameters of the inferred functions
             for inferred_node in inferred_nodes:
                 print(f"Inferred node: {inferred_node}")
                 if isinstance(inferred_node, CallableNode):
                     params_objects = inferred_node.args.args
-                    params_names = [param.name for param in params_objects]
+                    params_names = [param.name for param in params_objects] if params_objects else []
                     print(f"Params: {params_names}")
 
                     function_qualified_name = node.qname()
@@ -199,5 +199,5 @@ postgres_session.commit()
 neomodel.db.cypher_query("MATCH (n) DETACH DELETE n")
 
 # Analyze codebase
-ca = CodeAnalyzer("target/simple")
+ca = CodeAnalyzer("target/requests")
 ca.analyze()
