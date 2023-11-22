@@ -144,36 +144,14 @@ class CodeAnalyzer:
                     params_names = [param.name for param in params_objects]
                     print(f"Params: {params_names}")
 
-                    # function_qualified_name = node.qname()
-                    # called_function_qualified_name = inferred_node.qname()
+                    function_qualified_name = node.qname()
+                    called_function_qualified_name = inferred_node.qname()
 
-                    # crr = CallsRelRow(
-                    #     function_qualified_name=function_qualified_name,
-                    #     called_function_qualified_name=called_function_qualified_name,
-                    # )
-                    # postgres_session.add(crr)
-
-        # try:
-        #     for call in calls:
-        #         inferred_nodes.extend(call.func.inferred())
-        # except astroid.exceptions.InferenceError:
-        #     pass
-
-        # inferred_nodes = [
-        #     inferred_node
-        #     for inferred_node in inferred_nodes
-        #     if inferred_node is not astroid.Uninferable
-        # ]
-
-        # for inferred_node in inferred_nodes:
-        #     function_qualified_name = node.qname()
-        #     called_function_qualified_name = inferred_node.qname()
-
-        #     crr = CallsRelRow(
-        #         function_qualified_name=function_qualified_name,
-        #         called_function_qualified_name=called_function_qualified_name,
-        #     )
-        #     postgres_session.add(crr)
+                    crr = CallsRelRow(
+                        function_qualified_name=function_qualified_name,
+                        called_function_qualified_name=called_function_qualified_name,
+                    )
+                    postgres_session.add(crr)
 
         postgres_session.commit()
 
