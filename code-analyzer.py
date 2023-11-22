@@ -1,8 +1,14 @@
 import os
 import astroid
 import neomodel
+from typing import Union
 
 from models import Class, Function, CallsRelRow, postgres_session
+
+
+CallableNode = Union[
+    astroid.FunctionDef, astroid.BoundMethod, astroid.UnboundMethod, astroid.Lambda
+]
 
 
 class CodeAnalyzer:
@@ -89,33 +95,63 @@ class CodeAnalyzer:
 
     def __visit_function_inferred_nodes(self, node: astroid.FunctionDef):
         # Visit body and write down function calls
-        body_nodes = [
+        calls = [
             body_node_child
             for body_node in node.body
             for body_node_child in body_node.get_children()
             if isinstance(body_node_child, astroid.Call)
         ]
-        inferred_nodes = []
-        try:
-            for body_node in body_nodes:
-                inferred_nodes.extend(body_node.func.inferred())
-        except astroid.exceptions.InferenceError:
-            pass
-        inferred_nodes = [
-            inferred_node
-            for inferred_node in inferred_nodes
-            if inferred_node is not astroid.Uninferable
-        ]
 
-        for inferred_node in inferred_nodes:
-            function_qualified_name = node.qname()
-            called_function_qualified_name = inferred_node.qname()
+        for call in calls:
+            inferred_nodes = []
+            try:
+                """
+                Multiple Possible Inferences:
+                In Python, a name (like that of a function) can refer to multiple different objects over the course
+                of a program's execution. Astroid's inference engine takes this into account and attempts to infer
+                all possible objects a name could refer to at a given point in the code.
+                For example, if a function name is reassigned multiple times to different callable objects,
+                inferred() will return all of these possibilities.
+                """
 
-            crr = CallsRelRow(
-                function_qualified_name=function_qualified_name,
-                called_function_qualified_name=called_function_qualified_name,
-            )
-            postgres_session.add(crr)
+                inferred_nodes = call.func.inferred()
+            except astroid.exceptions.InferenceError:
+                pass
+
+            # All arguments values passed to the inferred functions
+            args_objects = call.args
+            args_values = [arg.value for arg in args_objects]
+            print(f"Call {node.qname()} calls {inferred_nodes} with {args_values}")
+
+            # All parameters of the inferred functions
+            for inferred_node in inferred_nodes:
+                print(f"Inferred node: {inferred_node}")
+                if isinstance(inferred_node, CallableNode):
+                    params_objects = inferred_node.args.args
+                    params_names = [param.name for param in params_objects]
+                    print(f"Params: {params_names}")
+
+        # try:
+        #     for call in calls:
+        #         inferred_nodes.extend(call.func.inferred())
+        # except astroid.exceptions.InferenceError:
+        #     pass
+
+        # inferred_nodes = [
+        #     inferred_node
+        #     for inferred_node in inferred_nodes
+        #     if inferred_node is not astroid.Uninferable
+        # ]
+
+        # for inferred_node in inferred_nodes:
+        #     function_qualified_name = node.qname()
+        #     called_function_qualified_name = inferred_node.qname()
+
+        #     crr = CallsRelRow(
+        #         function_qualified_name=function_qualified_name,
+        #         called_function_qualified_name=called_function_qualified_name,
+        #     )
+        #     postgres_session.add(crr)
 
         postgres_session.commit()
 
