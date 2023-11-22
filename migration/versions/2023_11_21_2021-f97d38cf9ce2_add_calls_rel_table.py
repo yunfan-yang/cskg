@@ -24,8 +24,6 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('function_qualified_name', sa.String(), nullable=True),
     sa.Column('called_function_qualified_name', sa.String(), nullable=True),
-    sa.Column('args', sa.String(), nullable=True),
-    sa.Column('keywords', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     schema='public'
     )

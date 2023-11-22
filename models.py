@@ -26,11 +26,6 @@ postgres_engine = create_engine(POSTGRES_URL)
 postgres_session = Session(bind=postgres_engine)
 
 
-class CallsRel(StructuredRel):
-    args = StringProperty(required=True)
-    keywords = StringProperty(required=True)
-
-
 class Function(StructuredNode):
     name = StringProperty(required=True)
     qualified_name = StringProperty(unique_index=True, required=True)
@@ -38,7 +33,7 @@ class Function(StructuredNode):
     file_path = StringProperty(required=True)
 
     ## Relationships
-    calls = RelationshipTo("Function", "CALLS", model=CallsRel)
+    calls = RelationshipTo("Function", "CALLS")
 
 
 class Class(StructuredNode):
@@ -60,5 +55,3 @@ class CallsRelRow(PostgresBase):
     id = Column(Integer, primary_key=True)
     function_qualified_name = Column(String)
     called_function_qualified_name = Column(String)
-    args = Column(String)
-    keywords = Column(String)

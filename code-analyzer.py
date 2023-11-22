@@ -107,11 +107,12 @@ class CodeAnalyzer:
         ]
 
         for inferred_node in inferred_nodes:
+            function_qualified_name = node.qname()
+            called_function_qualified_name = inferred_node.qname()
+
             crr = CallsRelRow(
-                function_qualified_name=node.qname(),
-                called_function_qualified_name=inferred_node.qname(),
-                args="",
-                keywords="",
+                function_qualified_name=function_qualified_name,
+                called_function_qualified_name=called_function_qualified_name,
             )
             postgres_session.add(crr)
 
@@ -140,10 +141,7 @@ class CodeAnalyzer:
             print(
                 f"Function {function_qualified_name} calls {called_function_qualified_name}"
             )
-            function_node.calls.connect(
-                called_function_node,
-                {"args": calls_rel_row.args, "keywords": calls_rel_row.keywords},
-            )
+            function_node.calls.connect(called_function_node)
 
 
 # Clean database
