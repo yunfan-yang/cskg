@@ -123,25 +123,37 @@ class CodeAnalyzer:
         calls_rel_rows = postgres_session.query(CallsRelRow).all()
 
         for calls_rel_row in calls_rel_rows:
-            function_qualified_name = calls_rel_row.function_qualified_name
-            called_function_qualified_name = (
-                calls_rel_row.called_function_qualified_name
-            )
+            try:
+                function_qualified_name = calls_rel_row.function_qualified_name
+                called_function_qualified_name = (
+                    calls_rel_row.called_function_qualified_name
+                )
 
-            function_node = Function.nodes.get_or_none(
-                qualified_name=function_qualified_name
-            )
-            called_function_node = Function.nodes.get_or_none(
-                qualified_name=called_function_qualified_name
-            )
+                function_node = Function.nodes.get_or_none(
+                    qualified_name=function_qualified_name
+                )
+                called_function_node = Function.nodes.get_or_none(
+                    qualified_name=called_function_qualified_name
+                )
 
-            if function_node is None or called_function_node is None:
-                continue
+                if function_node is None or called_function_node is None:
+                    continue
 
-            print(
-                f"Function {function_qualified_name} calls {called_function_qualified_name}"
-            )
-            function_node.calls.connect(called_function_node)
+                print(
+                    f"Function {function_qualified_name} calls {called_function_qualified_name}"
+                )
+                function_node.calls.connect(called_function_node)
+                calls_rel_row.is_linked = True
+            except neomodel.exceptions.DoesNotExist:
+                print(
+                    f"Function {function_qualified_name} calls {called_function_qualified_name} but one of them does not exist"
+                )
+            except neomodel.exceptions.MultipleNodesReturned:
+                print(
+                    f"Function {function_qualified_name} calls {called_function_qualified_name} but one of them is duplicated"
+                )
+
+        postgres_session.commit()
 
 
 # Clean database

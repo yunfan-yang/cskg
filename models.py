@@ -13,7 +13,7 @@ from neomodel import (
     RelationshipTo,
     RelationshipFrom,
 )
-from sqlalchemy import UniqueConstraint, create_engine, Column, Integer, String
+from sqlalchemy import UniqueConstraint, create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import DeclarativeBase, Session
 
 load_dotenv()
@@ -55,3 +55,5 @@ class CallsRelRow(PostgresBase):
     id = Column(Integer, primary_key=True)
     function_qualified_name = Column(String)
     called_function_qualified_name = Column(String)
+    is_linked = Column(Boolean, default=False)
+    
