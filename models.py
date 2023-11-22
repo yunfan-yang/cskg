@@ -62,14 +62,3 @@ class CallsRelRow(PostgresBase):
     called_function_qualified_name = Column(String)
     args = Column(String)
     keywords = Column(String)
-
-    # Unique constraint
-    __table_args__ = (
-        UniqueConstraint(
-            "function_qualified_name",
-            "called_function_qualified_name",
-            "args",
-            "keywords",
-            name="unique_calls_rel",
-        ),
-    )
