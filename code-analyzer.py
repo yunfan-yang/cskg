@@ -2,7 +2,7 @@ import os
 import astroid
 import neomodel
 
-from models import Class, Function
+from models import ClassNode, FunctionNode
 
 
 class CodeAnalyzer:
@@ -52,12 +52,12 @@ class CodeAnalyzer:
 
         return nodes
 
-    def __visit_class(self, node: astroid.ClassDef) -> Class:
+    def __visit_class(self, node: astroid.ClassDef) -> ClassNode:
         name = node.name
         qualified_name = node.qname()
         print(f"Class: {name} ({qualified_name})")
 
-        c = Class(
+        c = ClassNode(
             name=name, qualified_name=qualified_name, file_path=self.current_file_path
         )
         c.save()
@@ -69,13 +69,13 @@ class CodeAnalyzer:
 
         return c
 
-    def __visit_function(self, node: astroid.FunctionDef) -> Function:
+    def __visit_function(self, node: astroid.FunctionDef) -> FunctionNode:
         name = node.name
         qualified_name = node.qname()
         args = node.args
         print(f"Function: {name} ({qualified_name})")
 
-        f = Function(
+        f = FunctionNode(
             name=name,
             qualified_name=qualified_name,
             args=args,
@@ -109,19 +109,19 @@ class CodeAnalyzer:
 
     def __hook_inferred_nodes(self):
         # Get all functions
-        functions = Function.nodes.all()
+        functions = FunctionNode.nodes.all()
 
         for function in functions:
             print(f"Hooking inferred nodes for {function.qualified_name}")
-            
+
             inferred_nodes = function.inferred_nodes
             for inferred_node in inferred_nodes:
                 try:
-                    inferred_node = Function.nodes.get(qualified_name=inferred_node)
+                    inferred_node = FunctionNode.nodes.get(qualified_name=inferred_node)
                     function.calls.connect(inferred_node, {"args": "", "keywords": ""})
                 except neomodel.exceptions.DoesNotExist:
                     pass
 
 
-ca = CodeAnalyzer("target/requests")
-ca.analyze()
+# ca = CodeAnalyzer("target/requests")
+# ca.analyze()
