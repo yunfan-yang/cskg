@@ -2,7 +2,7 @@ import os
 import astroid
 import neomodel
 
-from models import ClassNode, FunctionNode
+from models import ClassNode, FunctionNode, CallsRelRow
 
 
 class CodeAnalyzer:
@@ -81,8 +81,9 @@ class CodeAnalyzer:
             args=args,
             file_path=self.current_file_path,
         )
-        f.inferred_nodes = self.__visit_function_inferred_nodes(node)
         f.save()
+
+        self.__visit_function_inferred_nodes(node)
         return f
 
     def __visit_function_inferred_nodes(self, node: astroid.FunctionDef):
@@ -105,7 +106,16 @@ class CodeAnalyzer:
             if inferred_node is not astroid.Uninferable
         ]
 
-        return [inferred_node.qname() for inferred_node in inferred_nodes]
+        for inferred_node in inferred_nodes:
+            print(f"Inferred node: {inferred_node.qname()}")
+
+            crr = CallsRelRow(
+                function_qualified_name=node.qname(),
+                called_function_qualified_name=inferred_node.qname(),
+                args="",
+                keywords="",
+            )
+            crr.save()
 
     def __hook_inferred_nodes(self):
         # Get all functions

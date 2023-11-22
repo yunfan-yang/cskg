@@ -13,7 +13,8 @@ from neomodel import (
     RelationshipTo,
     RelationshipFrom,
 )
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import DeclarativeBase
 
 load_dotenv()
 
@@ -27,6 +28,15 @@ engine = create_engine(POSTGRES_URL)
 class CallsRel(StructuredRel):
     args = StringProperty(required=True)
     keywords = StringProperty(required=True)
+
+
+class CallsRelRow(DeclarativeBase):
+    __tablename__ = "calls_rel"
+    id = Column(Integer, primary_key=True)
+    function_qualified_name = Column(String)
+    called_function_qualified_name = Column(String)
+    args = Column(String)
+    keywords = Column(String)
 
 
 class FunctionNode(StructuredNode):
