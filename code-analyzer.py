@@ -107,8 +107,6 @@ class CodeAnalyzer:
         ]
 
         for inferred_node in inferred_nodes:
-            print(f"Inferred node: {inferred_node.qname()}")
-
             crr = CallsRelRow(
                 function_qualified_name=node.qname(),
                 called_function_qualified_name=inferred_node.qname(),
