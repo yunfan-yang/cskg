@@ -1,4 +1,5 @@
 import os
+import logging
 import astroid
 import neo4j
 import neomodel
@@ -10,6 +11,9 @@ from models import postgres_session, Class, Function, CallsRelRow, InheritsRelRo
 CallableNode = Union[
     astroid.FunctionDef, astroid.BoundMethod, astroid.UnboundMethod, astroid.Lambda
 ]
+
+basic_logger = logging.FileHandler("logs/basic_logger.log")
+class_logger = logging.FileHandler("logs/class_logger.log")
 
 
 class CodeAnalyzer:
@@ -36,7 +40,7 @@ class CodeAnalyzer:
         except neomodel.exceptions.UniqueProperty or neo4j.exceptions.ConstraintError:
             node = cls.nodes.get_or_none(**kwargs)
 
-        print(f"Creating {cls} with kwargs {kwargs}", node)
+        basic_logger.debug(f"Creating {cls} with kwargs {kwargs}", node)
         return node
 
     def __extract_file(self):
@@ -73,7 +77,7 @@ class CodeAnalyzer:
     def __visit_class(self, node: astroid.ClassDef) -> Class:
         name = node.name
         qualified_name = node.qname()
-        print(f"Class: {name} ({qualified_name})")
+        basic_logger.debug(f"Class: {name} ({qualified_name})")
 
         c = self.__create_node(
             Class,
@@ -102,7 +106,7 @@ class CodeAnalyzer:
         name = node.name
         qualified_name = node.qname()
         args = node.args
-        print(f"Function: {name} ({qualified_name})")
+        basic_logger.debug(f"Function: {name} ({qualified_name})")
 
         f = self.__create_node(
             Function,
@@ -143,11 +147,11 @@ class CodeAnalyzer:
             # All arguments values passed to the inferred functions
             args_objects = call.args
             # args_values = [arg.value for arg in args_objects]
-            print(f"Call {node.qname()} calls {inferred_nodes} with {args_objects}")
+            basic_logger.debug(f"Call {node.qname()} calls {inferred_nodes} with {args_objects}")
 
             # All parameters of the inferred functions
             for inferred_node in inferred_nodes:
-                print(f"Inferred node: {inferred_node}")
+                basic_logger.debug(f"Inferred node: {inferred_node}")
                 if isinstance(inferred_node, CallableNode):
                     params_objects = inferred_node.args.args
                     params_names = (
@@ -155,7 +159,7 @@ class CodeAnalyzer:
                         if params_objects
                         else []
                     )
-                    print(f"Params: {params_names}")
+                    basic_logger.debug(f"Params: {params_names}")
 
                     function_qualified_name = node.qname()
                     called_function_qualified_name = inferred_node.qname()
@@ -189,17 +193,17 @@ class CodeAnalyzer:
                 if function_node is None or called_function_node is None:
                     continue
 
-                print(
+                basic_logger.debug(
                     f"Function {function_qualified_name} calls {called_function_qualified_name}"
                 )
                 function_node.calls.connect(called_function_node)
                 calls_rel_row.is_linked = True
             except neomodel.exceptions.DoesNotExist:
-                print(
+                basic_logger.debug(
                     f"Function {function_qualified_name} calls {called_function_qualified_name} but one of them does not exist"
                 )
             except neomodel.exceptions.MultipleNodesReturned:
-                print(
+                basic_logger.debug(
                     f"Function {function_qualified_name} calls {called_function_qualified_name} but one of them is duplicated"
                 )
 
