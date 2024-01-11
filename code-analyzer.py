@@ -25,6 +25,7 @@ class CodeAnalyzer:
         logger.debug("analyze")
         self.__traverse_files()
         self.__hook_inferred_nodes()
+        self.__hook_inherited_nodes()
 
     def __traverse_files(self):
         logger.debug("traverse files")
@@ -213,6 +214,41 @@ class CodeAnalyzer:
                     f"Function {function_qualified_name} calls {called_function_qualified_name} but one of them is duplicated"
                 )
 
+        postgres_session.commit()
+
+    def __hook_inherited_nodes(self):
+        inherits_rel_rows = postgres_session.query(InheritsRelRow).all()
+
+        for inherits_rel_row in inherits_rel_rows:
+            try:
+                class_qualified_name = inherits_rel_row.class_qualified_name
+                inherited_class_qualified_name = (
+                    inherits_rel_row.inherited_class_qualified_name
+                )
+
+                class_node = Class.nodes.get_or_none(
+                    qualified_name=class_qualified_name
+                )
+                inherited_class_node = Class.nodes.get_or_none(
+                    qualified_name=inherited_class_qualified_name
+                )
+
+                if class_node is None or inherited_class_node is None:
+                    continue
+
+                logger.debug(
+                    f"Class {class_qualified_name} inherites {inherited_class_qualified_name}"
+                )
+                class_node.inherits.connect(inherited_class_node)
+                inherits_rel_row.is_linked = True
+            except neomodel.exceptions.DoesNotExist:
+                logger.info(
+                    f"Function {class_qualified_name} calls {inherited_class_qualified_name} but one of them does not exist"
+                )
+            except neomodel.exceptions.MultipleNodesReturned:
+                logger.debug(
+                    f"Function {class_qualified_name} calls {inherited_class_qualified_name} but one of them is duplicated"
+                )
         postgres_session.commit()
 
 
