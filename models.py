@@ -46,6 +46,7 @@ class Class(StructuredNode):
 
     ## Relationships
     contains = RelationshipTo(StructuredNode, "CONTAINS")
+    inherits = RelationshipTo(StructuredNode, "INHERITS")
 
 
 install_all_labels()

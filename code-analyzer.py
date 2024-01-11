@@ -4,7 +4,7 @@ import neo4j
 import neomodel
 from typing import Union
 
-from models import Class, Function, CallsRelRow, postgres_session
+from models import postgres_session, Class, Function, CallsRelRow, InheritsRelRow
 
 
 CallableNode = Union[
@@ -82,6 +82,15 @@ class CodeAnalyzer:
             file_path=self.current_file_path,
         )
 
+        # Visit parents
+        parent_classes = node.ancestors(recurs=False)
+        for parent_class in parent_classes:
+            ihs = InheritsRelRow(
+                class_qualified_name=qualified_name,
+                inherited_class_qualified_name=parent_class.qname(),
+            )
+            postgres_session.add(ihs)
+
         # Visit children
         children_nodes = self.__visit_children(node)
         for child_entity in children_nodes:
@@ -141,7 +150,11 @@ class CodeAnalyzer:
                 print(f"Inferred node: {inferred_node}")
                 if isinstance(inferred_node, CallableNode):
                     params_objects = inferred_node.args.args
-                    params_names = [param.name for param in params_objects] if params_objects else []
+                    params_names = (
+                        [param.name for param in params_objects]
+                        if params_objects
+                        else []
+                    )
                     print(f"Params: {params_names}")
 
                     function_qualified_name = node.qname()
