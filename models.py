@@ -49,9 +49,6 @@ class Class(StructuredNode):
     inherits = RelationshipTo(StructuredNode, "INHERITS")
 
 
-install_all_labels()
-
-
 class PostgresBase(DeclarativeBase):
     __abstract__ = True
     __table_args__ = {"schema": "public"}
