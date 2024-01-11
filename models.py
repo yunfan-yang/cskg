@@ -62,3 +62,11 @@ class CallsRelRow(PostgresBase):
     function_qualified_name = Column(String)
     called_function_qualified_name = Column(String)
     is_linked = Column(Boolean, default=False)
+
+
+class InheritsRelRow(PostgresBase):
+    __tablename__ = "inherits_rel"
+    id = Column(Integer, primary_key=True)
+    class_qualified_name = Column(String)
+    inherited_class_qualified_name = Column(String)
+    is_linked = Column(Boolean, default=False)
