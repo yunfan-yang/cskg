@@ -1,11 +1,8 @@
 from neomodel import (
-    config,
     StructuredNode,
     StringProperty,
     RelationshipTo,
 )
-
-config.AUTO_INSTALL_LABELS = True
 
 
 class Function(StructuredNode):
@@ -24,5 +21,5 @@ class Class(StructuredNode):
     file_path = StringProperty(required=True)
 
     ## Relationships
-    contains = RelationshipTo(StructuredNode, "CONTAINS")
     inherits = RelationshipTo(StructuredNode, "INHERITS")
+    contains = RelationshipTo(StructuredNode, "CONTAINS")
