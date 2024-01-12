@@ -2,7 +2,6 @@ import json
 from typing import Union
 import astroid
 
-from analyzer.models.relational import CallsRelRow, FunctionRow
 from analyzer.node import visit_children
 
 
@@ -19,12 +18,12 @@ def visit_function(node: astroid.FunctionDef, current_file_path: str = None):
     attributes = {
         "file_path": current_file_path,
     }
-    fnr = FunctionRow(
-        name=name,
-        qualified_name=qualified_name,
-        is_created=False,
-        attributes=json.dumps(attributes),
-    )
+    fnr = {
+        "type": "function",
+        "name": name,
+        "qualified_name": qualified_name,
+        "file_path": current_file_path,
+    }
     yield fnr
 
     yield from visit_function_inferred_nodes(node)
@@ -71,8 +70,9 @@ def visit_function_inferred_nodes(node: astroid.FunctionDef):
                 function_qualified_name = node.qname()
                 called_function_qualified_name = inferred_node.qname()
 
-                crr = CallsRelRow(
-                    function_qualified_name=function_qualified_name,
-                    called_function_qualified_name=called_function_qualified_name,
-                )
+                crr = {
+                    "type": "calls",
+                    "function_qualified_name": function_qualified_name,
+                    "called_function_qualified_name": called_function_qualified_name,
+                }
                 yield crr

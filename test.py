@@ -45,8 +45,16 @@ generator = ca.analyze()
 
 while True:
     try:
-        c = next(generator)
-        print(c)
+        node = next(generator)
+
+        if node.get("type") == "class":
+            classes.insert_one(node)
+        elif node.get("type") == "function":
+            functions.insert_one(node)
+        elif node.get("type") == "calls":
+            calls_rel.insert_one(node)
+        elif node.get("type") == "inherits":
+            inherits_rel.insert_one(node)
     except:
         break
 
