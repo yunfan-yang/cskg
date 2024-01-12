@@ -57,7 +57,8 @@ class PostgresBase(DeclarativeBase):
 class ClassRow(PostgresBase):
     __tablename__ = "classes"
     id = Column(Integer, primary_key=True)
-    class_qualified_name = Column(String)
+    name = Column(String)
+    qualified_name = Column(String)
     is_created = Column(Boolean, default=False, nullable=False)
     attributes = Column(String)
 
@@ -65,7 +66,8 @@ class ClassRow(PostgresBase):
 class FunctionRow(PostgresBase):
     __tablename__ = "functions"
     id = Column(Integer, primary_key=True)
-    function_qualified_name = Column(String)
+    name = Column(String)
+    qualified_name = Column(String)
     is_created = Column(Boolean, default=False, nullable=False)
     attributes = Column(String)
 
