@@ -12,20 +12,6 @@ services:
       - $HOME/neo4j/logs:/logs
       - $HOME/neo4j/import:/var/lib/neo4j/import
       - $HOME/neo4j/plugins:/plugins
-  postgres:
-    restart: 'on-failure'
-    image: postgres:latest
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=kg
-      - PGPORT=5060
-    volumes:
-      - ./data/postgres:/var/lib/postgres
-    expose:
-      - "5060"
-    ports:
-      - "5060:5060"
   mongo:
     image: mongo
     restart: always
