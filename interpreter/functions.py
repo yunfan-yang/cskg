@@ -1,7 +1,7 @@
 from typing import Union
 import astroid
 
-from interpreter.node import visit_children
+from interpreter.nodes import visit_children
 
 
 CallableNode = Union[

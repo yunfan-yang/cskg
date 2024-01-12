@@ -1,7 +1,7 @@
 import os
 import astroid
 
-from interpreter.node import visit_children
+from interpreter.nodes import visit_children
 
 
 class CodeInterpreter:
