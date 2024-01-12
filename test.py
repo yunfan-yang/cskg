@@ -5,6 +5,7 @@ import neomodel
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from pymongo import MongoClient
+from loguru import logger
 
 from analyzer.code_analyzer import CodeAnalyzer
 
@@ -28,6 +29,11 @@ functions = database.functions
 calls_rel = database.calls_rel
 inherits_rel = database.inherits_rel
 
+classes.drop()
+functions.drop()
+calls_rel.drop()
+inherits_rel.drop()
+
 # Clean database
 # postgres_session.query(ClassRow).delete()
 # postgres_session.query(FunctionRow).delete()
@@ -38,6 +44,7 @@ inherits_rel = database.inherits_rel
 # neomodel.db.cypher_query("DROP CONSTRAINT constraint_unique_Function_qualified_name")
 # neomodel.db.cypher_query("DROP CONSTRAINT constraint_unique_Class_qualified_name")
 
+logger.add("logs/default.log")
 
 # Analyze codebase
 ca = CodeAnalyzer("targets/requests")
@@ -46,6 +53,8 @@ generator = ca.analyze()
 while True:
     try:
         node = next(generator)
+
+        logger.info(node)
 
         if node.get("type") == "class":
             classes.insert_one(node)

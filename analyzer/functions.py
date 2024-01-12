@@ -15,9 +15,6 @@ def visit_function(node: astroid.FunctionDef, current_file_path: str = None):
     qualified_name = node.qname()
     args = node.args
 
-    attributes = {
-        "file_path": current_file_path,
-    }
     fnr = {
         "type": "function",
         "name": name,
