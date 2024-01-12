@@ -2,10 +2,19 @@ import os
 import astroid
 import neo4j
 import neomodel
+import json
 from typing import Union
 from loguru import logger
 
-from models import postgres_session, Class, Function, CallsRelRow, InheritsRelRow
+from models import (
+    postgres_session,
+    Class,
+    Function,
+    CallsRelRow,
+    InheritsRelRow,
+    ClassRow,
+    FunctionRow,
+)
 
 
 logger.add("logs/default.log")
@@ -22,10 +31,9 @@ class CodeAnalyzer:
         self.current_file_path = None
 
     def analyze(self):
-        logger.debug("analyze")
         self.__traverse_files()
-        self.__hook_inferred_nodes()
-        self.__hook_inherited_nodes()
+        # self.__hook_inferred_nodes()
+        # self.__hook_inherited_nodes()
 
     def __traverse_files(self):
         logger.debug("traverse files")
@@ -54,42 +62,34 @@ class CodeAnalyzer:
         with open(self.current_file_path, "r") as file:
             code = file.read()
             tree = astroid.parse(code, module_name, self.current_file_path)
-            nodes = self.__visit_children(tree)
+            self.__visit_children(tree)
 
-    def __visit_children(self, node: astroid.NodeNG) -> list[neomodel.StructuredNode]:
-        nodes = []
-
+    def __visit_children(self, node: astroid.NodeNG):
         children = node.get_children()
         for child in children:
-            es = self.__visit_node(child)
-            nodes.extend(es)
+            self.__visit_node(child)
 
-        return nodes
-
-    def __visit_node(self, node) -> list[neomodel.StructuredNode]:
-        nodes = []
-
+    def __visit_node(self, node):
         if isinstance(node, astroid.ClassDef):
-            c = self.__visit_class(node)
-            nodes.append(c)
+            self.__visit_class(node)
 
         elif isinstance(node, astroid.FunctionDef):
-            f = self.__visit_function(node)
-            nodes.append(f)
+            self.__visit_function(node)
 
-        return nodes
-
-    def __visit_class(self, node: astroid.ClassDef) -> Class:
+    def __visit_class(self, node: astroid.ClassDef):
         name = node.name
         qualified_name = node.qname()
-        logger.info(f"Class: {name} ({qualified_name})")
+        logger.info(f"Class: {qualified_name}")
 
-        c = self.__create_node(
-            Class,
+        # Create class
+        attributes = {"file_path": self.current_file_path}
+        clr = ClassRow(
             name=name,
             qualified_name=qualified_name,
-            file_path=self.current_file_path,
+            is_created=False,
+            attributes=json.dumps(attributes),
         )
+        postgres_session.add(clr)
 
         # Visit parents
         parent_classes = node.ancestors(recurs=False)
@@ -101,28 +101,27 @@ class CodeAnalyzer:
             postgres_session.add(ihs)
 
         # Visit children
-        children_nodes = self.__visit_children(node)
-        for child_entity in children_nodes:
-            c.contains.connect(child_entity)
+        self.__visit_children(node)
 
-        return c
-
-    def __visit_function(self, node: astroid.FunctionDef) -> Function:
+    def __visit_function(self, node: astroid.FunctionDef):
         name = node.name
         qualified_name = node.qname()
         args = node.args
         logger.debug(f"Function: {name} ({qualified_name})")
 
-        f = self.__create_node(
-            Function,
+        attributes = {
+            "file_path": self.current_file_path,
+        }
+        fnr = FunctionRow(
             name=name,
             qualified_name=qualified_name,
-            file_path=self.current_file_path,
+            is_created=False,
+            attributes=json.dumps(attributes),
         )
+        postgres_session.add(fnr)
 
         self.__visit_function_inferred_nodes(node)
         self.__visit_children(node)
-        return f
 
     def __visit_function_inferred_nodes(self, node: astroid.FunctionDef):
         # Visit body and write down function calls
@@ -253,6 +252,8 @@ class CodeAnalyzer:
 
 
 # Clean database
+postgres_session.query(ClassRow).delete()
+postgres_session.query(FunctionRow).delete()
 postgres_session.query(CallsRelRow).delete()
 postgres_session.query(InheritsRelRow).delete()
 postgres_session.commit()
