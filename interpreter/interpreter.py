@@ -10,16 +10,16 @@ class CodeInterpreter:
         self.current_file_path = None
 
     def analyze(self):
-        yield from self.__traverse_files()
+        yield from self.traverse_files()
 
-    def __traverse_files(self):
+    def traverse_files(self):
         for root, dirs, files in os.walk(self.folder_path):
             for file in files:
                 if file.endswith(".py"):  # Only handles python file
                     current_file_path = os.path.join(root, file)
-                    yield from self.__extract_file(current_file_path)
+                    yield from self.extract_file(current_file_path)
 
-    def __extract_file(self, current_file_path: str = None):
+    def extract_file(self, current_file_path: str = None):
         module_name = current_file_path.split("/")[-1].split(".")[0]
 
         with open(current_file_path, "r") as file:
