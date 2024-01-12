@@ -6,7 +6,6 @@ import json
 from typing import Union
 from loguru import logger
 
-from analyzer.models import postgres_session
 from analyzer.node import visit_children
 
 
@@ -19,7 +18,7 @@ class CodeAnalyzer:
         self.current_file_path = None
 
     def analyze(self):
-        self.__traverse_files()
+        yield from self.__traverse_files()
         # self.__hook_inferred_nodes()
         # self.__hook_inherited_nodes()
 
@@ -28,10 +27,10 @@ class CodeAnalyzer:
         for root, dirs, files in os.walk(self.folder_path):
             logger.debug(f"root {root}")
             for file in files:
-                if file.endswith(".py"):
+                if file.endswith(".py"): # Only handles python file
                     self.current_file_path = os.path.join(root, file)
                     logger.debug(f"current file path: {self.current_file_path}")
-                    self.__extract_file()
+                    yield from self.__extract_file()
 
     def __extract_file(self):
         module_name = self.current_file_path.split("/")[-1].split(".")[0]
@@ -40,12 +39,4 @@ class CodeAnalyzer:
             code = file.read()
             tree = astroid.parse(code, module_name, self.current_file_path)
 
-            g = visit_children(tree)
-            while True:
-                try:
-                    c = next(g)
-                    postgres_session.add(c)
-                except:
-                    break
-
-        postgres_session.commit()
+            yield from visit_children(tree)

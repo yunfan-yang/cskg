@@ -1,7 +1,7 @@
 import json
 import astroid
 
-from analyzer.models import ClassRow, InheritsRelRow
+from analyzer.models.relational import ClassRow, InheritsRelRow
 from analyzer.node import visit_children
 
 

@@ -2,7 +2,7 @@ import json
 from typing import Union
 import astroid
 
-from analyzer.models import CallsRelRow, FunctionRow
+from analyzer.models.relational import CallsRelRow, FunctionRow
 from analyzer.node import visit_children
 
 

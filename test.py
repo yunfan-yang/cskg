@@ -1,7 +1,7 @@
 import neomodel
 from analyzer.code_analyzer import CodeAnalyzer
 
-from analyzer.models import (
+from analyzer.models_old import (
     postgres_session,
     CallsRelRow,
     InheritsRelRow,
@@ -21,4 +21,11 @@ neomodel.db.cypher_query("DROP CONSTRAINT constraint_unique_Class_qualified_name
 
 # Analyze codebase
 ca = CodeAnalyzer("targets/requests")
-ca.analyze()
+generator = ca.analyze()
+
+while True:
+    try:
+        c = next(generator)
+        print(c)
+    except:
+        break

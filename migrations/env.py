@@ -8,7 +8,7 @@ from alembic import context
 
 from dotenv import load_dotenv
 
-import analyzer.models as models
+import analyzer.models_old as models_old
 
 load_dotenv()
 
@@ -28,7 +28,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = models.PostgresBase.metadata
+target_metadata = models_old.PostgresBase.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
