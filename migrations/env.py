@@ -8,7 +8,7 @@ from alembic import context
 
 from dotenv import load_dotenv
 
-import models
+import analyzer.models as models
 
 load_dotenv()
 
