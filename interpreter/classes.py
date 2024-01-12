@@ -20,7 +20,7 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
     parent_classes = node.ancestors(recurs=False)
     for parent_class in parent_classes:
         ihs = {
-            "type": "inherits",
+            "type": "inherits_rel",
             "class_qualified_name": qualified_name,
             "inherited_class_qualified_name": parent_class.qname(),
         }

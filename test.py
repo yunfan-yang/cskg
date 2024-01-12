@@ -56,9 +56,9 @@ while True:
             classes.insert_one(node)
         elif node.get("type") == "function":
             functions.insert_one(node)
-        elif node.get("type") == "calls":
+        elif node.get("type") == "calls_rel":
             calls_rel.insert_one(node)
-        elif node.get("type") == "inherits":
+        elif node.get("type") == "inherits_rel":
             inherits_rel.insert_one(node)
     except:
         break

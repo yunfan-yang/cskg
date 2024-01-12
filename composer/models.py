@@ -21,5 +21,5 @@ class Class(StructuredNode):
     file_path = StringProperty(required=True)
 
     ## Relationships
-    inherits = RelationshipTo(StructuredNode, "INHERITS")
-    contains = RelationshipTo(StructuredNode, "CONTAINS")
+    inherits = RelationshipTo("Class", "INHERITS")
+    contains = RelationshipTo("Function", "CONTAINS")

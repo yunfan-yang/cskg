@@ -67,7 +67,7 @@ def visit_function_inferred_nodes(node: astroid.FunctionDef):
                 called_function_qualified_name = inferred_node.qname()
 
                 crr = {
-                    "type": "calls",
+                    "type": "calls_rel",
                     "function_qualified_name": function_qualified_name,
                     "called_function_qualified_name": called_function_qualified_name,
                 }
