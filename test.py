@@ -24,6 +24,7 @@ postgres_session = Session(bind=postgres_engine)
 
 mongo_client = MongoClient(MONGO_URL)
 database = mongo_client.code_analyzer
+
 classes = database.classes
 functions = database.functions
 calls_rel = database.calls_rel
@@ -47,7 +48,7 @@ inherits_rel.drop()
 logger.add("logs/default.log")
 
 # Analyze codebase
-ca = CodeAnalyzer("targets/requests")
+ca = CodeAnalyzer("targets/transformers")
 generator = ca.analyze()
 
 while True:
