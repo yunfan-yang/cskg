@@ -1,4 +1,3 @@
-import json
 import astroid
 
 from analyzer.node import visit_children
