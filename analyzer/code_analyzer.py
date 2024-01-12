@@ -1,15 +1,7 @@
 import os
 import astroid
-import neo4j
-import neomodel
-import json
-from typing import Union
-from loguru import logger
 
 from analyzer.node import visit_children
-
-
-logger.add("logs/default.log")
 
 
 class CodeAnalyzer:
@@ -19,17 +11,12 @@ class CodeAnalyzer:
 
     def analyze(self):
         yield from self.__traverse_files()
-        # self.__hook_inferred_nodes()
-        # self.__hook_inherited_nodes()
 
     def __traverse_files(self):
-        logger.debug("traverse files")
         for root, dirs, files in os.walk(self.folder_path):
-            logger.debug(f"root {root}")
             for file in files:
-                if file.endswith(".py"): # Only handles python file
+                if file.endswith(".py"):  # Only handles python file
                     self.current_file_path = os.path.join(root, file)
-                    logger.debug(f"current file path: {self.current_file_path}")
                     yield from self.__extract_file()
 
     def __extract_file(self):
