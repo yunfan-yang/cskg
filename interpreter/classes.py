@@ -1,6 +1,6 @@
 import astroid
 
-from analyzer.node import visit_children
+from interpreter.node import visit_children
 
 
 def visit_class(node: astroid.ClassDef, current_file_path: str = None):

@@ -1,10 +1,10 @@
 import os
 import astroid
 
-from analyzer.node import visit_children
+from interpreter.node import visit_children
 
 
-class CodeAnalyzer:
+class CodeInterpreter:
     def __init__(self, folder_path):
         self.folder_path = folder_path
         self.current_file_path = None

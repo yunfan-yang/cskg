@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pymongo import MongoClient
 from loguru import logger
 
-from analyzer.code_analyzer import CodeAnalyzer
+from interpreter.interpreter import CodeInterpreter
 
 
 load_dotenv()
@@ -48,7 +48,7 @@ inherits_rel.drop()
 logger.add("logs/default.log")
 
 # Analyze codebase
-ca = CodeAnalyzer("targets/transformers")
+ca = CodeInterpreter("targets/transformers")
 generator = ca.analyze()
 
 while True:
