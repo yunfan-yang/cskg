@@ -37,7 +37,13 @@ class GraphComposer:
             return Class(**arguments)
 
         elif node_type == "function":
-            return Function(**node)
+            included_fields = [
+                "name",
+                "qualified_name",
+                "file_path",
+            ]
+            arguments = _included_fields_dict(node, included_fields)
+            return Function(**arguments)
 
         elif node_type == "calls_rel":
             function_qualified_name = node.get("function_qualified_name")
