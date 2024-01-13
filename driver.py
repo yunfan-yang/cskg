@@ -1,6 +1,7 @@
 from typing import Any
 from pymongo import MongoClient
 import neomodel
+from loguru import logger
 
 from composer.composer import GraphComposer
 from interpreter.interpreter import CodeInterpreter
@@ -50,10 +51,13 @@ class Driver:
         while True:
             try:
                 node = next(generator)
+                logger.info(node)
                 node_type = node.get("type")
                 self.mongo_db[node_type].insert_one(node)
             except:
                 break
+
+        logger.info("Done")
 
 
 def _mongo_drop_all(mongo_db):
