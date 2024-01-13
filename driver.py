@@ -14,7 +14,7 @@ DRIVER_CONFIGURATIONS = dict[str, Any]
 # }
 
 
-class Drive:
+class Driver:
     def __init__(self, folder_path: str, configurations: DRIVER_CONFIGURATIONS):
         self.folder_path = folder_path
         self.configurations = configurations
