@@ -41,6 +41,10 @@ class Driver:
         _mongo_drop_all(self.mongo_db)
         _neo_drop_all(self.neo_db)
 
+        # Create indexes
+        self.mongo_db.class_.create_index("qualified_name", unique=True)
+        self.mongo_db.function.create_index("qualified_name", unique=True)
+
     def run(self):
         # Instantiate
         self.interpreter = CodeInterpreter(self.folder_path)
@@ -56,6 +60,16 @@ class Driver:
                 self.mongo_db[node_type].insert_one(node)
             except:
                 break
+        logger.info("Interpretation done")
+
+        # Compose graph
+        self.graph_composer.classes = self.mongo_db.class_.find()
+        self.graph_composer.functions = self.mongo_db.function.find()
+        self.graph_composer.calls_rel = self.mongo_db.calls_rel.find()
+        self.graph_composer.inherits_rel = self.mongo_db.inherits_rel.find()
+
+        self.graph_composer.compose()
+        logger.info("Composition done")
 
         logger.info("Done")
 

@@ -1,5 +1,6 @@
 from typing import Any
 from composer.models import *
+from loguru import logger
 
 
 class GraphComposer:
@@ -16,16 +17,22 @@ class GraphComposer:
         everything.extend(self.calls_rel)
         everything.extend(self.inherits_rel)
 
+        logger.info(everything)
+
         for thing in everything:
+            logger.debug(thing)
             try:
-                instance = self.instantiate(thing)
+                instance = GraphComposer.instantiate(thing)
+                logger.debug(instance)
                 instance.save()
-            except:
+            except Exception as e:
+                logger.error(e)
                 pass
 
     @classmethod
-    def instantiate(node: dict[str, Any]):
+    def instantiate(cls, node: dict[str, Any]):
         node_type = node.get("type")
+        logger.info(node_type)
 
         if node_type == "class":
             included_fields = [
@@ -34,6 +41,7 @@ class GraphComposer:
                 "file_path",
             ]
             arguments = _included_fields_dict(node, included_fields)
+            logger.debug(arguments)
             return Class(**arguments)
 
         elif node_type == "function":
