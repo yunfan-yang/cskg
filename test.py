@@ -13,5 +13,5 @@ configs = {
     "NEO4J_URL": NEO4J_URL,
     "MONGO_URL": MONGO_URL,
 }
-driver = Driver("targets/simple", configs)
+driver = Driver("targets/requests", configs)
 driver.run()

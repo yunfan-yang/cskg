@@ -87,6 +87,19 @@ class GraphComposer:
 
             rel = c1.inherits.connect(c2, {})
             return rel
+        
+        elif node_type == "contains_rel":
+            class_qualified_name = node.get("class_qualified_name")
+            function_qualified_name = node.get("function_qualified_name")
+            logger.info(
+                f"Contains: {class_qualified_name} -> {function_qualified_name}"
+            )
+
+            c1 = Class.nodes.get(qualified_name=class_qualified_name)
+            f1 = Function.nodes.get(qualified_name=function_qualified_name)
+
+            rel = c1.contains.connect(f1, {})
+            return rel
 
         else:
             raise Exception("Invalid node type")

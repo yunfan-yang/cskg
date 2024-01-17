@@ -27,4 +27,14 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
         yield ihs
 
     # Visit children
-    yield from visit_children(node, current_file_path)
+    # yield from visit_children(node, current_file_path)
+    children_nodes = visit_children(node, current_file_path)
+    for child_node in children_nodes:
+        if child_node["type"] == "function":
+            contains = {
+                "type": "contains_rel",
+                "class_qualified_name": qualified_name,
+                "function_qualified_name": child_node["qualified_name"],
+            }
+            yield contains
+            yield child_node
