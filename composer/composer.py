@@ -5,9 +5,9 @@ from neomodel import DoesNotExist
 
 
 class GraphComposer:
-    def __init__(self, entities: list = [], relationships: list = []):
-        self.entities = entities
-        self.relationships = relationships
+    def __init__(self, entities: list = None, relationships: list = None):
+        self.entities = entities or []
+        self.relationships = relationships or []
 
     def compose(self):
         GraphComposer.compose_entities(self.entities)
