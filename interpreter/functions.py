@@ -14,13 +14,13 @@ def visit_function(node: astroid.FunctionDef, current_file_path: str = None):
     qualified_name = node.qname()
     args = node.args
 
-    fnr = {
+    function_ent = {
         "type": "function",
         "name": name,
         "qualified_name": qualified_name,
         "file_path": current_file_path,
     }
-    yield fnr
+    yield function_ent
 
     yield from visit_function_inferred_nodes(node)
     yield from visit_children(node, current_file_path)
@@ -66,9 +66,9 @@ def visit_function_inferred_nodes(node: astroid.FunctionDef):
                 function_qualified_name = node.qname()
                 called_function_qualified_name = inferred_node.qname()
 
-                crr = {
+                calls_rel = {
                     "type": "calls_rel",
                     "function_qualified_name": function_qualified_name,
                     "called_function_qualified_name": called_function_qualified_name,
                 }
-                yield crr
+                yield calls_rel
