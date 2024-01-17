@@ -71,10 +71,16 @@ class Driver:
         logger.info("Interpretation done")
 
         # Compose graph
-        self.graph_composer.classes = self.mongo_db.class_.find()
-        self.graph_composer.functions = self.mongo_db.function.find()
-        self.graph_composer.calls_rel = self.mongo_db.calls_rel.find()
-        self.graph_composer.inherits_rel = self.mongo_db.inherits_rel.find()
+        entities_collections = ["class", "function"]
+        relationships_collections = ["calls_rel", "inherits_rel"]
+
+        for collection_name in entities_collections:
+            self.graph_composer.entities.extend(self.mongo_db[collection_name].find())
+
+        for collection_name in relationships_collections:
+            self.graph_composer.relationships.extend(
+                self.mongo_db[collection_name].find()
+            )
 
         self.graph_composer.compose()
         logger.info("Composition done")

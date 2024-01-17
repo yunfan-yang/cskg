@@ -1,33 +1,42 @@
 from typing import Any
 from composer.models import *
 from loguru import logger
+from neomodel import DoesNotExist
 
 
 class GraphComposer:
-    def __init__(self):
-        self.classes = []
-        self.functions = []
-        self.calls_rel = []
-        self.inherits_rel = []
+    def __init__(self, entities: list = [], relationships: list = []):
+        self.entities = entities
+        self.relationships = relationships
 
     def compose(self):
-        everything = []
-        everything.extend(self.classes)
-        everything.extend(self.functions)
-        everything.extend(self.calls_rel)
-        everything.extend(self.inherits_rel)
+        GraphComposer.compose_entities(self.entities)
+        GraphComposer.compose_relationships(self.relationships)
 
-        logger.info(everything)
-
-        for thing in everything:
-            logger.debug(thing)
+    @classmethod
+    def compose_entities(self, entities: list):
+        for entity in entities:
+            logger.debug(entity)
             try:
-                instance = GraphComposer.instantiate(thing)
-                logger.debug(instance)
+                instance = GraphComposer.instantiate(entity)
                 instance.save()
+            except DoesNotExist as e:
+                logger.error(e)
             except Exception as e:
                 logger.error(e)
-                pass
+                raise e
+
+    @classmethod
+    def compose_relationships(self, relationships: list):
+        for relationship in relationships:
+            logger.debug(relationship)
+            try:
+                instance = GraphComposer.instantiate(relationship)
+            except DoesNotExist as e:
+                logger.error(e)
+            except Exception as e:
+                logger.error(e)
+                raise e
 
     @classmethod
     def instantiate(cls, node: dict[str, Any]):
@@ -57,40 +66,26 @@ class GraphComposer:
             function_qualified_name = node.get("function_qualified_name")
             called_function_qualified_name = node.get("called_function_qualified_name")
             logger.info(
-                f"{function_qualified_name} calls {called_function_qualified_name}"
+                f"Calls: {function_qualified_name} -> {called_function_qualified_name}"
             )
 
-            f1 = Function.nodes.get_or_none(qualified_name=function_qualified_name)
-            f2 = Function.nodes.get_or_none(
-                qualified_name=called_function_qualified_name
-            )
-
-            logger.debug(f"{f1}")
-            logger.debug(f"{f2}")
-
-            if f1 is None or f2 is None:
-                raise Exception("Invalid entities")
+            f1 = Function.nodes.get(qualified_name=function_qualified_name)
+            f2 = Function.nodes.get(qualified_name=called_function_qualified_name)
 
             rel = f1.calls.connect(f2, {})
-            logger.debug(f"rel: {rel}")
-
             return rel
 
         elif node_type == "inherits_rel":
             class_qualified_name = node.get("class_qualified_name")
             inherited_class_qualified_name = node.get("inherited_class_qualified_name")
             logger.info(
-                f"{class_qualified_name} inherits {inherited_class_qualified_name}"
+                f"Inherits: {class_qualified_name} -> {inherited_class_qualified_name}"
             )
 
-            c1 = Class.nodes.get_or_none(qualified_name=class_qualified_name)
-            c2 = Class.nodes.get_or_none(qualified_name=inherited_class_qualified_name)
-
-            if c1 is None or c2 is None:
-                raise Exception("Invalid entities")
+            c1 = Class.nodes.get(qualified_name=class_qualified_name)
+            c2 = Class.nodes.get(qualified_name=inherited_class_qualified_name)
 
             rel = c1.inherits.connect(c2, {})
-            logger.debug(f"rel: {rel}")
             return rel
 
         else:
