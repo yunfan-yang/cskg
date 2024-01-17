@@ -1,8 +1,21 @@
 from neomodel import (
     StructuredNode,
+    StructuredRel,
     StringProperty,
     RelationshipTo,
 )
+
+
+class Calls(StructuredRel):
+    ...
+
+
+class Inherits(StructuredRel):
+    ...
+
+
+class Contains(StructuredRel):
+    ...
 
 
 class Function(StructuredNode):
@@ -12,7 +25,7 @@ class Function(StructuredNode):
     file_path = StringProperty(required=True)
 
     ## Relationships
-    calls = RelationshipTo("Function", "CALLS")
+    calls = RelationshipTo("Function", "CALLS", model=Calls)
 
 
 class Class(StructuredNode):
@@ -21,5 +34,5 @@ class Class(StructuredNode):
     file_path = StringProperty(required=True)
 
     ## Relationships
-    inherits = RelationshipTo("Class", "INHERITS")
-    contains = RelationshipTo("Function", "CONTAINS")
+    inherits = RelationshipTo("Class", "INHERITS", model=Inherits)
+    contains = RelationshipTo("Function", "CONTAINS", model=Contains)

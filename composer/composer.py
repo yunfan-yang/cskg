@@ -56,26 +56,42 @@ class GraphComposer:
         elif node_type == "calls_rel":
             function_qualified_name = node.get("function_qualified_name")
             called_function_qualified_name = node.get("called_function_qualified_name")
+            logger.info(
+                f"{function_qualified_name} calls {called_function_qualified_name}"
+            )
 
-            f1 = Function.nodes.get_or_none(function_qualified_name)
-            f2 = Function.nodes.get_or_none(called_function_qualified_name)
+            f1 = Function.nodes.get_or_none(qualified_name=function_qualified_name)
+            f2 = Function.nodes.get_or_none(
+                qualified_name=called_function_qualified_name
+            )
+
+            logger.debug(f"{f1}")
+            logger.debug(f"{f2}")
 
             if f1 is None or f2 is None:
                 raise Exception("Invalid entities")
 
-            return f1.calls.connect(f2)
+            rel = f1.calls.connect(f2, {})
+            logger.debug(f"rel: {rel}")
+
+            return rel
 
         elif node_type == "inherits_rel":
             class_qualified_name = node.get("class_qualified_name")
             inherited_class_qualified_name = node.get("inherited_class_qualified_name")
+            logger.info(
+                f"{class_qualified_name} inherits {inherited_class_qualified_name}"
+            )
 
-            c1 = Class.nodes.get_or_none(class_qualified_name)
-            c2 = Class.nodes.get_or_none(inherited_class_qualified_name)
+            c1 = Class.nodes.get_or_none(qualified_name=class_qualified_name)
+            c2 = Class.nodes.get_or_none(qualified_name=inherited_class_qualified_name)
 
             if c1 is None or c2 is None:
                 raise Exception("Invalid entities")
 
-            return c1.inherits.connect(c2)
+            rel = c1.inherits.connect(c2, {})
+            logger.debug(f"rel: {rel}")
+            return rel
 
         else:
             raise Exception("Invalid node type")

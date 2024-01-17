@@ -1,5 +1,6 @@
 from typing import Any
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 import neomodel
 from loguru import logger
 
@@ -44,8 +45,8 @@ class Driver:
         _neo_drop_all(self.neo_db)
 
         # Create indexes
-        # self.mongo_db.class_.create_index("qualified_name", unique=True)
-        # self.mongo_db.function.create_index("qualified_name", unique=True)
+        self.mongo_db.class_.create_index("qualified_name", unique=True)
+        self.mongo_db.function.create_index("qualified_name", unique=True)
 
     def run(self):
         # Instantiate
@@ -62,6 +63,8 @@ class Driver:
                 self.mongo_db[node_type].insert_one(node)
             except StopIteration:
                 break
+            except DuplicateKeyError as e:
+                logger.error(e)
             except Exception as e:
                 logger.error(e)
                 break
