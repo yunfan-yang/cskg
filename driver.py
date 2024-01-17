@@ -6,6 +6,8 @@ from loguru import logger
 from composer.composer import GraphComposer
 from interpreter.interpreter import CodeInterpreter
 
+logger.add("logs/default.log")
+
 
 DRIVER_CONFIGURATIONS = dict[str, Any]
 # Configurations:
@@ -42,8 +44,8 @@ class Driver:
         _neo_drop_all(self.neo_db)
 
         # Create indexes
-        self.mongo_db.class_.create_index("qualified_name", unique=True)
-        self.mongo_db.function.create_index("qualified_name", unique=True)
+        # self.mongo_db.class_.create_index("qualified_name", unique=True)
+        # self.mongo_db.function.create_index("qualified_name", unique=True)
 
     def run(self):
         # Instantiate
@@ -51,14 +53,17 @@ class Driver:
         self.graph_composer = GraphComposer()
 
         # Interpretate codebase
-        generator = self.interpreter.analyze()
+        generator = self.interpreter.interpret()
         while True:
             try:
                 node = next(generator)
                 logger.info(node)
                 node_type = node.get("type")
                 self.mongo_db[node_type].insert_one(node)
-            except:
+            except StopIteration:
+                break
+            except Exception as e:
+                logger.error(e)
                 break
         logger.info("Interpretation done")
 

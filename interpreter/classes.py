@@ -27,4 +27,4 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
         yield ihs
 
     # Visit children
-    yield from visit_children(node)
+    yield from visit_children(node, current_file_path)

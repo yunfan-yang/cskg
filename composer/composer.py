@@ -82,4 +82,4 @@ class GraphComposer:
 
 
 def _included_fields_dict(dict: dict[str, Any], fields: list[str]):
-    return {key: dict[key] for key in fields if key in dict}
+    return {key: dict.get(key) for key in fields if key in dict}

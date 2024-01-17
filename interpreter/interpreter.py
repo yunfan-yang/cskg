@@ -1,5 +1,6 @@
 import os
 import astroid
+from loguru import logger
 
 from interpreter.nodes import visit_children
 
@@ -9,7 +10,7 @@ class CodeInterpreter:
         self.folder_path = folder_path
         self.current_file_path = None
 
-    def analyze(self):
+    def interpret(self):
         yield from self.traverse_files()
 
     def traverse_files(self):
@@ -20,6 +21,7 @@ class CodeInterpreter:
                     yield from self.extract_file(current_file_path)
 
     def extract_file(self, current_file_path: str = None):
+        logger.debug(f"extract file {current_file_path}")
         module_name = current_file_path.split("/")[-1].split(".")[0]
 
         with open(current_file_path, "r") as file:

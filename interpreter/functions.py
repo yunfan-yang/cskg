@@ -23,7 +23,7 @@ def visit_function(node: astroid.FunctionDef, current_file_path: str = None):
     yield fnr
 
     yield from visit_function_inferred_nodes(node)
-    yield from visit_children(node)
+    yield from visit_children(node, current_file_path)
 
 
 def visit_function_inferred_nodes(node: astroid.FunctionDef):
