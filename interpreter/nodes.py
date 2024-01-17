@@ -3,8 +3,6 @@ from loguru import logger
 
 
 def visit_node(node, current_file_path: str):
-    logger.debug(f"visit node {node} {current_file_path}")
-
     if isinstance(node, astroid.ClassDef):
         from interpreter.classes import visit_class
 
@@ -17,7 +15,6 @@ def visit_node(node, current_file_path: str):
 
 
 def visit_children(node: astroid.NodeNG, current_file_path: str):
-    logger.debug(f"visit_children {node} {current_file_path}")
     children = node.get_children()
     for child in children:
         yield from visit_node(child, current_file_path)

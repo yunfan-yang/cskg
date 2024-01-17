@@ -41,7 +41,7 @@ class GraphComposer:
     @classmethod
     def instantiate(cls, node: dict[str, Any]):
         node_type = node.get("type")
-        logger.info(node_type)
+        logger.debug(node_type)
 
         if node_type == "class":
             included_fields = [
@@ -65,7 +65,7 @@ class GraphComposer:
         elif node_type == "calls_rel":
             function_qualified_name = node.get("function_qualified_name")
             called_function_qualified_name = node.get("called_function_qualified_name")
-            logger.info(
+            logger.debug(
                 f"Calls: {function_qualified_name} -> {called_function_qualified_name}"
             )
 
@@ -78,7 +78,7 @@ class GraphComposer:
         elif node_type == "inherits_rel":
             class_qualified_name = node.get("class_qualified_name")
             inherited_class_qualified_name = node.get("inherited_class_qualified_name")
-            logger.info(
+            logger.debug(
                 f"Inherits: {class_qualified_name} -> {inherited_class_qualified_name}"
             )
 
@@ -87,11 +87,11 @@ class GraphComposer:
 
             rel = c1.inherits.connect(c2, {})
             return rel
-        
+
         elif node_type == "contains_rel":
             class_qualified_name = node.get("class_qualified_name")
             function_qualified_name = node.get("function_qualified_name")
-            logger.info(
+            logger.debug(
                 f"Contains: {class_qualified_name} -> {function_qualified_name}"
             )
 
@@ -102,7 +102,7 @@ class GraphComposer:
             return rel
 
         else:
-            raise Exception("Invalid node type")
+            logger.warn("Unknown node type")
 
 
 def _included_fields_dict(dict: dict[str, Any], fields: list[str]):

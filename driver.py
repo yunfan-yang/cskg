@@ -58,7 +58,7 @@ class Driver:
         while True:
             try:
                 node = next(generator)
-                logger.info(node)
+                logger.debug(node)
                 node_type = node.get("type")
                 self.mongo_db[node_type].insert_one(node)
             except StopIteration:
