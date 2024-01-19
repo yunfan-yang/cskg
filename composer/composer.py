@@ -1,7 +1,7 @@
 from typing import Any
 from composer.models import *
 from loguru import logger
-from neomodel import DoesNotExist
+from neomodel import DoesNotExist, db
 
 
 class GraphComposer:
@@ -14,12 +14,13 @@ class GraphComposer:
         GraphComposer.compose_relationships(self.relationships)
 
     @classmethod
+    @db.transaction
     def compose_entities(self, entities: list):
         for entity in entities:
             logger.debug(entity)
             try:
-                instance = GraphComposer.instantiate(entity)
-                instance.save()
+                entity_instance = GraphComposer.instantiate(entity)
+                entity_instance.save()
             except DoesNotExist as e:
                 logger.error(e)
             except Exception as e:
@@ -27,11 +28,12 @@ class GraphComposer:
                 raise e
 
     @classmethod
+    @db.transaction
     def compose_relationships(self, relationships: list):
         for relationship in relationships:
             logger.debug(relationship)
             try:
-                instance = GraphComposer.instantiate(relationship)
+                relationship_instance = GraphComposer.instantiate(relationship)
             except DoesNotExist as e:
                 logger.error(e)
             except Exception as e:
