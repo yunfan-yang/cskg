@@ -34,6 +34,7 @@ class Driver:
         neomodel.config.DATABASE_URL = neo4j_url
         neomodel.config.AUTO_INSTALL_LABELS = True
         self.neo_db = neomodel.db
+        self.neo_db.set_connection(neo4j_url)
 
         # Instantiate mongo db client
         mongo_client = MongoClient(mongo_url)
@@ -86,6 +87,9 @@ class Driver:
         logger.info("Composition done")
 
         logger.info("Done")
+
+    def __del__(self):
+        self.neo_db.close_connection()
 
 
 def _mongo_drop_all(mongo_db):
