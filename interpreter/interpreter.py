@@ -22,7 +22,7 @@ class CodeInterpreter:
                     current_file_path = os.path.join(root, file)
                     ast = self.manager.ast_from_file(current_file_path)
                     asts[current_file_path] = ast
-                    logger.debug(f"Ast from file: {ast}")
+                    logger.debug(f"Ast from file: {current_file_path}")
 
         for file_path, ast in asts.items():
             yield from visit_children(ast, file_path)
