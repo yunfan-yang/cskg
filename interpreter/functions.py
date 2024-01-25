@@ -6,10 +6,12 @@ from astroid import (
 )
 from loguru import logger
 
+from interpreter import remove_module_prefix, get_module_prefix
+
 
 def visit_function(node: FunctionDef, current_file_path: str = None):
     name = node.name
-    qualified_name = node.qname()
+    qualified_name = remove_module_prefix(node.qname(), current_file_path)
     args = node.args
 
     function_ent = {
@@ -19,10 +21,10 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
         "file_path": current_file_path,
     }
     yield function_ent
-    yield from visit_function_called_nodes(node)
+    yield from visit_function_called_nodes(node, current_file_path)
 
 
-def visit_function_called_nodes(node: FunctionDef):
+def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None):
     """
     Visit body and write down node function calls other functions.
     """
@@ -57,6 +59,18 @@ def visit_function_called_nodes(node: FunctionDef):
 
         function_qualified_name = node.qname()
         called_function_qualified_name = inferred_node.qname()
+
+        prefix = get_module_prefix(current_file_path)
+        if not called_function_qualified_name.startswith(prefix):
+            continue
+
+        function_qualified_name = remove_module_prefix(
+            function_qualified_name, current_file_path
+        )
+
+        called_function_qualified_name = remove_module_prefix(
+            called_function_qualified_name, current_file_path
+        )
 
         calls_rel = {
             "type": "calls_rel",
