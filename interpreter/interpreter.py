@@ -1,5 +1,6 @@
 import os
 import astroid
+from astroid.manager import AstroidManager
 from loguru import logger
 
 from interpreter.nodes import visit_children
@@ -8,17 +9,24 @@ from interpreter.nodes import visit_children
 class CodeInterpreter:
     def __init__(self, folder_path):
         self.folder_path = folder_path
-        self.current_file_path = None
+        self.manager = AstroidManager()
 
     def interpret(self):
         yield from self.traverse_files()
 
     def traverse_files(self):
+        asts = {}
+
         for root, dirs, files in os.walk(self.folder_path):
             for file in files:
                 if file.endswith(".py"):  # Only handles python file
                     current_file_path = os.path.join(root, file)
-                    yield from self.extract_file(current_file_path)
+
+                    ast = self.manager.ast_from_file(current_file_path)
+                    asts[current_file_path] = ast
+
+        for file_path, ast in asts.items():
+            yield from visit_children(ast, file_path)
 
     def extract_file(self, current_file_path: str = None):
         logger.debug(f"extract file {current_file_path}")
