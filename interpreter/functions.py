@@ -1,4 +1,11 @@
-from astroid import InferenceError, FunctionDef, Call, NodeNG, Uninferable
+from astroid import (
+    InferenceError,
+    FunctionDef,
+    Call,
+    Attribute,
+    Name,
+    Uninferable,
+)
 from loguru import logger
 
 from interpreter.nodes import visit_children
@@ -16,22 +23,21 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
         "file_path": current_file_path,
     }
     yield function_ent
-
-    yield from visit_function_inferred_nodes(node)
-    yield from visit_children(node, current_file_path)
+    yield from visit_function_called_nodes(node)
 
 
-def visit_function_inferred_nodes(node: FunctionDef):
+def visit_function_called_nodes(node: FunctionDef):
     """
     Visit body and write down node function calls other functions.
     """
-    calls = [
-        body_node_child
-        for body_node in node.body
-        for body_node_child in body_node.nodes_of_class(Call)
-    ]
 
-    for call in calls:
+    calls = list(node.nodes_of_class(Call))
+    funcs = [call.func for call in calls]
+
+    logger.debug(f"function calls: {calls}")
+    logger.debug(f"function nodes: {funcs}")
+
+    for func in funcs:
         try:
             """
             Multiple Possible Inferences:
@@ -41,17 +47,16 @@ def visit_function_inferred_nodes(node: FunctionDef):
             For example, if a function name is reassigned multiple times to different callable objects,
             inferred() will return all of these possibilities.
             """
-            called_function = call.func
-            inference_results = called_function.inferred()
+            inference_results = func.inferred()
         except InferenceError:
-            logger.error(f"Could not infer function call: {call}")
+            logger.error(f"Could not infer function call (hard): {func}")
             continue
 
         inferred_nodes = filter(lambda node: node is not Uninferable, inference_results)
-        inferred_node = next(inferred_nodes, None)
+        inferred_node: FunctionDef = next(inferred_nodes, None)
 
         if not inferred_node:
-            logger.error(f"Could not infer function call (soft): {call}")
+            logger.error(f"Could not infer function call (soft): {func}")
             continue
 
         function_qualified_name = node.qname()
