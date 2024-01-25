@@ -2,6 +2,7 @@ from typing import Any
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 import neomodel
+from neomodel import clear_neo4j_database
 from loguru import logger
 
 from composer.composer import GraphComposer
@@ -101,9 +102,4 @@ def _mongo_drop_all(mongo_db):
 
 
 def _neo_drop_all(neo_db):
-    neo_db.cypher_query("MATCH (n) DETACH DELETE n")
-
-    constraints = neo_db.cypher_query("SHOW CONSTRAINTS")[0]
-    for constraint in constraints:
-        constraint_info = constraint[0]
-        neomodel.db.cypher_query(f"DROP CONSTRAINT {constraint_info}")
+    clear_neo4j_database(neo_db, clear_constraints=True, clear_indexes=True)

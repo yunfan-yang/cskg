@@ -52,7 +52,6 @@ class GraphComposer:
                 "file_path",
             ]
             arguments = _included_fields_dict(node, included_fields)
-            logger.debug(arguments)
             return Class(**arguments)
 
         elif node_type == "function":
