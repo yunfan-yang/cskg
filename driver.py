@@ -55,6 +55,16 @@ class Driver:
         self.graph_composer = GraphComposer()
 
         # Interpretate codebase
+        self.__interpret_code()
+        logger.info("Interpretation done")
+
+        # Compose graph
+        self.__compose_graph()
+        logger.info("Composition done")
+
+        logger.info("Done")
+
+    def __interpret_code(self):
         generator = self.interpreter.interpret()
         while True:
             try:
@@ -69,9 +79,8 @@ class Driver:
             except Exception as e:
                 logger.error(e)
                 break
-        logger.info("Interpretation done")
 
-        # # Compose graph
+    def __compose_graph(self):
         entities_collections = ["class", "function"]
         relationships_collections = ["calls_rel", "inherits_rel", "contains_rel"]
 
@@ -84,9 +93,6 @@ class Driver:
             )
 
         self.graph_composer.compose()
-        logger.info("Composition done")
-
-        logger.info("Done")
 
 
 def _mongo_drop_all(mongo_db):
