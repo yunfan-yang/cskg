@@ -2,13 +2,9 @@ from astroid import (
     InferenceError,
     FunctionDef,
     Call,
-    Attribute,
-    Name,
     Uninferable,
 )
 from loguru import logger
-
-from interpreter.nodes import visit_children
 
 
 def visit_function(node: FunctionDef, current_file_path: str = None):
