@@ -46,7 +46,7 @@ class Driver:
         _neo_drop_all(self.neo_db)
 
         # Create indexes
-        self.mongo_db.class_.create_index("qualified_name", unique=True)
+        self.mongo_db["class"].create_index("qualified_name", unique=True)
         self.mongo_db.function.create_index("qualified_name", unique=True)
 
     def run(self):
@@ -59,7 +59,7 @@ class Driver:
         while True:
             try:
                 node = next(generator)
-                logger.debug(node)
+                logger.info(node)
                 node_type = node.get("type")
                 self.mongo_db[node_type].insert_one(node)
             except StopIteration:
@@ -71,7 +71,7 @@ class Driver:
                 break
         logger.info("Interpretation done")
 
-        # Compose graph
+        # # Compose graph
         entities_collections = ["class", "function"]
         relationships_collections = ["calls_rel", "inherits_rel", "contains_rel"]
 
@@ -87,9 +87,6 @@ class Driver:
         logger.info("Composition done")
 
         logger.info("Done")
-
-    def __del__(self):
-        self.neo_db.close_connection()
 
 
 def _mongo_drop_all(mongo_db):
