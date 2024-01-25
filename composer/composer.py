@@ -3,6 +3,26 @@ from composer.models import *
 from loguru import logger
 from neomodel import DoesNotExist, db
 
+ENTITY_FIELDS_MAPPING = {
+    "class": ["name", "qualified_name", "file_path"],
+    "function": ["name", "qualified_name", "file_path"],
+}
+
+RELATIONSHIP_FIELDS_MAPPING = {
+    "calls_rel": [
+        ["function_qualified_name", "Function"],
+        ["called_function_qualified_name", "Function"],
+    ],
+    "inherits_rel": [
+        ["class_qualified_name", "Class"],
+        ["inherited_class_qualified_name", "Class"],
+    ],
+    "contains_rel": [
+        ["class_qualified_name", "Class"],
+        ["function_qualified_name", "Function"],
+    ],
+}
+
 
 class GraphComposer:
     def __init__(self, entities: list = None, relationships: list = None):
@@ -19,8 +39,9 @@ class GraphComposer:
         for entity in entities:
             logger.debug(entity)
             try:
-                entity_instance = GraphComposer.instantiate(entity)
-                entity_instance.save()
+                cypher = GraphComposer.get_entity_cypher(entity)
+                logger.debug(cypher)
+                db.cypher_query(cypher)
             except DoesNotExist as e:
                 logger.error(e)
             except Exception as e:
@@ -33,77 +54,59 @@ class GraphComposer:
         for relationship in relationships:
             logger.debug(relationship)
             try:
-                relationship_instance = GraphComposer.instantiate(relationship)
-            except DoesNotExist as e:
-                logger.error(e)
+                cypher = GraphComposer.get_relationship_cypher(relationship)
+                logger.debug(cypher)
+                db.cypher_query(cypher)
             except Exception as e:
                 logger.error(e)
                 raise e
 
     @classmethod
-    def instantiate(cls, node: dict[str, Any]):
-        node_type = node.get("type")
-        logger.debug(node_type)
+    def get_entity_cypher(cls, entity: dict[str, Any]):
+        node_type = entity.get("type")
 
-        if node_type == "class":
-            included_fields = [
-                "name",
-                "qualified_name",
-                "file_path",
-            ]
-            arguments = _included_fields_dict(node, included_fields)
-            return Class(**arguments)
+        if not isinstance(node_type, str):
+            logger.error(f"Unknown node type: {node_type}")
+            return
 
-        elif node_type == "function":
-            included_fields = [
-                "name",
-                "qualified_name",
-                "file_path",
-            ]
-            arguments = _included_fields_dict(node, included_fields)
-            return Function(**arguments)
+        node_type_neo = node_type.capitalize()
 
-        elif node_type == "calls_rel":
-            function_qualified_name = node.get("function_qualified_name")
-            called_function_qualified_name = node.get("called_function_qualified_name")
-            logger.debug(
-                f"Calls: {function_qualified_name} -> {called_function_qualified_name}"
-            )
+        included_fields = ENTITY_FIELDS_MAPPING.get(node_type)
 
-            f1 = Function.nodes.get(qualified_name=function_qualified_name)
-            f2 = Function.nodes.get(qualified_name=called_function_qualified_name)
+        included_fields_dict = _included_fields_dict(entity, included_fields)
+        entity_properties = [
+            f"{key}: '{value}'" for key, value in included_fields_dict.items()
+        ]
+        entity_properties_neo = ", ".join(entity_properties)
 
-            rel = f1.calls.connect(f2, {})
-            return rel
+        return f"""
+            CREATE (:{node_type_neo} {{ {entity_properties_neo} }}) 
+        """
 
-        elif node_type == "inherits_rel":
-            class_qualified_name = node.get("class_qualified_name")
-            inherited_class_qualified_name = node.get("inherited_class_qualified_name")
-            logger.debug(
-                f"Inherits: {class_qualified_name} -> {inherited_class_qualified_name}"
-            )
+    @classmethod
+    def get_relationship_cypher(cls, relationship: dict[str, Any]):
+        node_type = relationship.get("type")
 
-            c1 = Class.nodes.get(qualified_name=class_qualified_name)
-            c2 = Class.nodes.get(qualified_name=inherited_class_qualified_name)
+        if not isinstance(node_type, str):
+            logger.error(f"Unknown relationship type: {node_type}")
+            return
 
-            rel = c1.inherits.connect(c2, {})
-            return rel
+        node_type_neo = node_type.replace("_rel", "").upper()
 
-        elif node_type == "contains_rel":
-            class_qualified_name = node.get("class_qualified_name")
-            function_qualified_name = node.get("function_qualified_name")
-            logger.debug(
-                f"Contains: {class_qualified_name} -> {function_qualified_name}"
-            )
+        fields = RELATIONSHIP_FIELDS_MAPPING.get(node_type)
 
-            c1 = Class.nodes.get(qualified_name=class_qualified_name)
-            f1 = Function.nodes.get(qualified_name=function_qualified_name)
+        field_a_name, field_a_type = fields[0]
+        field_b_name, field_b_type = fields[1]
 
-            rel = c1.contains.connect(f1, {})
-            return rel
+        field_a_value = relationship.get(field_a_name)
+        field_b_value = relationship.get(field_b_name)
+        field_a_type_neo = field_a_type.capitalize()
+        field_b_type_neo = field_b_type.capitalize()
 
-        else:
-            logger.warn("Unknown node type")
+        return f"""
+            MATCH (a:{field_a_type_neo} {{qualified_name: "{field_a_value}"}}), (b:{field_b_type_neo} {{qualified_name: "{field_b_value}"}})
+            CREATE (a)-[:{node_type_neo}]->(b)
+        """
 
 
 def _included_fields_dict(dict: dict[str, Any], fields: list[str]):
