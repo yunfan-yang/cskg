@@ -29,7 +29,10 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
     # Visit children
     # yield from visit_children(node, current_file_path)
     children_nodes = visit_children(node, current_file_path)
+
     for child_node in children_nodes:
+        yield child_node
+
         if child_node["type"] == "function":
             contains_rel = {
                 "type": "contains_rel",
@@ -37,4 +40,3 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
                 "function_qualified_name": child_node["qualified_name"],
             }
             yield contains_rel
-            yield child_node
