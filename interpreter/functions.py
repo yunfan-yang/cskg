@@ -1,7 +1,12 @@
+from functools import reduce
 from astroid import (
     InferenceError,
     FunctionDef,
+    ClassDef,
     Call,
+    Return,
+    Instance,
+    Const,
     Uninferable,
 )
 from loguru import logger
@@ -22,6 +27,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
     }
     yield function_ent
     yield from visit_function_called_nodes(node, current_file_path)
+    yield from visit_function_return_node(node, current_file_path)
 
 
 def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None):
@@ -33,7 +39,7 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
     funcs = [call.func for call in calls]
 
     logger.debug(f"function calls: {calls}")
-    logger.debug(f"function nodes: {funcs}")
+    logger.debug(f"function infers: {funcs}")
 
     for func in funcs:
         try:
@@ -79,3 +85,48 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
         }
 
         yield calls_rel
+
+
+def visit_function_return_node(node: FunctionDef, current_file_path: str):
+    """
+    Visit body and write down node function returns
+    """
+
+    try:
+        inference_results = node.infer_call_result(None)
+    except InferenceError:
+        logger.error(f"Could not infer function return: {node}")
+        return
+
+    inferred_nodes = filter(lambda node: node is not Uninferable, inference_results)
+    inferred_nodes = list(inferred_nodes)
+
+    logger.debug(f"function returns: {inferred_nodes}")
+
+    for inferred_node in inferred_nodes:
+        logger.debug(f"inferred_node: {inferred_node}")
+
+        return_type = None
+
+        if hasattr(inferred_node, "pytype"):
+            return_type = inferred_node.pytype()
+        elif hasattr(inferred_node, "qname"):
+            return_type = inferred_node.qname()
+        else:
+            return_type = type(inferred_node).__name__
+
+        prefix = get_module_prefix(current_file_path)
+        if not return_type.startswith(prefix):
+            continue
+
+        function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
+        return_type_qualified_name = remove_module_prefix(
+            return_type, current_file_path
+        )
+        returns_rel = {
+            "type": "returns_rel",
+            "function_qualified_name": function_qualified_name,
+            "return_type_qualified_name": return_type_qualified_name,
+        }
+
+        yield returns_rel

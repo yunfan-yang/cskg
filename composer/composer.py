@@ -3,6 +3,8 @@ from composer.models import *
 from loguru import logger
 from neomodel import DoesNotExist, db
 
+from models import *
+
 ENTITY_FIELDS_MAPPING = {
     "class": ["name", "qualified_name", "file_path"],
     "function": ["name", "qualified_name", "file_path"],

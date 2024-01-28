@@ -83,7 +83,12 @@ class Driver:
 
     def __compose_graph(self):
         entities_collections = ["class", "function"]
-        relationships_collections = ["calls_rel", "inherits_rel", "contains_rel"]
+        relationships_collections = [
+            "calls_rel",
+            "inherits_rel",
+            "contains_rel",
+            "returns_rel",
+        ]
 
         for collection_name in entities_collections:
             self.graph_composer.entities.extend(self.mongo_db[collection_name].find())
