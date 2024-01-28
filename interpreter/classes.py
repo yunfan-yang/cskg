@@ -20,13 +20,14 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
     # Visit parents
     parent_classes = node.ancestors(recurs=False)
     for parent_class in parent_classes:
-        inherited_class_qualified_name = remove_module_prefix(
+        child_qualified_name = qualified_name
+        parent_qualified_name = remove_module_prefix(
             parent_class.qname(), current_file_path
         )
         inherits_rel = {
             "type": "inherits_rel",
-            "class_qualified_name": qualified_name,
-            "inherited_class_qualified_name": inherited_class_qualified_name,
+            "child_qualified_name": child_qualified_name,
+            "parent_qualified_name": parent_qualified_name,
         }
         yield inherits_rel
 

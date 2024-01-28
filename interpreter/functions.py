@@ -64,24 +64,24 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
             continue
 
         function_qualified_name = node.qname()
-        called_function_qualified_name = inferred_node.qname()
+        callee_qualified_name = inferred_node.qname()
 
         prefix = get_module_prefix(current_file_path)
-        if not called_function_qualified_name.startswith(prefix):
+        if not callee_qualified_name.startswith(prefix):
             continue
 
         function_qualified_name = remove_module_prefix(
             function_qualified_name, current_file_path
         )
 
-        called_function_qualified_name = remove_module_prefix(
-            called_function_qualified_name, current_file_path
+        callee_qualified_name = remove_module_prefix(
+            callee_qualified_name, current_file_path
         )
 
         calls_rel = {
             "type": "calls_rel",
             "function_qualified_name": function_qualified_name,
-            "called_function_qualified_name": called_function_qualified_name,
+            "callee_qualified_name": callee_qualified_name,
         }
 
         yield calls_rel
@@ -120,13 +120,13 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
             continue
 
         function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
-        return_type_qualified_name = remove_module_prefix(
+        class_qualified_name = remove_module_prefix(
             return_type, current_file_path
         )
         returns_rel = {
             "type": "returns_rel",
             "function_qualified_name": function_qualified_name,
-            "return_type_qualified_name": return_type_qualified_name,
+            "class_qualified_name": class_qualified_name,
         }
 
         yield returns_rel

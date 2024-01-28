@@ -1,10 +1,10 @@
-from typing import Any, Iterable
+from itertools import chain, islice
+from typing import Iterable
 from composer.models import *
 from loguru import logger
-from neomodel import DoesNotExist, db
+from neomodel import db
 
 from composer.node_composers import (
-    NodeComposer,
     EntityComposer,
     RelationshipComposer,
 )
@@ -14,8 +14,8 @@ CHUNK_SIZE = 1000
 
 class GraphComposer:
     def __init__(self):
-        self.entities: list[tuple[Iterable, EntityComposer]] = {}
-        self.relationships: list[tuple[Iterable, RelationshipComposer]] = {}
+        self.entities: list[tuple[Iterable, EntityComposer]] = []
+        self.relationships: list[tuple[Iterable, RelationshipComposer]] = []
 
     def add_entities(self, entities: Iterable, composer: EntityComposer):
         self.entities.append((entities, composer))
@@ -30,18 +30,21 @@ class GraphComposer:
             for chunk in _chunk(entities, CHUNK_SIZE):
                 with db.transaction:
                     cyphers = map(entity_composer.get_cypher, chunk)
-                    cypher = "\n".join(cyphers)
-                    logger.debug(cypher)
-                    db.cypher_query(cypher)
+                    for cypher in cyphers:
+                        db.cypher_query(cypher)
+
+                logger.info(f"Composed {len(cyphers)} {entity_composer.entity_type}")
 
     def compose_relationships(self):
         for relationships, relationship_composer in self.relationships:
             for chunk in _chunk(relationships, CHUNK_SIZE):
                 with db.transaction:
                     cyphers = map(relationship_composer.get_cypher, chunk)
-                    cypher = "\n".join(cyphers)
-                    logger.debug(cypher)
-                    db.cypher_query(cypher)
+                    for cypher in cyphers:
+                        db.cypher_query(cypher)
+                logger.info(
+                    f"Composed {len(cyphers)} {relationship_composer.relation_type}"
+                )
 
     def compose(self):
         self.compose_entities()
@@ -56,6 +59,10 @@ def _chunk(iterable: Iterable, size: int):
     :param batch_size: The size of each batch.
     :return: Yields batches of the iterable.
     """
-    l = len(iterable)
-    for ndx in range(0, l, size):
-        yield iterable[ndx : min(ndx + size, l)]
+
+    # Iterable is always unsized
+    # https://stackoverflow.com/questions/39381401/python-type-hinting-for-iterable-but-not-list
+
+    iterator = iter(iterable)
+    for first in iterator:
+        yield chain([first], islice(iterator, size - 1))
