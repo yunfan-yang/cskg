@@ -14,7 +14,7 @@ class AbstractNodeComposer(ABC):
 class EntityComposer(AbstractNodeComposer):
     def __init__(self, entity_type: str, included_fields: list[str] = None):
         super().__init__(included_fields)
-        self.entity_type = entity_type.upper()
+        self.entity_type = entity_type.capitalize()
 
     def get_cypher(self, entity: dict[str, Any]):
         entity_type = self.entity_type
@@ -65,7 +65,7 @@ class RelationshipComposer(AbstractNodeComposer):
 
         return f"""
             MATCH (a:{field_a_type_neo} {{qualified_name: "{field_a_value}"}}), (b:{field_b_type_neo} {{qualified_name: "{field_b_value}"}})
-            CREATE (a)-[:{relation_type}]->(b)
+            CREATE (a)-[:{relation_type} {{}}]->(b)
         """
 
 

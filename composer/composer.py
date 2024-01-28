@@ -1,6 +1,5 @@
 from itertools import chain, islice
-from typing import Iterable
-from composer.models import *
+from typing import Any, Iterable, TypeVar
 from loguru import logger
 from neomodel import db
 
@@ -14,14 +13,18 @@ CHUNK_SIZE = 1000
 
 class GraphComposer:
     def __init__(self):
-        self.entities: list[tuple[Iterable, EntityComposer]] = []
-        self.relationships: list[tuple[Iterable, RelationshipComposer]] = []
+        self.entities: list[tuple[Iterable[dict[str, Any]], EntityComposer]] = []
+        self.relationships: list[
+            tuple[Iterable[dict[str, Any]], RelationshipComposer]
+        ] = []
 
-    def add_entities(self, entities: Iterable, composer: EntityComposer):
+    def add_entities(
+        self, entities: Iterable[dict[str, Any]], composer: EntityComposer
+    ):
         self.entities.append((entities, composer))
 
     def add_relationships(
-        self, relationships: Iterable, composer: RelationshipComposer
+        self, relationships: Iterable[dict[str, Any]], composer: RelationshipComposer
     ):
         self.relationships.append((relationships, composer))
 
@@ -29,29 +32,29 @@ class GraphComposer:
         for entities, entity_composer in self.entities:
             for chunk in _chunk(entities, CHUNK_SIZE):
                 with db.transaction:
-                    cyphers = map(entity_composer.get_cypher, chunk)
-                    for cypher in cyphers:
+                    for entity in chunk:
+                        cypher = entity_composer.get_cypher(entity)
                         db.cypher_query(cypher)
-
-                logger.info(f"Composed {len(cyphers)} {entity_composer.entity_type}")
+                logger.info(f"Composed {entity_composer.entity_type}")
 
     def compose_relationships(self):
         for relationships, relationship_composer in self.relationships:
             for chunk in _chunk(relationships, CHUNK_SIZE):
                 with db.transaction:
-                    cyphers = map(relationship_composer.get_cypher, chunk)
-                    for cypher in cyphers:
+                    for relationship in chunk:
+                        cypher = relationship_composer.get_cypher(relationship)
                         db.cypher_query(cypher)
-                logger.info(
-                    f"Composed {len(cyphers)} {relationship_composer.relation_type}"
-                )
+                logger.info(f"Composed {relationship_composer.relation_type}")
 
     def compose(self):
         self.compose_entities()
         self.compose_relationships()
 
 
-def _chunk(iterable: Iterable, size: int):
+T = TypeVar("T")
+
+
+def _chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
     """
     Splits an iterable into chunk of a specified size.
 
@@ -59,10 +62,6 @@ def _chunk(iterable: Iterable, size: int):
     :param batch_size: The size of each batch.
     :return: Yields batches of the iterable.
     """
-
-    # Iterable is always unsized
-    # https://stackoverflow.com/questions/39381401/python-type-hinting-for-iterable-but-not-list
-
     iterator = iter(iterable)
     for first in iterator:
         yield chain([first], islice(iterator, size - 1))
