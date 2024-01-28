@@ -5,8 +5,9 @@ import neomodel
 from neomodel import clear_neo4j_database
 from loguru import logger
 
-from composer.composer import GraphComposer
 from interpreter.interpreter import CodeInterpreter
+from composer.composer import GraphComposer
+from composer.node_composers import EntityComposer, RelationshipComposer
 
 logger.add("logs/default.log")
 
@@ -82,21 +83,47 @@ class Driver:
                 break
 
     def __compose_graph(self):
-        entities_collections = ["class", "function"]
-        relationships_collections = [
-            "calls_rel",
-            "inherits_rel",
-            "contains_rel",
-            "returns_rel",
-        ]
+        class_composer = EntityComposer(
+            "CLASS", included_fields=["qualified_name", "name", "file_path"]
+        )
+        function_composer = EntityComposer(
+            "FUNCTION",
+            included_fields=["name", "qualified_name", "file_path"],
+        )
+        calls_rel_composer = RelationshipComposer(
+            "CALLS",
+            from_field=("function_qualified_name", "function"),
+            to_field=("callee_qualified_name", "function"),
+        )
+        inherits_rel_composer = RelationshipComposer(
+            "INHERITS",
+            from_field=("child_qualified_name", "class"),
+            to_field=("parent_qualified_name", "class"),
+        )
+        contains_rel_composer = RelationshipComposer(
+            "CONTAINS",
+            from_field=("class_qualified_name", "class"),
+            to_field=("function_qualified_name", "function"),
+        )
+        returns_rel_composer = RelationshipComposer(
+            "RETURNS",
+            from_field=("function_qualified_name", "function"),
+            to_field=("class_qualified_name", "class"),
+        )
 
-        for collection_name in entities_collections:
-            self.graph_composer.entities.extend(self.mongo_db[collection_name].find())
+        classes = self.mongo_db["class"].find()
+        functions = self.mongo_db["function"].find()
+        calls_rels = self.mongo_db["calls_rel"].find()
+        inherits_rels = self.mongo_db["inherits_rel"].find()
+        contains_rels = self.mongo_db["contains_rel"].find()
+        returns_rels = self.mongo_db["returns_rel"].find()
 
-        for collection_name in relationships_collections:
-            self.graph_composer.relationships.extend(
-                self.mongo_db[collection_name].find()
-            )
+        self.graph_composer.add_entities(classes, class_composer)
+        self.graph_composer.add_entities(functions, function_composer)
+        self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
+        self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
+        self.graph_composer.add_relationships(contains_rels, contains_rel_composer)
+        self.graph_composer.add_relationships(returns_rels, returns_rel_composer)
 
         self.graph_composer.compose()
 
