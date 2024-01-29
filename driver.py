@@ -87,11 +87,22 @@ class Driver:
 
     def __compose_graph(self):
         class_composer = EntityComposer(
-            "CLASS", included_fields=["qualified_name", "name", "file_path"]
+            "Class", included_fields=["qualified_name", "name", "file_path"]
         )
         function_composer = EntityComposer(
-            "FUNCTION",
+            "Function",
             included_fields=["name", "qualified_name", "file_path"],
+        )
+        method_composer = EntityComposer(
+            ("Method", "Function"),
+            included_fields=[
+                "name",
+                "qualified_name",
+                "subtype",
+                "file_path",
+                "class_name",
+                "class_qualified_name",
+            ],
         )
         calls_rel_composer = RelationshipComposer(
             "CALLS",
@@ -116,6 +127,7 @@ class Driver:
 
         classes = self.mongo_db["class"].find()
         functions = self.mongo_db["function"].find()
+        methods = self.mongo_db["method"].find()
         calls_rels = self.mongo_db["calls_rel"].find()
         inherits_rels = self.mongo_db["inherits_rel"].find()
         contains_rels = self.mongo_db["contains_rel"].find()
@@ -123,6 +135,7 @@ class Driver:
 
         self.graph_composer.add_entities(classes, class_composer)
         self.graph_composer.add_entities(functions, function_composer)
+        self.graph_composer.add_entities(methods, method_composer)
         self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
         self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
         self.graph_composer.add_relationships(contains_rels, contains_rel_composer)

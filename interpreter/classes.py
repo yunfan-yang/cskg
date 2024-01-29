@@ -38,7 +38,7 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
     for child_node in children_nodes:
         yield child_node
 
-        if child_node["type"] == "function":
+        if child_node["type"] == "function" or child_node["type"] == "method":
             function_qualified_name = remove_module_prefix(
                 child_node["qualified_name"], current_file_path
             )

@@ -2,12 +2,9 @@ from functools import reduce
 from astroid import (
     InferenceError,
     FunctionDef,
-    ClassDef,
     Call,
-    Return,
-    Instance,
-    Const,
     Uninferable,
+    ParentMissingError,
 )
 from loguru import logger
 
@@ -19,13 +16,41 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
     qualified_name = remove_module_prefix(node.qname(), current_file_path)
     args = node.args
 
-    function_ent = {
-        "type": "function",
-        "name": name,
-        "qualified_name": qualified_name,
-        "file_path": current_file_path,
-    }
-    yield function_ent
+    # Whether if function is a method
+    tree = node.repr_tree(ast_state=True)
+    logger.debug(f"tree: {tree}")
+
+    try:
+        function_type = node.type
+    except ParentMissingError:
+        function_type = "function"
+
+    if function_type == "function":
+        function_ent = {
+            "type": "function",
+            "name": name,
+            "qualified_name": qualified_name,
+            "file_path": current_file_path,
+        }
+        yield function_ent
+
+    else:
+        class_node = node.parent.frame()
+        class_name = class_node.name
+        class_qualified_name = remove_module_prefix(
+            class_node.qname(), current_file_path
+        )
+        method_ent = {
+            "type": "method",
+            "subtype": function_type,
+            "name": name,
+            "qualified_name": qualified_name,
+            "class_name": class_name,
+            "class_qualified_name": class_qualified_name,
+            "file_path": current_file_path,
+        }
+        yield method_ent
+
     yield from visit_function_called_nodes(node, current_file_path)
     yield from visit_function_return_node(node, current_file_path)
 
@@ -120,9 +145,7 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
             continue
 
         function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
-        class_qualified_name = remove_module_prefix(
-            return_type, current_file_path
-        )
+        class_qualified_name = remove_module_prefix(return_type, current_file_path)
         returns_rel = {
             "type": "returns_rel",
             "function_qualified_name": function_qualified_name,

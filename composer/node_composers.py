@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Iterable
 
 
 class AbstractNodeComposer(ABC):
@@ -12,9 +12,13 @@ class AbstractNodeComposer(ABC):
 
 
 class EntityComposer(AbstractNodeComposer):
-    def __init__(self, entity_type: str, included_fields: list[str] = None):
+    def __init__(
+        self, entity_label: str | Iterable[str], included_fields: list[str] = None
+    ):
         super().__init__(included_fields)
-        self.entity_type = entity_type.capitalize()
+        self.entity_type = ":".join(
+            map(lambda x: x.capitalize(), ensure_list_of_strings(entity_label))
+        )
 
     def get_cypher(self, entity: dict[str, Any]):
         entity_type = self.entity_type
@@ -42,13 +46,13 @@ class RelationshipComposer(AbstractNodeComposer):
 
     def __init__(
         self,
-        relation_type: str,
+        relation_label: str,
         from_field: Field,
         to_field: Field,
         included_fields: list[str] = None,
     ):
         super().__init__(included_fields)
-        self.relation_type = relation_type.upper()
+        self.relation_type = relation_label.upper()
         self.from_field = from_field
         self.to_field = to_field
 
@@ -70,3 +74,12 @@ class RelationshipComposer(AbstractNodeComposer):
 
 
 NodeComposer = EntityComposer | RelationshipComposer
+
+
+def ensure_list_of_strings(variable):
+    if isinstance(variable, str):
+        return [variable]
+    elif isinstance(variable, Iterable):
+        return variable
+    else:
+        raise ValueError("Variable must be a string or a list of strings")
