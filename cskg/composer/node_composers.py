@@ -24,9 +24,14 @@ class EntityComposer(AbstractNodeComposer):
         entity_type = self.entity_type
 
         included_fields_dict = _included_fields_dict(entity, self.included_fields)
-        entity_properties = [
-            f"{key}: '{value}'" for key, value in included_fields_dict.items()
-        ]
+        entity_properties = []
+
+        for key, value in included_fields_dict.items():
+            if isinstance(value, str):
+                entity_properties.append(f"{key}: '{value}'")
+            else:
+                entity_properties.append(f"{key}: {value}")
+
         entity_properties_neo = ", ".join(entity_properties)
 
         return f"""
