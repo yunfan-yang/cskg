@@ -10,6 +10,10 @@ from interpreter.interpreter import CodeInterpreter
 from composer.composer import GraphComposer
 from composer.node_composers import EntityComposer, RelationshipComposer
 
+# Initialize logger file
+filename = time.strftime("%Y-%m-%d_%H-%M-%S")
+logger.add(f"logs/{filename}.log")
+
 
 DRIVER_CONFIGURATIONS = dict[str, Any]
 # Configurations:
@@ -26,10 +30,6 @@ class Driver:
         self.interpreter = None
         self.graph_composer = None
         self.__init_database()
-
-        # Initialize logger file
-        filename = time.strftime("%Y-%m-%d_%H-%M-%S")
-        logger.add(f"logs/{filename}.log")
 
     def __init_database(self):
         neo4j_url = self.configurations.get("NEO4J_URL")
