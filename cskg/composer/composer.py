@@ -3,7 +3,7 @@ from typing import Any, Iterable, TypeVar
 from loguru import logger
 from neomodel import db
 
-from cmkg.composer.node_composers import (
+from cskg.composer.node_composers import (
     EntityComposer,
     RelationshipComposer,
 )

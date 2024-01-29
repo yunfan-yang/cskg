@@ -12,8 +12,8 @@ from astroid import (
 from astroid.typing import InferenceResult
 from loguru import logger
 
-from cmkg.interpreter import remove_module_prefix, get_module_prefix
-from cmkg.interpreter.args import get_arguments_list, get_comprehensive_arguments_list
+from cskg.interpreter import remove_module_prefix, get_module_prefix
+from cskg.interpreter.args import get_arguments_list, get_comprehensive_arguments_list
 
 
 def visit_function(node: FunctionDef, current_file_path: str = None):

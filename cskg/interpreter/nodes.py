@@ -3,12 +3,12 @@ import astroid
 
 def visit_node(node, current_file_path: str):
     if isinstance(node, astroid.ClassDef):
-        from cmkg.interpreter.classes import visit_class
+        from cskg.interpreter.classes import visit_class
 
         yield from visit_class(node, current_file_path)
 
     elif isinstance(node, astroid.FunctionDef):
-        from cmkg.interpreter.functions import visit_function
+        from cskg.interpreter.functions import visit_function
 
         yield from visit_function(node, current_file_path)
 

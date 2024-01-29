@@ -2,7 +2,7 @@ import os
 from astroid.manager import AstroidManager
 from loguru import logger
 
-from cmkg.interpreter.nodes import visit_children
+from cskg.interpreter.nodes import visit_children
 
 
 class CodeInterpreter:
