@@ -25,6 +25,8 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
 
     # Function subtype
     function_subtype = get_function_subtype(node)
+    args = get_arguments_list(node)
+    args_flat = [f"{arg_name}: {arg_type}" for arg_name, arg_type in args]
 
     if function_subtype == "function":
         function_ent = {
@@ -32,7 +34,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
             "name": name,
             "qualified_name": qualified_name,
             "file_path": current_file_path,
-            "args": get_arguments_list(node),
+            "args": args_flat,
         }
         yield function_ent
 
@@ -47,6 +49,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
             "subtype": function_subtype,
             "name": name,
             "qualified_name": qualified_name,
+            "args": args_flat,
             "class_name": class_name,
             "class_qualified_name": class_qualified_name,
             "file_path": current_file_path,

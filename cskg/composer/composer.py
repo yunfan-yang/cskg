@@ -34,6 +34,7 @@ class GraphComposer:
                 with db.transaction:
                     for entity in chunk:
                         cypher = entity_composer.get_cypher(entity)
+                        logger.debug(f"cypher: {cypher}")
                         db.cypher_query(cypher)
                 logger.info(f"Composed {entity_composer.entity_type}")
 
