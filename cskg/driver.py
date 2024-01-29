@@ -86,11 +86,11 @@ class Driver:
 
     def __compose_graph(self):
         class_composer = EntityComposer(
-            "Class", included_fields=["qualified_name", "name", "file_path"]
+            "Class", included_fields=["name", "qualified_name", "file_path"]
         )
         function_composer = EntityComposer(
             "Function",
-            included_fields=["name", "qualified_name", "file_path"],
+            included_fields=["name", "qualified_name", "args", "file_path"],
         )
         method_composer = EntityComposer(
             ("Method", "Function"),
@@ -98,6 +98,7 @@ class Driver:
                 "name",
                 "qualified_name",
                 "subtype",
+                "args",
                 "file_path",
                 "class_name",
                 "class_qualified_name",
