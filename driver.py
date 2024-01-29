@@ -82,8 +82,7 @@ class Driver:
             except DuplicateKeyError as e:
                 logger.error(e)
             except Exception as e:
-                logger.error(e)
-                break
+                raise e
 
     def __compose_graph(self):
         class_composer = EntityComposer(
@@ -119,6 +118,11 @@ class Driver:
             from_field=("class_qualified_name", "class"),
             to_field=("function_qualified_name", "function"),
         )
+        takes_rel_composer = RelationshipComposer(
+            "TAKES",
+            from_field=("function_qualified_name", "function"),
+            to_field=("argument_type_qualified_name", "class"),
+        )
         returns_rel_composer = RelationshipComposer(
             "RETURNS",
             from_field=("function_qualified_name", "function"),
@@ -131,6 +135,7 @@ class Driver:
         calls_rels = self.mongo_db["calls_rel"].find()
         inherits_rels = self.mongo_db["inherits_rel"].find()
         contains_rels = self.mongo_db["contains_rel"].find()
+        takes_rels = self.mongo_db["takes_rel"].find()
         returns_rels = self.mongo_db["returns_rel"].find()
 
         self.graph_composer.add_entities(classes, class_composer)
@@ -139,6 +144,7 @@ class Driver:
         self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
         self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
         self.graph_composer.add_relationships(contains_rels, contains_rel_composer)
+        self.graph_composer.add_relationships(takes_rels, takes_rel_composer)
         self.graph_composer.add_relationships(returns_rels, returns_rel_composer)
 
         self.graph_composer.compose()

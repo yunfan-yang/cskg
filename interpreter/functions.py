@@ -5,22 +5,23 @@ from astroid import (
     Call,
     Uninferable,
     ParentMissingError,
+    AssignName,
+    Name,
+    Arguments,
 )
+from astroid.typing import InferenceResult
 from loguru import logger
 
 from interpreter import remove_module_prefix, get_module_prefix
+from interpreter.args import get_arguments_list, get_comprehensive_arguments_list
 
 
 def visit_function(node: FunctionDef, current_file_path: str = None):
     name = node.name
     qualified_name = remove_module_prefix(node.qname(), current_file_path)
 
-    tree = node.repr_tree(ast_state=True)
-    logger.debug(f"tree: {tree}")
-
-    # Arguments
-    args = node.args
-    argument_list = args.args
+    # tree = node.repr_tree(ast_state=True)
+    # logger.debug(f"tree: {tree}")
 
     # Function subtype
     function_subtype = get_function_subtype(node)
@@ -31,6 +32,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
             "name": name,
             "qualified_name": qualified_name,
             "file_path": current_file_path,
+            "args": get_arguments_list(node),
         }
         yield function_ent
 
@@ -53,6 +55,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
 
     yield from visit_function_called_nodes(node, current_file_path)
     yield from visit_function_return_node(node, current_file_path)
+    yield from visit_function_arguments_nodes(node, current_file_path)
 
 
 def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None):
@@ -156,7 +159,23 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
 
 
 def visit_function_arguments_nodes(node: FunctionDef, current_file_path: str):
-    ...
+    arguments_list = get_arguments_list(node)
+
+    for argument_name, inferred_type_qualified_name in arguments_list:
+        prefix = get_module_prefix(current_file_path)
+        if not inferred_type_qualified_name.startswith(prefix):
+            continue
+
+        function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
+        inferred_type_qualified_name = remove_module_prefix(
+            inferred_type_qualified_name, current_file_path
+        )
+        yield {
+            "type": "takes_rel",
+            "function_qualified_name": function_qualified_name,
+            "argument_name": argument_name,
+            "argument_type_qualified_name": inferred_type_qualified_name,
+        }
 
 
 def get_function_subtype(node: FunctionDef):
