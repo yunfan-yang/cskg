@@ -14,18 +14,18 @@ from interpreter import remove_module_prefix, get_module_prefix
 def visit_function(node: FunctionDef, current_file_path: str = None):
     name = node.name
     qualified_name = remove_module_prefix(node.qname(), current_file_path)
-    args = node.args
 
-    # Whether if function is a method
     tree = node.repr_tree(ast_state=True)
     logger.debug(f"tree: {tree}")
 
-    try:
-        function_type = node.type
-    except ParentMissingError:
-        function_type = "function"
+    # Arguments
+    args = node.args
+    argument_list = args.args
 
-    if function_type == "function":
+    # Function subtype
+    function_subtype = get_function_subtype(node)
+
+    if function_subtype == "function":
         function_ent = {
             "type": "function",
             "name": name,
@@ -42,7 +42,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
         )
         method_ent = {
             "type": "method",
-            "subtype": function_type,
+            "subtype": function_subtype,
             "name": name,
             "qualified_name": qualified_name,
             "class_name": class_name,
@@ -153,3 +153,19 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
         }
 
         yield returns_rel
+
+
+def visit_function_arguments_nodes(node: FunctionDef, current_file_path: str):
+    ...
+
+
+def get_function_subtype(node: FunctionDef):
+    """
+    Get function subtype: `function`, `method`, `classmethod`, `staticmethod`
+    """
+    try:
+        return node.type
+    except ParentMissingError:
+        return "function"
+    except Exception as e:
+        raise e
