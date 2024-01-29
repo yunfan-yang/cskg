@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-from driver import Driver
+from cmkg.driver import Driver
 
 # Load environment variables
 load_dotenv()

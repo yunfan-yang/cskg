@@ -6,9 +6,9 @@ import neomodel
 from neomodel import clear_neo4j_database
 from loguru import logger
 
-from interpreter.interpreter import CodeInterpreter
-from composer.composer import GraphComposer
-from composer.node_composers import EntityComposer, RelationshipComposer
+from cmkg.interpreter.interpreter import CodeInterpreter
+from cmkg.composer.composer import GraphComposer
+from cmkg.composer.node_composers import EntityComposer, RelationshipComposer
 
 # Initialize logger file
 filename = time.strftime("%Y-%m-%d_%H-%M-%S")

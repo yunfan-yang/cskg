@@ -1,7 +1,7 @@
 import astroid
 
-from interpreter import remove_module_prefix
-from interpreter.nodes import visit_children
+from cmkg.interpreter import remove_module_prefix
+from cmkg.interpreter.nodes import visit_children
 
 
 def visit_class(node: astroid.ClassDef, current_file_path: str = None):
