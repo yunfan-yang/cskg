@@ -133,10 +133,10 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
     inferred_nodes = filter(lambda node: node is not Uninferable, inference_results)
     inferred_nodes = list(inferred_nodes)
 
-    logger.debug(f"function returns: {inferred_nodes}")
+    # logger.debug(f"function returns: {inferred_nodes}")
 
     for inferred_node in inferred_nodes:
-        logger.debug(f"inferred_node: {inferred_node}")
+        # logger.debug(f"inferred_node: {inferred_node}")
 
         return_type = None
 
@@ -233,23 +233,22 @@ def visit_function_local_variables(node: FunctionDef, current_file_path: str):
                 continue
 
         inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
-        logger.debug(f"inferred_types: {list(inferred_types)}")
         inferred_type = next(inferred_types, None)
         logger.debug(f"inferred_type: {inferred_type}")
 
-        # if not inferred_type:
-        #     continue
+        if not inferred_type:
+            continue
 
-        # inferred_type_qualified_name = remove_module_prefix(
-        #     inferred_type.qname(), current_file_path
-        # )
+        inferred_type_qualified_name = remove_module_prefix(
+            inferred_type.qname(), current_file_path
+        )
 
-        # instantiates_rel = {
-        #     "type": "instantiates_rel",
-        #     "class_qualified_name": inferred_type_qualified_name,
-        #     "variable_qualified_name": var_qualified_name,
-        # }
-        # yield instantiates_rel
+        instantiates_rel = {
+            "type": "instantiates_rel",
+            "class_qualified_name": inferred_type_qualified_name,
+            "variable_qualified_name": var_qualified_name,
+        }
+        yield instantiates_rel
 
 
 def get_variable_access(variable_name: str):
