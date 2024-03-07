@@ -8,6 +8,7 @@ from astroid import (
     AssignName,
     Name,
     Arguments,
+    Attribute,
 )
 from astroid.typing import InferenceResult
 from loguru import logger
@@ -68,12 +69,19 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
     """
 
     calls = list(node.nodes_of_class(Call))
-    funcs = [call.func for call in calls]
+    called_funcs = [call.func for call in calls]
 
     logger.debug(f"function calls: {calls}")
-    logger.debug(f"function infers: {funcs}")
+    logger.debug(f"function infers: {called_funcs}")
 
-    for func in funcs:
+    for called_func in called_funcs:
+        if isinstance(called_func, Name):
+            callee_name = called_func.name
+        elif isinstance(called_func, Attribute):
+            callee_name = called_func.attrname
+        else:
+            raise Exception(called_func)
+
         try:
             """
             Multiple Possible Inferences:
@@ -83,16 +91,16 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
             For example, if a function name is reassigned multiple times to different callable objects,
             inferred() will return all of these possibilities.
             """
-            inference_results = func.inferred()
+            inference_results = called_func.inferred()
         except InferenceError:
-            logger.error(f"Could not infer function call (hard): {func}")
+            logger.error(f"Could not infer function call (hard): {called_func}")
             continue
 
         inferred_nodes = filter(lambda node: node is not Uninferable, inference_results)
         inferred_node: FunctionDef = next(inferred_nodes, None)
 
         if not inferred_node:
-            logger.error(f"Could not infer function call (soft): {func}")
+            logger.error(f"Could not infer function call (soft): {called_func}")
             continue
 
         function_qualified_name = node.qname()
