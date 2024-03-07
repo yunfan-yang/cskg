@@ -1,4 +1,3 @@
-import time
 from typing import Any
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
@@ -9,19 +8,6 @@ from loguru import logger
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 from cskg.composer.node_composers import EntityComposer, RelationshipComposer
-
-# Initialize logger file
-filename = time.strftime("%Y-%m-%d_%H-%M-%S")
-logger.add(
-    f"logs/{filename}.log", filter=lambda record: record["level"].name not in ["DEBUG", "ERROR"]
-)
-logger.add(
-    f"logs/{filename}.debug.log", filter=lambda record: record["level"].name == "DEBUG"
-)
-logger.add(
-    f"logs/{filename}.error.log", filter=lambda record: record["level"].name == "ERROR"
-)
-
 
 DRIVER_CONFIGURATIONS = dict[str, Any]
 # Configurations:
@@ -164,8 +150,12 @@ class Driver:
         self.graph_composer.add_entities(variables, variable_composer)
         self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
         self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
-        self.graph_composer.add_relationships(contains_cf_rels, contains_cf_rel_composer)
-        self.graph_composer.add_relationships(contains_fv_rels, contains_fv_rel_composer)
+        self.graph_composer.add_relationships(
+            contains_cf_rels, contains_cf_rel_composer
+        )
+        self.graph_composer.add_relationships(
+            contains_fv_rels, contains_fv_rel_composer
+        )
         self.graph_composer.add_relationships(takes_rels, takes_rel_composer)
         self.graph_composer.add_relationships(returns_rels, returns_rel_composer)
 
