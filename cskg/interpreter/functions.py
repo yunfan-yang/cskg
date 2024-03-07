@@ -112,7 +112,7 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
 
         calls_rel = {
             "type": "calls_rel",
-            "function_qualified_name": function_qualified_name,
+            "caller_qualified_name": function_qualified_name,
             "callee_qualified_name": callee_qualified_name,
         }
 

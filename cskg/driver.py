@@ -104,7 +104,7 @@ class Driver:
         )
         calls_rel_composer = RelationshipComposer(
             "CALLS",
-            from_field=("function_qualified_name", "function"),
+            from_field=("caller_qualified_name", "function"),
             to_field=("callee_qualified_name", "function"),
         )
         inherits_rel_composer = RelationshipComposer(
