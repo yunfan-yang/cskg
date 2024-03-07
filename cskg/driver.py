@@ -12,8 +12,12 @@ from cskg.composer.node_composers import EntityComposer, RelationshipComposer
 
 # Initialize logger file
 filename = time.strftime("%Y-%m-%d_%H-%M-%S")
-logger.add(f"logs/{filename}.log", filter=lambda record: record["level"].name != "DEBUG")
-logger.add(f"logs/{filename}.debug.log", filter=lambda record: record["level"].name == "DEBUG")
+logger.add(
+    f"logs/{filename}.log", filter=lambda record: record["level"].name != "DEBUG"
+)
+logger.add(
+    f"logs/{filename}.debug.log", filter=lambda record: record["level"].name == "DEBUG"
+)
 
 
 DRIVER_CONFIGURATIONS = dict[str, Any]
@@ -105,6 +109,10 @@ class Driver:
                 "class_qualified_name",
             ],
         )
+        variable_composer = EntityComposer(
+            "Variable",
+            included_fields=["type", "name", "qualified_name", "access", "file_path"],
+        )
         calls_rel_composer = RelationshipComposer(
             "CALLS",
             from_field=("function_qualified_name", "function"),
@@ -115,10 +123,15 @@ class Driver:
             from_field=("child_qualified_name", "class"),
             to_field=("parent_qualified_name", "class"),
         )
-        contains_rel_composer = RelationshipComposer(
+        contains_cf_rel_composer = RelationshipComposer(
             "CONTAINS",
             from_field=("class_qualified_name", "class"),
             to_field=("function_qualified_name", "function"),
+        )
+        contains_fv_rel_composer = RelationshipComposer(
+            "CONTAINS",
+            from_field=("function_qualified_name", "function"),
+            to_field=("variable_qualified_name", "variable"),
         )
         takes_rel_composer = RelationshipComposer(
             "TAKES",
@@ -134,18 +147,22 @@ class Driver:
         classes = self.mongo_db["class"].find()
         functions = self.mongo_db["function"].find()
         methods = self.mongo_db["method"].find()
+        variables = self.mongo_db["variable"].find()
         calls_rels = self.mongo_db["calls_rel"].find()
         inherits_rels = self.mongo_db["inherits_rel"].find()
-        contains_rels = self.mongo_db["contains_rel"].find()
+        contains_cf_rels = self.mongo_db["contains_cf_rel"].find()
+        contains_fv_rels = self.mongo_db["contains_fv_rel"].find()
         takes_rels = self.mongo_db["takes_rel"].find()
         returns_rels = self.mongo_db["returns_rel"].find()
 
         self.graph_composer.add_entities(classes, class_composer)
         self.graph_composer.add_entities(functions, function_composer)
         self.graph_composer.add_entities(methods, method_composer)
+        self.graph_composer.add_entities(variables, variable_composer)
         self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
         self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
-        self.graph_composer.add_relationships(contains_rels, contains_rel_composer)
+        self.graph_composer.add_relationships(contains_cf_rels, contains_cf_rel_composer)
+        self.graph_composer.add_relationships(contains_fv_rels, contains_fv_rel_composer)
         self.graph_composer.add_relationships(takes_rels, takes_rel_composer)
         self.graph_composer.add_relationships(returns_rels, returns_rel_composer)
 

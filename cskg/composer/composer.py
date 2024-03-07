@@ -45,6 +45,7 @@ class GraphComposer:
                     for relationship in chunk:
                         cypher = relationship_composer.get_cypher(relationship)
                         db.cypher_query(cypher)
+                        logger.debug(f"cypher: {cypher}")
                 logger.info(f"Composed {relationship_composer.relation_type}")
 
     def compose(self):

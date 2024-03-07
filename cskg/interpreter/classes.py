@@ -42,9 +42,9 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
             function_qualified_name = remove_module_prefix(
                 child_node["qualified_name"], current_file_path
             )
-            contains_rel = {
-                "type": "contains_rel",
+            contains_cf_rel = {
+                "type": "contains_cf_rel",
                 "class_qualified_name": qualified_name,
                 "function_qualified_name": function_qualified_name,
             }
-            yield contains_rel
+            yield contains_cf_rel

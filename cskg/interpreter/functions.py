@@ -217,7 +217,7 @@ def visit_function_local_variables(node: FunctionDef, current_file_path: str):
         yield variable_ent
 
         contains_rel = {
-            "type": "contains_rel",
+            "type": "contains_fv_rel",
             "function_qualified_name": function_qualified_name,
             "variable_qualified_name": var_qualified_name,
         }
