@@ -1,6 +1,5 @@
 import astroid
 
-
 def visit_node(node, current_file_path: str):
     if isinstance(node, astroid.ClassDef):
         from cskg.interpreter.classes import visit_class
