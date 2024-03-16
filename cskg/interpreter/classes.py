@@ -1,9 +1,9 @@
-import astroid
+from astroid import ClassDef
 
 from cskg.interpreter.nodes import visit_children
 
 
-def visit_class(node: astroid.ClassDef, current_file_path: str = None):
+def visit_class(node: ClassDef, current_file_path: str = None):
     name = node.name
     qualified_name = node.qname()
 
