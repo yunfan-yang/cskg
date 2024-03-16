@@ -13,13 +13,13 @@ from astroid import (
 from astroid.typing import InferenceResult
 from loguru import logger
 
-from cskg.interpreter import remove_module_prefix, get_module_prefix
+from cskg.interpreter import get_module_prefix
 from cskg.interpreter.args import get_arguments_list, get_comprehensive_arguments_list
 
 
 def visit_function(node: FunctionDef, current_file_path: str = None):
     name = node.name
-    qualified_name = remove_module_prefix(node.qname(), current_file_path)
+    qualified_name = node.qname()
 
     # tree = node.repr_tree(ast_state=True)
     # logger.debug(f"tree: {tree}")
@@ -42,9 +42,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
     else:
         class_node = node.parent.frame()
         class_name = class_node.name
-        class_qualified_name = remove_module_prefix(
-            class_node.qname(), current_file_path
-        )
+        class_qualified_name = class_node.qname()
         method_ent = {
             "type": "method",
             "subtype": function_subtype,
@@ -110,14 +108,6 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
         if not callee_qualified_name.startswith(prefix):
             continue
 
-        function_qualified_name = remove_module_prefix(
-            function_qualified_name, current_file_path
-        )
-
-        callee_qualified_name = remove_module_prefix(
-            callee_qualified_name, current_file_path
-        )
-
         calls_rel = {
             "type": "calls_rel",
             "caller_qualified_name": function_qualified_name,
@@ -159,8 +149,8 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
         if not return_type.startswith(prefix):
             continue
 
-        function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
-        class_qualified_name = remove_module_prefix(return_type, current_file_path)
+        function_qualified_name = node.qname()
+        class_qualified_name = return_type
         returns_rel = {
             "type": "returns_rel",
             "function_qualified_name": function_qualified_name,
@@ -178,10 +168,7 @@ def visit_function_arguments_nodes(node: FunctionDef, current_file_path: str):
         if not inferred_type_qualified_name.startswith(prefix):
             continue
 
-        function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
-        inferred_type_qualified_name = remove_module_prefix(
-            inferred_type_qualified_name, current_file_path
-        )
+        function_qualified_name = node.qname()
         yield {
             "type": "takes_rel",
             "function_qualified_name": function_qualified_name,
@@ -211,7 +198,7 @@ def visit_function_local_variables(node: FunctionDef, current_file_path: str):
     logger.debug(f"local_vars: {local_vars}")
 
     for var_name, assign_names in local_vars.items():
-        function_qualified_name = remove_module_prefix(node.qname(), current_file_path)
+        function_qualified_name = node.qname()
         var_qualified_name = function_qualified_name + "." + var_name
         access = get_variable_access(var_name)
 
@@ -247,9 +234,7 @@ def visit_function_local_variables(node: FunctionDef, current_file_path: str):
         if not inferred_type:
             continue
 
-        inferred_type_qualified_name = remove_module_prefix(
-            inferred_type.qname(), current_file_path
-        )
+        inferred_type_qualified_name = inferred_type.qname()
 
         instantiates_rel = {
             "type": "instantiates_rel",

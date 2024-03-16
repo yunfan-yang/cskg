@@ -1,12 +1,11 @@
 import astroid
 
-from cskg.interpreter import remove_module_prefix
 from cskg.interpreter.nodes import visit_children
 
 
 def visit_class(node: astroid.ClassDef, current_file_path: str = None):
     name = node.name
-    qualified_name = remove_module_prefix(node.qname(), current_file_path)
+    qualified_name = node.qname()
 
     # Create class
     class_ent = {
@@ -21,9 +20,7 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
     parent_classes = node.ancestors(recurs=False)
     for parent_class in parent_classes:
         child_qualified_name = qualified_name
-        parent_qualified_name = remove_module_prefix(
-            parent_class.qname(), current_file_path
-        )
+        parent_qualified_name = parent_class.qname()
         inherits_rel = {
             "type": "inherits_rel",
             "child_qualified_name": child_qualified_name,
@@ -39,9 +36,7 @@ def visit_class(node: astroid.ClassDef, current_file_path: str = None):
         yield child_node
 
         if child_node["type"] == "function" or child_node["type"] == "method":
-            function_qualified_name = remove_module_prefix(
-                child_node["qualified_name"], current_file_path
-            )
+            function_qualified_name = child_node["qualified_name"]
             contains_cf_rel = {
                 "type": "contains_cf_rel",
                 "class_qualified_name": qualified_name,
