@@ -17,5 +17,4 @@ def visit_module(module: Module, current_file_path: str = None):
 
     yield module_ent
     yield from visit_local_variables(module, current_file_path)
-
     yield from visit_children(module, current_file_path)

@@ -83,9 +83,6 @@ def visit_function_called_nodes(function: FunctionDef, current_file_path: str = 
     calls = list(function.nodes_of_class(Call))
     called_funcs = [call.func for call in calls]
 
-    # logger.debug(f"function calls: {calls}")
-    # logger.debug(f"function infers: {called_funcs}")
-
     for called_func in called_funcs:
         try:
             """
@@ -138,11 +135,7 @@ def visit_function_return_node(function: FunctionDef, current_file_path: str):
     inferred_nodes = filter(lambda node: node is not Uninferable, inference_results)
     inferred_nodes = list(inferred_nodes)
 
-    # logger.debug(f"function returns: {inferred_nodes}")
-
     for inferred_node in inferred_nodes:
-        # logger.debug(f"inferred_node: {inferred_node}")
-
         return_type = None
 
         if hasattr(inferred_node, "pytype"):
