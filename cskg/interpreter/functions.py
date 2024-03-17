@@ -73,13 +73,6 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
     logger.debug(f"function infers: {called_funcs}")
 
     for called_func in called_funcs:
-        if isinstance(called_func, Name):
-            callee_name = called_func.name
-        elif isinstance(called_func, Attribute):
-            callee_name = called_func.attrname
-        else:
-            raise Exception(called_func)
-
         try:
             """
             Multiple Possible Inferences:

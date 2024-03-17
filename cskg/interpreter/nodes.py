@@ -1,7 +1,13 @@
 import astroid
 
+
 def visit_node(node, current_file_path: str):
-    if isinstance(node, astroid.ClassDef):
+    if isinstance(node, astroid.Module):
+        from cskg.interpreter.module import visit_module
+
+        yield from visit_module(node, current_file_path)
+
+    elif isinstance(node, astroid.ClassDef):
         from cskg.interpreter.classes import visit_class
 
         yield from visit_class(node, current_file_path)
