@@ -27,7 +27,7 @@ def get_inferred_types(
             inferred_types = inferred_type_method()
         else:
             inferred_types = node.inferred()
-    except InferenceError:
+    except InferenceError or StopIteration:
         return []
 
     inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
