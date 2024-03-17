@@ -5,11 +5,11 @@ from astroid.bases import Proxy
 from loguru import logger
 
 
-def get_module_prefix(folder_path):
+def get_module_prefix(folder_path: str):
     return ".".join(folder_path.split("/")[0:-1])
 
 
-def remove_module_prefix(qualified_name, folder_path):
+def remove_module_prefix(qualified_name: str, folder_path: str):
     module_prefix = get_module_prefix(folder_path)
     if qualified_name.startswith(module_prefix):
         return qualified_name.replace(module_prefix + ".", "")

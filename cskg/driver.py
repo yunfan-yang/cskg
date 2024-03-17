@@ -79,6 +79,9 @@ class Driver:
                 raise e
 
     def __compose_graph(self):
+        module_composer = EntityComposer(
+            "Module", included_fields=["name", "qualified_name", "file_path"]
+        )
         class_composer = EntityComposer(
             "Class", included_fields=["name", "qualified_name", "file_path"]
         )
