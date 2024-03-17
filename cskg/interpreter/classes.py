@@ -6,6 +6,7 @@ from cskg.interpreter.nodes import visit_children
 def visit_class(cls: ClassDef, current_file_path: str = None):
     name = cls.name
     qualified_name = cls.qname()
+    module_qname = cls.root().qname()
 
     # Create class
     class_ent = {
@@ -15,6 +16,14 @@ def visit_class(cls: ClassDef, current_file_path: str = None):
         "file_path": current_file_path,
     }
     yield class_ent
+
+    # Module contains class
+    contains_mc_rel = {
+        "type": "contains_mc_rel",
+        "module_qualified_name": module_qname,
+        "class_qualified_name": qualified_name,
+    }
+    yield contains_mc_rel
 
     # Visit parents
     parent_classes = cls.ancestors(recurs=False)
