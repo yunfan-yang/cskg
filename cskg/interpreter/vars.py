@@ -11,10 +11,9 @@ from loguru import logger
 from cskg.interpreter import get_inferred_type
 
 
-def visit_local_variables(
-    node: Module | ClassDef | FunctionDef, current_file_path: str
-):
+def visit_local_variables(node: Module | ClassDef | FunctionDef):
     qname = node.qname()
+    file_path = node.root().file
 
     # var_assign_name: AssignName
     for var_name, var_assign_name in node.items():
@@ -31,7 +30,7 @@ def visit_local_variables(
             "name": var_name,
             "qualified_name": var_qname,
             "access": access,
-            "file_path": current_file_path,
+            "file_path": file_path,
         }
         yield variable_ent
 

@@ -1,5 +1,5 @@
 import os
-from astroid import FunctionDef, Module, ClassDef
+from astroid import FunctionDef, Module, ClassDef, NodeNG
 from astroid.manager import AstroidManager
 from loguru import logger
 
@@ -24,13 +24,13 @@ class CodeInterpreter:
         for root, dirs, files in os.walk(self.folder_path):
             for file in files:
                 if file.endswith(".py"):  # Only handles python file
-                    current_file_path = os.path.join(root, file)
-                    ast = self.manager.ast_from_file(current_file_path)
-                    asts[current_file_path] = ast
-                    logger.debug(f"Ast from file: {current_file_path}")
+                    file_path = os.path.join(root, file)
+                    ast = self.manager.ast_from_file(file_path)
+                    asts[file_path] = ast
+                    logger.debug(f"Ast from file: {file_path}")
 
         for file_path, ast in asts.items():
-            yield from visit_node(ast, file_path)
+            yield from visit_node(ast)
 
     def format_qname(self, node: Module | ClassDef | FunctionDef):
         original_qname_function = node.qname

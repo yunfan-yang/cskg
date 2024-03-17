@@ -12,9 +12,10 @@ from cskg.interpreter.args import get_arguments_list, get_comprehensive_argument
 from cskg.interpreter.vars import visit_local_variables
 
 
-def visit_function(function: FunctionDef, current_file_path: str = None):
+def visit_function(function: FunctionDef):
     name = function.name
     qualified_name = function.qname()
+    file_path = function.root().file
 
     # Function subtype
     function_subtype = get_function_subtype(function)
@@ -30,7 +31,7 @@ def visit_function(function: FunctionDef, current_file_path: str = None):
             "type": "function",
             "name": name,
             "qualified_name": qualified_name,
-            "file_path": current_file_path,
+            "file_path": file_path,
             "args": args_flat,
         }
         yield function_ent
@@ -57,7 +58,7 @@ def visit_function(function: FunctionDef, current_file_path: str = None):
             "args": args_flat,
             "class_name": class_name,
             "class_qualified_name": class_qualified_name,
-            "file_path": current_file_path,
+            "file_path": file_path,
         }
         yield method_ent
 
@@ -69,13 +70,13 @@ def visit_function(function: FunctionDef, current_file_path: str = None):
         }
         yield contains_cf_rel
 
-    yield from visit_function_called_nodes(function, current_file_path)
-    yield from visit_function_return_node(function, current_file_path)
-    yield from visit_function_arguments_nodes(function, current_file_path)
-    yield from visit_local_variables(function, current_file_path)
+    yield from visit_function_called_nodes(function)
+    yield from visit_function_return_node(function)
+    yield from visit_function_arguments_nodes(function)
+    yield from visit_local_variables(function)
 
 
-def visit_function_called_nodes(function: FunctionDef, current_file_path: str = None):
+def visit_function_called_nodes(function: FunctionDef):
     """
     Visit body and write down node function calls other functions.
     """
@@ -107,11 +108,6 @@ def visit_function_called_nodes(function: FunctionDef, current_file_path: str = 
 
         function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
-
-        prefix = get_module_prefix(current_file_path)
-        if not callee_qualified_name.startswith(prefix):
-            continue
-
         calls_rel = {
             "type": "calls_rel",
             "caller_qualified_name": function_qualified_name,
@@ -121,11 +117,10 @@ def visit_function_called_nodes(function: FunctionDef, current_file_path: str = 
         yield calls_rel
 
 
-def visit_function_return_node(function: FunctionDef, current_file_path: str):
+def visit_function_return_node(function: FunctionDef):
     """
     Visit body and write down node function returns
     """
-
     try:
         inference_results = function.infer_call_result(None)
     except InferenceError:
@@ -145,10 +140,6 @@ def visit_function_return_node(function: FunctionDef, current_file_path: str):
         else:
             return_type = type(inferred_node).__name__
 
-        prefix = get_module_prefix(current_file_path)
-        if not return_type.startswith(prefix):
-            continue
-
         function_qualified_name = function.qname()
         class_qualified_name = return_type
         returns_rel = {
@@ -160,14 +151,10 @@ def visit_function_return_node(function: FunctionDef, current_file_path: str):
         yield returns_rel
 
 
-def visit_function_arguments_nodes(function: FunctionDef, current_file_path: str):
+def visit_function_arguments_nodes(function: FunctionDef):
     arguments_list = get_arguments_list(function)
 
     for argument_name, inferred_type_qualified_name in arguments_list:
-        prefix = get_module_prefix(current_file_path)
-        if not inferred_type_qualified_name.startswith(prefix):
-            continue
-
         function_qualified_name = function.qname()
         yield {
             "type": "takes_rel",
