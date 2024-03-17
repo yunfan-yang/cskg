@@ -1,7 +1,7 @@
 import astroid
 
 
-def visit_node(node, current_file_path: str):
+def visit_node(node: astroid.NodeNG, current_file_path: str):
     if isinstance(node, astroid.Module):
         from cskg.interpreter.module import visit_module
 
@@ -19,9 +19,5 @@ def visit_node(node, current_file_path: str):
 
 
 def visit_children(node: astroid.NodeNG, current_file_path: str):
-    if isinstance(node, astroid.Module):
-        yield from visit_node(node, current_file_path)
-
-    children = node.get_children()
-    for child in children:
+    for child in node.get_children():
         yield from visit_node(child, current_file_path)

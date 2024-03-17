@@ -4,7 +4,7 @@ from astroid.manager import AstroidManager
 from loguru import logger
 
 from cskg.interpreter import remove_module_prefix
-from cskg.interpreter.nodes import visit_children
+from cskg.interpreter.nodes import visit_node
 
 
 class CodeInterpreter:
@@ -30,7 +30,7 @@ class CodeInterpreter:
                     logger.debug(f"Ast from file: {current_file_path}")
 
         for file_path, ast in asts.items():
-            yield from visit_children(ast, file_path)
+            yield from visit_node(ast, file_path)
 
     def format_qname(self, node: Module | ClassDef | FunctionDef):
         original_qname_function = node.qname
