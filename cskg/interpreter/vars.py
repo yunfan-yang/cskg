@@ -12,8 +12,6 @@ from cskg.interpreter import get_inferred_type
 
 def visit_local_variables(node: ClassDef | FunctionDef, current_file_path: str):
     qname = node.qname()
-    logger.debug(f"qname: {qname}")
-    logger.debug(f"node: {node.items()}")
 
     var_assign_name: AssignName
     for var_name, var_assign_name in node.items():
