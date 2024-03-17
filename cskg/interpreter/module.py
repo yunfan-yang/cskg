@@ -1,10 +1,12 @@
 from astroid import Module
 
+from cskg.interpreter.vars import visit_local_variables
+
 
 def visit_module(module: Module, current_file_path: str = None):
     name = module.name
     qualified_name = module.qname()
-    
+
     module_ent = {
         "type": "module",
         "name": name,
@@ -13,3 +15,4 @@ def visit_module(module: Module, current_file_path: str = None):
     }
 
     yield module_ent
+    yield from visit_local_variables(module, current_file_path)

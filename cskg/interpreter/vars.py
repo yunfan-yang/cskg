@@ -1,4 +1,5 @@
 from astroid import (
+    Module,
     ClassDef,
     FunctionDef,
     NodeNG,
@@ -10,7 +11,9 @@ from loguru import logger
 from cskg.interpreter import get_inferred_type
 
 
-def visit_local_variables(node: ClassDef | FunctionDef, current_file_path: str):
+def visit_local_variables(
+    node: Module | ClassDef | FunctionDef, current_file_path: str
+):
     qname = node.qname()
 
     var_assign_name: AssignName
@@ -69,6 +72,12 @@ def get_contains_rel(node: NodeNG, var_qname: str):
         return {
             "type": "contains_fv_rel",
             "function_qualified_name": qname,
+            "variable_qualified_name": var_qname,
+        }
+    elif isinstance(node, Module):
+        return {
+            "type": "contains_mv_rel",
+            "module_qualified_name": qname,
             "variable_qualified_name": var_qname,
         }
     else:

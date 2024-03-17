@@ -1,6 +1,7 @@
 from astroid import ClassDef
 
 from cskg.interpreter.nodes import visit_children
+from cskg.interpreter.vars import visit_local_variables
 
 
 def visit_class(cls: ClassDef, current_file_path: str = None):
@@ -38,7 +39,6 @@ def visit_class(cls: ClassDef, current_file_path: str = None):
         yield inherits_rel
 
     # Visit children
-    # yield from visit_children(node, current_file_path)
     children_nodes = visit_children(cls, current_file_path)
 
     for child_node in children_nodes:
@@ -52,3 +52,5 @@ def visit_class(cls: ClassDef, current_file_path: str = None):
                 "function_qualified_name": function_qualified_name,
             }
             yield contains_cf_rel
+
+    yield from visit_local_variables(cls, current_file_path)
