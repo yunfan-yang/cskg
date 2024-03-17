@@ -1,7 +1,10 @@
+from typing import Iterator, overload
 from astroid import NodeNG, InferenceError
 from astroid.typing import SuccessfulInferenceResult
 from astroid.util import Uninferable
 from astroid.bases import Proxy
+from astroid.typing import InferenceResult
+
 from loguru import logger
 
 
@@ -16,14 +19,26 @@ def remove_module_prefix(qualified_name: str, folder_path: str):
     return qualified_name
 
 
-def get_inferred_type(node: NodeNG) -> NodeNG | None:
+def get_inferred_types(
+    node: NodeNG, inferred_type_method=None
+) -> list[SuccessfulInferenceResult]:
     try:
-        inferred_types = node.inferred()
+        if inferred_type_method:
+            inferred_types = inferred_type_method()
+        else:
+            inferred_types = node.inferred()
     except InferenceError:
-        return None
+        return []
 
     inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
-    inferred_type = next(inferred_types, None)
+    inferred_types = list(inferred_types)
+
+    return inferred_types
+
+
+def get_inferred_type(node: NodeNG) -> NodeNG | None:
+    inferred_types = get_inferred_types(node)
+    inferred_type = inferred_types[0] if inferred_types else None
 
     if isinstance(inferred_type, NodeNG):
         return inferred_type

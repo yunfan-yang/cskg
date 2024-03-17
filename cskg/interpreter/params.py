@@ -47,7 +47,7 @@ def get_comprehensive_parameters_list(arguments: Arguments):
     return comprehesive_list
 
 
-def get_arguments_list(node: FunctionDef):
+def get_parameters_list(node: FunctionDef):
     comprehensive_arguments_list = get_comprehensive_parameters_list(node.args)
     arguments_list: ArgumentList = []
 
