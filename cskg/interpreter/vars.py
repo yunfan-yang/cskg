@@ -16,8 +16,12 @@ def visit_local_variables(
 ):
     qname = node.qname()
 
-    var_assign_name: AssignName
+    # var_assign_name: AssignName
     for var_name, var_assign_name in node.items():
+        # Only variables
+        if not isinstance(var_assign_name, AssignName):
+            continue
+
         var_qname = qname + "." + var_name
         access = get_variable_access(var_name)
 
