@@ -14,7 +14,7 @@ ComprehensiveArgumentList = list[ComprehensiveArgument]
 ArgumentList = list[tuple[str, str]]
 
 
-def get_comprehensive_arguments_list(arguments: Arguments):
+def get_comprehensive_parameters_list(arguments: Arguments):
     args = arguments.args
     annotations = arguments.annotations
 
@@ -48,7 +48,7 @@ def get_comprehensive_arguments_list(arguments: Arguments):
 
 
 def get_arguments_list(node: FunctionDef):
-    comprehensive_arguments_list = get_comprehensive_arguments_list(node.args)
+    comprehensive_arguments_list = get_comprehensive_parameters_list(node.args)
     arguments_list: ArgumentList = []
 
     for argument, annotation, inferred_type in comprehensive_arguments_list:

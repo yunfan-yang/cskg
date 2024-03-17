@@ -8,7 +8,10 @@ from astroid import (
 from loguru import logger
 
 from cskg.interpreter import get_module_prefix
-from cskg.interpreter.params import get_arguments_list, get_comprehensive_arguments_list
+from cskg.interpreter.params import (
+    get_arguments_list,
+    get_comprehensive_parameters_list,
+)
 from cskg.interpreter.vars import visit_local_variables
 
 
