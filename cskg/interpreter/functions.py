@@ -1,8 +1,6 @@
 from astroid import (
-    InferenceError,
     FunctionDef,
     Call,
-    Uninferable,
     ParentMissingError,
     NodeNG,
 )
@@ -109,7 +107,9 @@ def visit_function_return_node(function: FunctionDef):
     """
     Visit body and write down node function returns
     """
-    inferred_nodes = get_inferred_types(function, lambda: function.infer_call_result(None))
+    inferred_nodes = get_inferred_types(
+        function, lambda: function.infer_call_result(None)
+    )
 
     for inferred_node in inferred_nodes:
         return_type = None
