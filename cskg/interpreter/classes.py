@@ -3,9 +3,9 @@ from astroid import ClassDef
 from cskg.interpreter.nodes import visit_children
 
 
-def visit_class(node: ClassDef, current_file_path: str = None):
-    name = node.name
-    qualified_name = node.qname()
+def visit_class(cls: ClassDef, current_file_path: str = None):
+    name = cls.name
+    qualified_name = cls.qname()
 
     # Create class
     class_ent = {
@@ -17,7 +17,7 @@ def visit_class(node: ClassDef, current_file_path: str = None):
     yield class_ent
 
     # Visit parents
-    parent_classes = node.ancestors(recurs=False)
+    parent_classes = cls.ancestors(recurs=False)
     for parent_class in parent_classes:
         child_qualified_name = qualified_name
         parent_qualified_name = parent_class.qname()
@@ -30,7 +30,7 @@ def visit_class(node: ClassDef, current_file_path: str = None):
 
     # Visit children
     # yield from visit_children(node, current_file_path)
-    children_nodes = visit_children(node, current_file_path)
+    children_nodes = visit_children(cls, current_file_path)
 
     for child_node in children_nodes:
         yield child_node

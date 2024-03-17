@@ -17,16 +17,16 @@ from cskg.interpreter import get_module_prefix
 from cskg.interpreter.args import get_arguments_list, get_comprehensive_arguments_list
 
 
-def visit_function(node: FunctionDef, current_file_path: str = None):
-    name = node.name
-    qualified_name = node.qname()
+def visit_function(function: FunctionDef, current_file_path: str = None):
+    name = function.name
+    qualified_name = function.qname()
 
     # tree = node.repr_tree(ast_state=True)
     # logger.debug(f"tree: {tree}")
 
     # Function subtype
-    function_subtype = get_function_subtype(node)
-    args = get_arguments_list(node)
+    function_subtype = get_function_subtype(function)
+    args = get_arguments_list(function)
     args_flat = [f"{arg_name}: {arg_type}" for arg_name, arg_type in args]
 
     if function_subtype == "function":
@@ -40,7 +40,7 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
         yield function_ent
 
     else:
-        class_node = node.parent.frame()
+        class_node = function.parent.frame()
         class_name = class_node.name
         class_qualified_name = class_node.qname()
         method_ent = {
@@ -55,18 +55,18 @@ def visit_function(node: FunctionDef, current_file_path: str = None):
         }
         yield method_ent
 
-    yield from visit_function_called_nodes(node, current_file_path)
-    yield from visit_function_return_node(node, current_file_path)
-    yield from visit_function_arguments_nodes(node, current_file_path)
-    yield from visit_function_local_variables(node, current_file_path)
+    yield from visit_function_called_nodes(function, current_file_path)
+    yield from visit_function_return_node(function, current_file_path)
+    yield from visit_function_arguments_nodes(function, current_file_path)
+    yield from visit_function_local_variables(function, current_file_path)
 
 
-def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None):
+def visit_function_called_nodes(function: FunctionDef, current_file_path: str = None):
     """
     Visit body and write down node function calls other functions.
     """
 
-    calls = list(node.nodes_of_class(Call))
+    calls = list(function.nodes_of_class(Call))
     called_funcs = [call.func for call in calls]
 
     logger.debug(f"function calls: {calls}")
@@ -94,7 +94,7 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
             logger.error(f"Could not infer function call (soft): {called_func}")
             continue
 
-        function_qualified_name = node.qname()
+        function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
 
         prefix = get_module_prefix(current_file_path)
@@ -110,15 +110,15 @@ def visit_function_called_nodes(node: FunctionDef, current_file_path: str = None
         yield calls_rel
 
 
-def visit_function_return_node(node: FunctionDef, current_file_path: str):
+def visit_function_return_node(function: FunctionDef, current_file_path: str):
     """
     Visit body and write down node function returns
     """
 
     try:
-        inference_results = node.infer_call_result(None)
+        inference_results = function.infer_call_result(None)
     except InferenceError:
-        logger.error(f"Could not infer function return: {node}")
+        logger.error(f"Could not infer function return: {function}")
         return
 
     inferred_nodes = filter(lambda node: node is not Uninferable, inference_results)
@@ -142,7 +142,7 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
         if not return_type.startswith(prefix):
             continue
 
-        function_qualified_name = node.qname()
+        function_qualified_name = function.qname()
         class_qualified_name = return_type
         returns_rel = {
             "type": "returns_rel",
@@ -153,15 +153,15 @@ def visit_function_return_node(node: FunctionDef, current_file_path: str):
         yield returns_rel
 
 
-def visit_function_arguments_nodes(node: FunctionDef, current_file_path: str):
-    arguments_list = get_arguments_list(node)
+def visit_function_arguments_nodes(function: FunctionDef, current_file_path: str):
+    arguments_list = get_arguments_list(function)
 
     for argument_name, inferred_type_qualified_name in arguments_list:
         prefix = get_module_prefix(current_file_path)
         if not inferred_type_qualified_name.startswith(prefix):
             continue
 
-        function_qualified_name = node.qname()
+        function_qualified_name = function.qname()
         yield {
             "type": "takes_rel",
             "function_qualified_name": function_qualified_name,
@@ -170,28 +170,28 @@ def visit_function_arguments_nodes(node: FunctionDef, current_file_path: str):
         }
 
 
-def get_function_subtype(node: FunctionDef):
+def get_function_subtype(function: FunctionDef):
     """
     Get function subtype: `function`, `method`, `classmethod`, `staticmethod`
     """
     try:
-        return node.type
+        return function.type
     except ParentMissingError:
         return "function"
     except Exception as e:
         raise e
 
 
-def visit_function_local_variables(node: FunctionDef, current_file_path: str):
+def visit_function_local_variables(function: FunctionDef, current_file_path: str):
     """
     Visit body and write down node function local variables
     """
-    local_vars = node.locals
+    local_vars = function.locals
 
     logger.debug(f"local_vars: {local_vars}")
 
     for var_name, assign_names in local_vars.items():
-        function_qualified_name = node.qname()
+        function_qualified_name = function.qname()
         var_qualified_name = function_qualified_name + "." + var_name
         access = get_variable_access(var_name)
 
