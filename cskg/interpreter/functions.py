@@ -1,28 +1,20 @@
-from more_itertools import flatten
 from astroid import (
     InferenceError,
     FunctionDef,
     Call,
     Uninferable,
     ParentMissingError,
-    AssignName,
-    Name,
-    Arguments,
-    Attribute,
 )
-from astroid.typing import InferenceResult
 from loguru import logger
 
 from cskg.interpreter import get_module_prefix
 from cskg.interpreter.args import get_arguments_list, get_comprehensive_arguments_list
+from cskg.interpreter.vars import visit_local_variables
 
 
 def visit_function(function: FunctionDef, current_file_path: str = None):
     name = function.name
     qualified_name = function.qname()
-
-    # tree = node.repr_tree(ast_state=True)
-    # logger.debug(f"tree: {tree}")
 
     # Function subtype
     function_subtype = get_function_subtype(function)
@@ -58,7 +50,7 @@ def visit_function(function: FunctionDef, current_file_path: str = None):
     yield from visit_function_called_nodes(function, current_file_path)
     yield from visit_function_return_node(function, current_file_path)
     yield from visit_function_arguments_nodes(function, current_file_path)
-    yield from visit_function_local_variables(function, current_file_path)
+    yield from visit_local_variables(function, current_file_path)
 
 
 def visit_function_called_nodes(function: FunctionDef, current_file_path: str = None):
@@ -69,8 +61,8 @@ def visit_function_called_nodes(function: FunctionDef, current_file_path: str = 
     calls = list(function.nodes_of_class(Call))
     called_funcs = [call.func for call in calls]
 
-    logger.debug(f"function calls: {calls}")
-    logger.debug(f"function infers: {called_funcs}")
+    # logger.debug(f"function calls: {calls}")
+    # logger.debug(f"function infers: {called_funcs}")
 
     for called_func in called_funcs:
         try:
@@ -180,66 +172,3 @@ def get_function_subtype(function: FunctionDef):
         return "function"
     except Exception as e:
         raise e
-
-
-def visit_function_local_variables(function: FunctionDef, current_file_path: str):
-    """
-    Visit body and write down node function local variables
-    """
-    local_vars = function.locals
-
-    logger.debug(f"local_vars: {local_vars}")
-
-    for var_name, assign_names in local_vars.items():
-        function_qualified_name = function.qname()
-        var_qualified_name = function_qualified_name + "." + var_name
-        access = get_variable_access(var_name)
-
-        variable_ent = {
-            "type": "variable",
-            "name": var_name,
-            "qualified_name": var_qualified_name,
-            "access": access,
-            "file_path": current_file_path,
-        }
-        yield variable_ent
-
-        contains_rel = {
-            "type": "contains_fv_rel",
-            "function_qualified_name": function_qualified_name,
-            "variable_qualified_name": var_qualified_name,
-        }
-        yield contains_rel
-
-        inferred_types = []
-        for assign_name in assign_names:
-            try:
-                inference_results = assign_name.inferred()
-                inferred_types.extend(inference_results)
-            except InferenceError:
-                logger.error(f"Could not infer variable (hard): {assign_name}")
-                continue
-
-        inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
-        inferred_type = next(inferred_types, None)
-        logger.debug(f"inferred_type: {inferred_type}")
-
-        if not inferred_type:
-            continue
-
-        inferred_type_qualified_name = inferred_type.qname()
-
-        instantiates_rel = {
-            "type": "instantiates_rel",
-            "class_qualified_name": inferred_type_qualified_name,
-            "variable_qualified_name": var_qualified_name,
-        }
-        yield instantiates_rel
-
-
-def get_variable_access(variable_name: str):
-    if variable_name.startswith("__") and not variable_name.endswith("__"):
-        return "private"
-    if variable_name.startswith("_"):
-        return "protected"
-    return "public"
