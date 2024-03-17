@@ -21,6 +21,7 @@ def visit_function(function: FunctionDef, current_file_path: str = None):
     args = get_arguments_list(function)
     args_flat = [f"{arg_name}: {arg_type}" for arg_name, arg_type in args]
 
+    # Class
     if function_subtype == "function":
         function_ent = {
             "type": "function",
@@ -46,6 +47,15 @@ def visit_function(function: FunctionDef, current_file_path: str = None):
             "file_path": current_file_path,
         }
         yield method_ent
+
+    # Module
+    module = function.root()
+    contains_mf_rel = {
+        "type": "contains_mf_rel",
+        "module_qualified_name": module.qname(),
+        "function_qualified_name": qualified_name,
+    }
+    yield contains_mf_rel
 
     yield from visit_function_called_nodes(function, current_file_path)
     yield from visit_function_return_node(function, current_file_path)
