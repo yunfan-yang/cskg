@@ -38,7 +38,7 @@ def get_inferred_types(
 
 def get_inferred_type(node: NodeNG) -> NodeNG | None:
     inferred_types = get_inferred_types(node)
-    inferred_type = inferred_types[0] if inferred_types else None
+    inferred_type = inferred_types[0] if len(inferred_types) > 0 else None
 
     if isinstance(inferred_type, NodeNG):
         return inferred_type
