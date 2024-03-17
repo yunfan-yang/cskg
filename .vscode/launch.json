@@ -5,12 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
-            "type": "python",
+            "name": "Python: Test",
+            "type": "debugpy",
             "request": "launch",
             "program": "${cwd}/test.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true,
         }
     ]
 }
