@@ -5,9 +5,11 @@ from astroid import (
     Name,
     Arguments,
     FunctionDef,
+    Const,
 )
 from astroid.typing import InferenceResult
 from astroid.exceptions import NoDefault
+from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
 
 from cskg.interpreter import get_inferred_type
@@ -75,12 +77,7 @@ def visit_parameters(function: FunctionDef):
     for assign_name_obj in arguments_obj.arguments:
         param_name = assign_name_obj.name
         param_qname = f"{function_qname}.{param_name}"
-
-        # Inferred type (unused)
-        inferred_type = get_inferred_type(
-            assign_name_obj, lambda: assign_name_obj.infer_lhs()
-        )
-        logger.debug(f"Argument: {param_name} - {inferred_type}")
+        default_value = get_parameter_default_value(arguments_obj, assign_name_obj)
 
         # NOTE: Parameters are also local variables, and them entities are declared in
         # variables visitor, therfore, no variables and instantiates_rel are declared here.
@@ -90,5 +87,36 @@ def visit_parameters(function: FunctionDef):
             "type": "takes_rel",
             "function_qualified_name": function.qname(),
             "param_qualified_name": param_qname,
+            "default_value": default_value,
         }
         yield takes_rel
+
+
+def get_parameter_default_value(arguments_obj: Arguments, assign_name: AssignName):
+    param_name = assign_name.name
+
+    try:
+        default_value_obj = arguments_obj.default_value(param_name)
+
+        # If default value is a Name, infer its type
+        if isinstance(default_value_obj, Name):
+            default_value_inferred_type = get_inferred_type(default_value_obj)
+
+            # If inferrable and inferred type is a LocalsDictNodeNG, get its qname
+            if isinstance(default_value_inferred_type, LocalsDictNodeNG):
+                default_value = default_value_inferred_type.qname()
+
+            # Pure name
+            else:
+                default_value = default_value_obj.name
+
+        # If default value is a Const, get its value
+        elif isinstance(default_value_obj, Const):
+            default_value = default_value_obj.value
+
+        # If default value is not a Name or a Const, need further investigation
+        else:
+            raise Exception(f"Unknown default value type: {type(default_value_obj)}")
+
+    except NoDefault:
+        return None
