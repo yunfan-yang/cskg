@@ -7,7 +7,10 @@ from astroid import (
     FunctionDef,
 )
 from astroid.typing import InferenceResult
+from astroid.exceptions import NoDefault
 from loguru import logger
+
+from cskg.interpreter import get_inferred_type
 
 ComprehensiveArgument = tuple[AssignName, Name, InferenceResult]
 ComprehensiveArgumentList = list[ComprehensiveArgument]
@@ -63,3 +66,29 @@ def get_parameters_list(node: FunctionDef):
         arguments_list.append((argument_name, inferred_type_qualified_name))
 
     return arguments_list
+
+
+def visit_parameters(function: FunctionDef):
+    function_qname = function.qname()
+    arguments_obj = function.args
+
+    for assign_name_obj in arguments_obj.arguments:
+        param_name = assign_name_obj.name
+        param_qname = f"{function_qname}.{param_name}"
+
+        # Inferred type (unused)
+        inferred_type = get_inferred_type(
+            assign_name_obj, lambda: assign_name_obj.infer_lhs()
+        )
+        logger.debug(f"Argument: {param_name} - {inferred_type}")
+
+        # NOTE: Parameters are also local variables, and them entities are declared in
+        # variables visitor, therfore, no variables and instantiates_rel are declared here.
+
+        # Takes rel
+        takes_rel = {
+            "type": "takes_rel",
+            "function_qualified_name": function.qname(),
+            "param_qualified_name": param_qname,
+        }
+        yield takes_rel

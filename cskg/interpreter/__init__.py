@@ -3,9 +3,6 @@ from astroid import NodeNG, InferenceError
 from astroid.typing import SuccessfulInferenceResult
 from astroid.util import Uninferable
 from astroid.bases import Proxy
-from astroid.typing import InferenceResult
-
-from loguru import logger
 
 
 def get_module_prefix(folder_path: str):

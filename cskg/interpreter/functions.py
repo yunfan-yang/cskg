@@ -9,7 +9,7 @@ from loguru import logger
 from cskg.interpreter import get_inferred_type, get_inferred_types
 from cskg.interpreter.params import (
     get_parameters_list,
-    get_comprehensive_parameters_list,
+    visit_parameters,
 )
 from cskg.interpreter.vars import visit_local_variables
 
@@ -24,7 +24,7 @@ def visit_function(function: FunctionDef):
     args = get_parameters_list(function)
     args_flat = [f"{arg_name}: {arg_type}" for arg_name, arg_type in args]
 
-    logger.debug(f"function: {qualified_name} ({function_subtype})")
+    # logger.debug(f"function: {qualified_name} ({function_subtype})")
 
     # Class
     if function_subtype == "function":
@@ -74,8 +74,8 @@ def visit_function(function: FunctionDef):
 
     yield from visit_function_called_nodes(function)
     yield from visit_function_return_node(function)
-    yield from visit_function_arguments_nodes(function)
     yield from visit_local_variables(function)
+    yield from visit_parameters(function)
 
 
 def visit_function_called_nodes(function: FunctionDef):
@@ -130,19 +130,6 @@ def visit_function_return_node(function: FunctionDef):
         }
 
         yield returns_rel
-
-
-def visit_function_arguments_nodes(function: FunctionDef):
-    arguments_list = get_parameters_list(function)
-
-    for argument_name, inferred_type_qualified_name in arguments_list:
-        function_qualified_name = function.qname()
-        yield {
-            "type": "takes_rel",
-            "function_qualified_name": function_qualified_name,
-            "argument_name": argument_name,
-            "argument_type_qualified_name": inferred_type_qualified_name,
-        }
 
 
 def get_function_subtype(function: FunctionDef):

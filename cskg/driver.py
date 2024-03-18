@@ -128,7 +128,7 @@ class Driver:
         takes_rel_composer = RelationshipComposer(
             "TAKES",
             from_field=("function_qualified_name", "function"),
-            to_field=("argument_type_qualified_name", "class"),
+            to_field=("param_qualified_name", "variable"),
         )
         returns_rel_composer = RelationshipComposer(
             "RETURNS",
