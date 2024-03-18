@@ -21,17 +21,23 @@ def visit_parameters(function: FunctionDef):
 
     for assign_name_obj in arguments_obj.arguments:
         param_name = assign_name_obj.name
-        param_qname = f"{function_qname}.{param_name}"
         default_value = get_parameter_default_value(arguments_obj, assign_name_obj)
 
-        # NOTE: Parameters are also local variables, and them entities are declared in
-        # variables visitor, therfore, no variables and instantiates_rel are declared here.
+        inferred_type = get_inferred_type(
+            assign_name_obj, lambda: assign_name_obj.infer_lhs()
+        )
+
+        if isinstance(inferred_type, LocalsDictNodeNG):
+            class_qname = inferred_type.qname()
+        else:
+            class_qname = None
 
         # Takes rel
         takes_rel = {
             "type": "takes_rel",
-            "function_qualified_name": function.qname(),
-            "param_qualified_name": param_qname,
+            "function_qualified_name": function_qname,
+            "param_class_qualified_name": class_qname,
+            "param_name": param_name,
             "default_value": default_value,
         }
         yield takes_rel
