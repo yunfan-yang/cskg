@@ -60,7 +60,7 @@ def visit_function(function: FunctionDef):
         contains_cf_rel = {
             "type": "contains_cf_rel",
             "class_qualified_name": qualified_name,
-            "function_qualified_name": qualified_name,
+            "method_qualified_name": qualified_name,
         }
         yield contains_cf_rel
 

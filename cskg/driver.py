@@ -118,7 +118,7 @@ class Driver:
         contains_cf_rel_composer = RelationshipComposer(
             "CONTAINS",
             from_field=("class_qualified_name", "class"),
-            to_field=("function_qualified_name", "function"),
+            to_field=("method_qualified_name", "function"),
         )
         contains_fv_rel_composer = RelationshipComposer(
             "CONTAINS",
