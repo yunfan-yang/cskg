@@ -7,10 +7,7 @@ from astroid import (
 from loguru import logger
 
 from cskg.interpreter import get_inferred_type, get_inferred_types
-from cskg.interpreter.params import (
-    get_parameters_list,
-    visit_parameters,
-)
+from cskg.interpreter.params import visit_parameters
 from cskg.interpreter.vars import visit_local_variables
 
 
@@ -21,9 +18,6 @@ def visit_function(function: FunctionDef):
 
     # Function subtype
     function_subtype = get_function_subtype(function)
-    args = get_parameters_list(function)
-    args_flat = [f"{arg_name}: {arg_type}" for arg_name, arg_type in args]
-
     # logger.debug(f"function: {qualified_name} ({function_subtype})")
 
     # Class
@@ -34,7 +28,6 @@ def visit_function(function: FunctionDef):
             "name": name,
             "qualified_name": qualified_name,
             "file_path": file_path,
-            "args": args_flat,
         }
         yield function_ent
 
@@ -57,7 +50,6 @@ def visit_function(function: FunctionDef):
             "subtype": function_subtype,
             "name": name,
             "qualified_name": qualified_name,
-            "args": args_flat,
             "class_name": class_name,
             "class_qualified_name": class_qualified_name,
             "file_path": file_path,

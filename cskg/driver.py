@@ -87,7 +87,7 @@ class Driver:
         )
         function_composer = EntityComposer(
             "Function",
-            included_fields=["name", "qualified_name", "args", "file_path"],
+            included_fields=["name", "qualified_name", "file_path"],
         )
         method_composer = EntityComposer(
             ("Method", "Function"),
