@@ -104,15 +104,15 @@ def get_parameter_default_value(arguments_obj: Arguments, assign_name: AssignNam
 
             # If inferrable and inferred type is a LocalsDictNodeNG, get its qname
             if isinstance(default_value_inferred_type, LocalsDictNodeNG):
-                default_value = default_value_inferred_type.qname()
+                return default_value_inferred_type.qname()
 
             # Pure name
             else:
-                default_value = default_value_obj.name
+                return default_value_obj.name
 
         # If default value is a Const, get its value
         elif isinstance(default_value_obj, Const):
-            default_value = default_value_obj.value
+            return default_value_obj.value
 
         # If default value is not a Name or a Const, need further investigation
         else:
