@@ -1,16 +1,12 @@
 from astroid import (
-    InferenceError,
-    Uninferable,
     AssignName,
     Name,
     Arguments,
     FunctionDef,
     Const,
 )
-from astroid.typing import InferenceResult
 from astroid.exceptions import NoDefault
 from astroid.nodes import LocalsDictNodeNG
-from loguru import logger
 
 from cskg.interpreter import get_inferred_type
 

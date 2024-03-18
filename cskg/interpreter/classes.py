@@ -1,5 +1,4 @@
 from astroid import ClassDef
-from loguru import logger
 
 from cskg.interpreter.nodes import visit_children
 from cskg.interpreter.vars import visit_local_variables
