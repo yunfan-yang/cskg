@@ -10,7 +10,7 @@ def visit_module(module: Module):
     file_path = module.root().file
 
     module_ent = {
-        "type": "module",
+        "type": "module_ent",
         "name": name,
         "qualified_name": qualified_name,
         "file_path": file_path,

@@ -26,7 +26,7 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
 
         # Variable entity
         variable_ent = {
-            "type": "variable",
+            "type": "variable_ent",
             "name": var_name,
             "qualified_name": var_qname,
             "access": access,

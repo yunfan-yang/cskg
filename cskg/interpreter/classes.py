@@ -12,7 +12,7 @@ def visit_class(cls: ClassDef):
 
     # Create class
     class_ent = {
-        "type": "class",
+        "type": "class_ent",
         "name": name,
         "qualified_name": qualified_name,
         "file_path": file_path,

@@ -24,7 +24,7 @@ def visit_function(function: FunctionDef):
     if function_subtype == "function":
         # Function
         function_ent = {
-            "type": "function",
+            "type": "function_ent",
             "name": name,
             "qualified_name": qualified_name,
             "file_path": file_path,
@@ -46,7 +46,7 @@ def visit_function(function: FunctionDef):
         class_name = class_node.name
         class_qualified_name = class_node.qname()
         method_ent = {
-            "type": "method",
+            "type": "method_ent",
             "subtype": function_subtype,
             "name": name,
             "qualified_name": qualified_name,

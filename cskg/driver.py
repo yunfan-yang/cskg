@@ -44,10 +44,6 @@ class Driver:
         _mongo_drop_all(self.mongo_db)
         _neo_drop_all(self.neo_db)
 
-        # Create indexes
-        self.mongo_db["class"].create_index("qualified_name", unique=True)
-        self.mongo_db.function.create_index("qualified_name", unique=True)
-
     def run(self):
         # Instantiate
         self.interpreter = CodeInterpreter(self.folder_path)
@@ -136,10 +132,10 @@ class Driver:
             to_field=("class_qualified_name", "class"),
         )
 
-        classes = self.mongo_db["class"].find()
-        functions = self.mongo_db["function"].find()
-        methods = self.mongo_db["method"].find()
-        variables = self.mongo_db["variable"].find()
+        classes = self.mongo_db["class_ent"].find()
+        functions = self.mongo_db["function_ent"].find()
+        methods = self.mongo_db["method_ent"].find()
+        variables = self.mongo_db["variable_ent"].find()
         calls_rels = self.mongo_db["calls_rel"].find()
         inherits_rels = self.mongo_db["inherits_rel"].find()
         contains_cf_rels = self.mongo_db["contains_cf_rel"].find()
