@@ -2,8 +2,8 @@ from astroid import (
     FunctionDef,
     Call,
     ParentMissingError,
-    NodeNG,
 )
+from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
 
 from cskg.interpreter import get_inferred_type, get_inferred_types
@@ -81,7 +81,7 @@ def visit_function_called_nodes(function: FunctionDef):
 
     for called_func in called_funcs:
         inferred_node = get_inferred_type(called_func)
-        if not isinstance(inferred_node, NodeNG):
+        if not isinstance(inferred_node, LocalsDictNodeNG):
             logger.error(f"Could not infer function call (soft): {called_func}")
             continue
 
