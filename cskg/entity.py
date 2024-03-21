@@ -36,7 +36,7 @@ class Entity(dict, ABC, metaclass=EntityMeta):
 
     @property
     def labels(self):
-        return (self.label, *self.extra_labels)
+        return {self.label, *self.extra_labels}
 
     def __setitem__(self, key, value):
         if key in self.__final_fields__:
@@ -106,7 +106,7 @@ class FunctionEntity(Entity):
 class MethodEntity(Entity):
     type = "method_ent"
     label = "Method"
-    extra_labels = "Function"
+    extra_labels = ("Function",)
 
 
 class VariableEntity(Entity):
