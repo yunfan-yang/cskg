@@ -135,7 +135,7 @@ def visit_function_return_node(function: FunctionDef):
 
         if isinstance(inferred_node, LocalsDictNodeNG):
             return_type = inferred_node.qname()
-        elif hasattr(inferred_node, "pytype"):
+        elif isinstance(inferred_node, BaseContainer):
             return_type = inferred_node.pytype()
         else:
             return_type = type(inferred_node).__name__
