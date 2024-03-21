@@ -6,8 +6,6 @@ class EntityMeta(ABCMeta):
     def __init__(cls, name, bases, dct):
         if not hasattr(cls, "type") or not hasattr(cls, "label"):
             raise AttributeError(f"Class {name} lacks required 'label' class attribute")
-        if not hasattr(cls, "labels"):
-            cls.labels = (cls.label,)
         super().__init__(name, bases, dct)
 
 
@@ -23,6 +21,9 @@ class Entity(dict, ABC, metaclass=EntityMeta):
         file_path: str,
         **kwargs,
     ):
+        if not hasattr(self, "labels"):
+            self.labels = (self.label,)
+
         super().__init__(
             type=self.type,
             label=self.label,
