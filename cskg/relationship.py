@@ -58,34 +58,34 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
 class CallsRel(Relationship):
     type = "calls_rel"
-    label = "Calls"
+    label = "CALLS"
 
 
 class InheritsRel(Relationship):
     type = "inherits_rel"
-    label = "Inherits"
+    label = "INHERITS"
 
 
 class ContainsRel(Relationship):
     type = "contains_rel"
-    label = "Contains"
+    label = "CONTAINS"
 
 
 class TakesRel(Relationship):
     type = "takes_rel"
-    label = "Takes"
+    label = "TAKES"
 
 
 class ReturnsRel(Relationship):
     type = "returns_rel"
-    label = "Returns"
+    label = "RETURNS"
 
 
 class YieldRel(Relationship):
     type = "yield_rel"
-    label = "Yield"
+    label = "YIELDS"
 
 
 class InstantiatesRel(Relationship):
     type = "instantiates_rel"
-    label = "Instantiates"
+    label = "INSTANTIATES"
