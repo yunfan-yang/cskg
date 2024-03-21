@@ -6,6 +6,8 @@ class EntityMeta(ABCMeta):
     def __init__(cls, name, bases, dct):
         if not hasattr(cls, "type") or not hasattr(cls, "label"):
             raise AttributeError(f"Class {name} lacks required 'label' class attribute")
+        if not hasattr(cls, "labels"):
+            cls.labels = (cls.label,)
         super().__init__(name, bases, dct)
 
 
@@ -23,7 +25,7 @@ class Entity(dict, ABC, metaclass=EntityMeta):
     ):
         super().__init__(
             type=self.type,
-            label=self.label,
+            label=self.labels or self.label,
             name=name,
             qualified_name=qualified_name,
             file_path=file_path,
@@ -69,7 +71,8 @@ class FunctionEntity(Entity):
 
 class MethodEntity(FunctionEntity):
     type = "method_ent"
-    label = ("Method", "Function")
+    label = "Method"
+    labels = ("Method", "Function")
 
 
 class VariableEntity(Entity):
