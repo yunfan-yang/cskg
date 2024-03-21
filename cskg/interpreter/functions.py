@@ -67,6 +67,7 @@ def visit_function(function: FunctionDef):
 
     yield from visit_function_called_nodes(function)
     yield from visit_function_return_node(function)
+    yield from visit_function_yield_node(function)
     yield from visit_local_variables(function)
     yield from visit_parameters(function)
 
@@ -135,6 +136,27 @@ def visit_function_return_node(function: FunctionDef):
         }
 
         yield returns_rel
+
+
+def visit_function_yield_node(function: FunctionDef):
+    """
+    Visit body and write down node function yields
+    """
+    inferred_nodes = get_inferred_types(
+        function, lambda: function.infer_yield_result(None)
+    )
+
+    for inferred_node in inferred_nodes:
+        return_type = get_inferred_node_qname(inferred_node)
+        function_qualified_name = function.qname()
+        class_qualified_name = return_type
+        yields_rel = {
+            "type": "yields_rel",
+            "function_qualified_name": function_qualified_name,
+            "class_qualified_name": class_qualified_name,
+        }
+
+        yield yields_rel
 
 
 def get_function_subtype(function: FunctionDef):
