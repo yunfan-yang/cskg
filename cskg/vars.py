@@ -29,8 +29,8 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
         variable_ent = VariableEntity(
             name=var_name,
             qualified_name=var_qname,
-            access=access,
             file_path=file_path,
+            access=access,
         )
         yield variable_ent
 

@@ -6,6 +6,7 @@ from astroid import (
 from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
+from cskg.entity import FunctionEntity, MethodEntity
 from cskg.interpreter import get_inferred_type, get_inferred_types
 from cskg.interpreter.params import visit_parameters
 from cskg.interpreter.vars import visit_local_variables
@@ -23,13 +24,12 @@ def visit_function(function: FunctionDef):
     # Class
     if function_subtype == "function":
         # Function
-        function_ent = {
-            "type": "function_ent",
-            "file_path": file_path,
-            "name": name,
-            "qualified_name": qualified_name,
-            "subtype": function_subtype,
-        }
+        function_ent = FunctionEntity(
+            name=name,
+            qualified_name=qualified_name,
+            file_path=file_path,
+            subtype=function_subtype,
+        )
         yield function_ent
 
         # Module
@@ -48,15 +48,14 @@ def visit_function(function: FunctionDef):
         class_node = function.parent.frame()
         class_name = class_node.name
         class_qualified_name = class_node.qname()
-        method_ent = {
-            "type": "method_ent",
-            "subtype": function_subtype,
-            "name": name,
-            "qualified_name": qualified_name,
-            "class_name": class_name,
-            "class_qualified_name": class_qualified_name,
-            "file_path": file_path,
-        }
+        method_ent = MethodEntity(
+            name=name,
+            qualified_name=qualified_name,
+            file_path=file_path,
+            subtype=function_subtype,
+            class_name=class_name,
+            class_qualified_name=class_qualified_name,
+        )
         yield method_ent
 
         # Class

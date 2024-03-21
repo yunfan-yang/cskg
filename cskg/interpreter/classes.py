@@ -1,5 +1,6 @@
 from astroid import ClassDef
 
+from cskg.entity import ClassEntity
 from cskg.interpreter.nodes import visit_children
 from cskg.interpreter.vars import visit_local_variables
 
@@ -11,12 +12,11 @@ def visit_class(cls: ClassDef):
     file_path = cls.root().file
 
     # Create class
-    class_ent = {
-        "type": "class_ent",
-        "name": name,
-        "qualified_name": qualified_name,
-        "file_path": file_path,
-    }
+    class_ent = ClassEntity(
+        name=name,
+        qualified_name=qualified_name,
+        file_path=file_path,
+    )
     yield class_ent
 
     # Module contains class
