@@ -17,6 +17,8 @@ class AbstractNodeComposer(ABC):
         for key, value in dictionary.items():
             if isinstance(value, str):
                 keypairs.append(f"{key}: '{value}'")
+            elif value is None:
+                keypairs.append(f"{key}: NULL")
             else:
                 keypairs.append(f"{key}: {value}")
         return ", ".join(keypairs)
@@ -68,9 +70,13 @@ class RelationshipComposer(AbstractNodeComposer):
         field_a_type_neo = field_a_type.capitalize()
         field_b_type_neo = field_b_type.capitalize()
 
+        relationship_properties = self.get_dictionary_cypher(
+            relationship, ["_id", field_a_name, field_b_name]
+        )
+
         return f"""
             MATCH (a:{field_a_type_neo} {{qualified_name: "{field_a_value}"}}), (b:{field_b_type_neo} {{qualified_name: "{field_b_value}"}})
-            CREATE (a)-[:{relation_type} {{}}]->(b)
+            CREATE (a)-[:{relation_type} {{ {relationship_properties} }}]->(b)
         """
 
 
