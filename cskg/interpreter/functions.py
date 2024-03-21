@@ -2,6 +2,7 @@ from astroid import (
     FunctionDef,
     Call,
     ParentMissingError,
+    Const,
 )
 from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
@@ -77,9 +78,34 @@ def visit_function_called_nodes(function: FunctionDef):
     """
 
     calls = list(function.nodes_of_class(Call))
-    called_funcs = [call.func for call in calls]
+    # called_funcs = [call.func for call in calls]
 
-    for called_func in called_funcs:
+    for call in calls:
+        # Arguments
+        args = call.args  # The positional arguments being given to the call
+        keywords = call.keywords  # The keyword arguments being given to the call
+
+        arguments = []
+
+        for arg in args:
+            inferred_node = get_inferred_type(arg)
+            if isinstance(inferred_node, LocalsDictNodeNG):
+                arguments.append(inferred_node.qname())
+            else:
+                arguments.append("Any")
+
+        for keyword in keywords:
+            arg_name = keyword.arg
+            if not arg_name:
+                continue
+            inferred_node = get_inferred_type(keyword.value)
+            if isinstance(inferred_node, LocalsDictNodeNG):
+                arguments.append(arg_name + "=" + inferred_node.qname())
+            else:
+                arguments.append(arg_name + "=" + "Any")
+
+        # Callee function
+        called_func = call.func  # What is being called
         inferred_node = get_inferred_type(called_func)
         if not isinstance(inferred_node, LocalsDictNodeNG):
             logger.error(f"Could not infer function call (soft): {called_func}")
@@ -91,6 +117,7 @@ def visit_function_called_nodes(function: FunctionDef):
             "type": "calls_rel",
             "caller_qualified_name": function_qualified_name,
             "callee_qualified_name": callee_qualified_name,
+            "arguments": arguments,
         }
 
         yield calls_rel

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import json
 from typing import Any, Iterable
 
 
@@ -13,12 +14,15 @@ class AbstractNodeComposer(ABC):
             excluded_fields = ["_id"]
 
         dictionary = _exclude_fields_dict(dictionary, excluded_fields)
+
         keypairs = []
         for key, value in dictionary.items():
             if isinstance(value, str):
                 keypairs.append(f"{key}: '{value}'")
             elif value is None:
                 keypairs.append(f"{key}: NULL")
+            elif isinstance(value, (list, dict)):
+                return key + ": " + json.dumps(value).replace("'", "")
             else:
                 keypairs.append(f"{key}: {value}")
         return ", ".join(keypairs)
