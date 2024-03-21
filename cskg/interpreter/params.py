@@ -31,8 +31,10 @@ def visit_parameters(function: FunctionDef):
         # Takes rel
         takes_rel = {
             "type": "takes_rel",
-            "function_qualified_name": function_qname,
-            "param_class_qualified_name": class_qname,
+            "from_type": "function",
+            "from_qualified_name": function_qname,
+            "to_type": "parameter",
+            "to_class_qualified_name": class_qname,
             "param_name": param_name,
             "default_value": default_value,
         }

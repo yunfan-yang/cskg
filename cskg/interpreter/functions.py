@@ -36,8 +36,10 @@ def visit_function(function: FunctionDef):
         module = function.root()
         contains_mf_rel = {
             "type": "contains_mf_rel",
-            "module_qualified_name": module.qname(),
-            "function_qualified_name": qualified_name,
+            "from_type": "module",
+            "from_qualified_name": module.qname(),
+            "to_type": "function",
+            "to_qualified_name": qualified_name,
         }
         yield contains_mf_rel
 
@@ -60,8 +62,10 @@ def visit_function(function: FunctionDef):
         # Class
         contains_cf_rel = {
             "type": "contains_cf_rel",
-            "class_qualified_name": qualified_name,
-            "method_qualified_name": qualified_name,
+            "from_type": "class",
+            "from_qualified_name": qualified_name,
+            "to_type": "method",
+            "to_qualified_name": qualified_name,
         }
         yield contains_cf_rel
 
@@ -109,8 +113,10 @@ def visit_function_called_nodes(function: FunctionDef):
         callee_qualified_name = inferred_node.qname()
         calls_rel = {
             "type": "calls_rel",
-            "caller_qualified_name": function_qualified_name,
-            "callee_qualified_name": callee_qualified_name,
+            "from_type": "function",
+            "from_qualified_name": function_qualified_name,
+            "to_type": "function",
+            "to_qualified_name": callee_qualified_name,
             "arguments": arguments,
         }
 
@@ -131,10 +137,11 @@ def visit_function_return_node(function: FunctionDef):
         class_qualified_name = return_type
         returns_rel = {
             "type": "returns_rel",
-            "function_qualified_name": function_qualified_name,
-            "class_qualified_name": class_qualified_name,
+            "from_type": "function",
+            "from_qualified_name": function_qualified_name,
+            "to_type": "class",
+            "to_qualified_name": class_qualified_name,
         }
-
         yield returns_rel
 
 
@@ -152,10 +159,11 @@ def visit_function_yield_node(function: FunctionDef):
         class_qualified_name = return_type
         yields_rel = {
             "type": "yields_rel",
-            "function_qualified_name": function_qualified_name,
-            "class_qualified_name": class_qualified_name,
+            "from_type": "function",
+            "from_qualified_name": function_qualified_name,
+            "to_type": "class",
+            "to_qualified_name": class_qualified_name,
         }
-
         yield yields_rel
 
 

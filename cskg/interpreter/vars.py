@@ -35,7 +35,7 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
         yield variable_ent
 
         # Containment relationships
-        yield get_contains_rel(node, var_qname)
+        yield from get_contains_rel(node, var_qname)
 
         # Variable instantiate from class
         var_inferred_type = get_inferred_type(var_assign_name)
@@ -48,8 +48,10 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
         inferred_type_qname = var_inferred_type.qname()
         instantiates_rel = {
             "type": "instantiates_rel",
-            "class_qualified_name": inferred_type_qname,
-            "variable_qualified_name": var_qname,
+            "from_type": "class",
+            "from_qualified_name": inferred_type_qname,
+            "to_type": "variable",
+            "to_qualified_name": var_qname,
         }
         yield instantiates_rel
 
@@ -66,22 +68,31 @@ def get_contains_rel(node: NodeNG, var_qname: str):
     qname = node.qname()
 
     if isinstance(node, ClassDef):
-        return {
+        contains_cv_rel = {
             "type": "contains_cv_rel",
-            "class_qualified_name": qname,
-            "variable_qualified_name": var_qname,
+            "from_type": "class",
+            "from_qualified_name": qname,
+            "to_type": "variable",
+            "to_qualified_name": var_qname,
         }
+        yield contains_cv_rel
     elif isinstance(node, FunctionDef):
-        return {
+        contains_fv_rel = {
             "type": "contains_fv_rel",
+            "from_type": "function",
             "function_qualified_name": qname,
+            "to_type": "variable",
             "variable_qualified_name": var_qname,
         }
+        yield contains_fv_rel
     elif isinstance(node, Module):
-        return {
+        contains_mv_rel = {
             "type": "contains_mv_rel",
+            "from_type": "module",
             "module_qualified_name": qname,
+            "to_type": "variable",
             "variable_qualified_name": var_qname,
         }
+        yield contains_mv_rel
     else:
         raise ValueError(f"Node {node} is not a ClassDef or FunctionDef")

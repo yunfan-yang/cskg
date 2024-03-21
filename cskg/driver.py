@@ -81,66 +81,18 @@ class Driver:
         method_composer = EntityComposer(("Method", "Function"))
         variable_composer = EntityComposer("Variable")
 
-        calls_rel_composer = RelationshipComposer(
-            "CALLS",
-            from_field=("caller_qualified_name", "function"),
-            to_field=("callee_qualified_name", "function"),
-        )
-        inherits_rel_composer = RelationshipComposer(
-            "INHERITS",
-            from_field=("child_qualified_name", "class"),
-            to_field=("parent_qualified_name", "class"),
-        )
-        contains_mc_rel_composer = RelationshipComposer(
-            "CONTAINS",
-            from_field=("module_qualified_name", "module"),
-            to_field=("class_qualified_name", "class"),
-        )
-        contains_mf_rel_composer = RelationshipComposer(
-            "CONTAINS",
-            from_field=("module_qualified_name", "module"),
-            to_field=("function_qualified_name", "function"),
-        )
-        contains_mv_rel_composer = RelationshipComposer(
-            "CONTAINS",
-            from_field=("module_qualified_name", "module"),
-            to_field=("variable_qualified_name", "variable"),
-        )
-        contains_cf_rel_composer = RelationshipComposer(
-            "CONTAINS",
-            from_field=("class_qualified_name", "class"),
-            to_field=("method_qualified_name", "function"),
-        )
-        contains_cv_rel_composer = RelationshipComposer(
-            "CONTAINS",
-            from_field=("class_qualified_name", "class"),
-            to_field=("variable_qualified_name", "variable"),
-        )
-        contains_fv_rel_composer = RelationshipComposer(
-            "CONTAINS",
-            from_field=("function_qualified_name", "function"),
-            to_field=("variable_qualified_name", "variable"),
-        )
-        takes_rel_composer = RelationshipComposer(
-            "TAKES",
-            from_field=("function_qualified_name", "function"),
-            to_field=("param_class_qualified_name", "class"),
-        )
-        returns_rel_composer = RelationshipComposer(
-            "RETURNS",
-            from_field=("function_qualified_name", "function"),
-            to_field=("class_qualified_name", "class"),
-        )
-        yields_rel_composer = RelationshipComposer(
-            "YIELDS",
-            from_field=("function_qualified_name", "function"),
-            to_field=("class_qualified_name", "class"),
-        )
-        instantiates_rel_composer = RelationshipComposer(
-            "INSTANTIATES",
-            from_field=("function_qualified_name", "function"),
-            to_field=("class_qualified_name", "class"),
-        )
+        calls_rel_composer = RelationshipComposer("CALLS")
+        inherits_rel_composer = RelationshipComposer("INHERITS")
+        contains_mc_rel_composer = RelationshipComposer("CONTAINS")
+        contains_mf_rel_composer = RelationshipComposer("CONTAINS")
+        contains_mv_rel_composer = RelationshipComposer("CONTAINS")
+        contains_cf_rel_composer = RelationshipComposer("CONTAINS")
+        contains_cv_rel_composer = RelationshipComposer("CONTAINS")
+        contains_fv_rel_composer = RelationshipComposer("CONTAINS")
+        takes_rel_composer = RelationshipComposer("TAKES")
+        returns_rel_composer = RelationshipComposer("RETURNS")
+        yields_rel_composer = RelationshipComposer("YIELDS")
+        instantiates_rel_composer = RelationshipComposer("INSTANTIATES")
 
         classes = self.mongo_db["class_ent"].find()
         functions = self.mongo_db["function_ent"].find()
@@ -165,16 +117,30 @@ class Driver:
         self.graph_composer.add_entities(variables, variable_composer)
         self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
         self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
-        self.graph_composer.add_relationships(contains_mc_rels, contains_mc_rel_composer)
-        self.graph_composer.add_relationships(contains_mf_rels, contains_mf_rel_composer)
-        self.graph_composer.add_relationships(contains_mv_rels, contains_mv_rel_composer)
-        self.graph_composer.add_relationships(contains_cf_rels, contains_cf_rel_composer)
-        self.graph_composer.add_relationships(contains_cv_rels, contains_cv_rel_composer)
-        self.graph_composer.add_relationships(contains_fv_rels, contains_fv_rel_composer)
+        self.graph_composer.add_relationships(
+            contains_mc_rels, contains_mc_rel_composer
+        )
+        self.graph_composer.add_relationships(
+            contains_mf_rels, contains_mf_rel_composer
+        )
+        self.graph_composer.add_relationships(
+            contains_mv_rels, contains_mv_rel_composer
+        )
+        self.graph_composer.add_relationships(
+            contains_cf_rels, contains_cf_rel_composer
+        )
+        self.graph_composer.add_relationships(
+            contains_cv_rels, contains_cv_rel_composer
+        )
+        self.graph_composer.add_relationships(
+            contains_fv_rels, contains_fv_rel_composer
+        )
         self.graph_composer.add_relationships(takes_rels, takes_rel_composer)
         self.graph_composer.add_relationships(returns_rels, returns_rel_composer)
         self.graph_composer.add_relationships(yields_rels, yields_rel_composer)
-        self.graph_composer.add_relationships(instantiates_rels, instantiates_rel_composer)
+        self.graph_composer.add_relationships(
+            instantiates_rels, instantiates_rel_composer
+        )
 
         self.graph_composer.compose()
 

@@ -15,7 +15,7 @@ def visit_module(module: Module):
         "qualified_name": qualified_name,
         "file_path": file_path,
     }
-
     yield module_ent
+    
     yield from visit_local_variables(module)
     yield from visit_children(module)

@@ -48,34 +48,20 @@ def _exclude_fields_dict(dict: dict[str, Any], fields: list[str]):
 
 
 class RelationshipComposer(AbstractNodeComposer):
-    Field = tuple[str, str]
-    """
-    A tuple of (name: str, type: str).
-    """
-
-    def __init__(
-        self,
-        relation_label: str,
-        from_field: Field,
-        to_field: Field,
-    ):
+    def __init__(self, relation_label: str):
         self.relation_type = relation_label.upper()
-        self.from_field = from_field
-        self.to_field = to_field
 
     def get_cypher(self, relationship: dict[str, Any]):
         relation_type = self.relation_type
 
-        field_a_name, field_a_type = self.from_field
-        field_b_name, field_b_type = self.to_field
-
-        field_a_value = relationship.get(field_a_name)
-        field_b_value = relationship.get(field_b_name)
-        field_a_type_neo = field_a_type.capitalize()
-        field_b_type_neo = field_b_type.capitalize()
+        field_a_value = relationship.get("from_qualified_name")
+        field_b_value = relationship.get("to_qualified_name")
+        field_a_type_neo = relationship.get("from_type").capitalize()
+        field_b_type_neo = relationship.get("to_type").capitalize()
 
         relationship_properties = self.get_dictionary_cypher(
-            relationship, ["_id", field_a_name, field_b_name]
+            relationship,
+            ["_id", "from_qualified_name", "to_qualified_name", "from_type", "to_type"],
         )
 
         return f"""
