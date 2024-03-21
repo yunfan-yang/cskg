@@ -86,22 +86,16 @@ def visit_function_called_nodes(function: FunctionDef):
 
         for arg in args:
             inferred_node = get_inferred_type(arg)
-            if isinstance(inferred_node, LocalsDictNodeNG):
-                arguments.append(inferred_node.qname())
-            elif isinstance(inferred_node, BaseContainer):
-                arguments.append(inferred_node.pytype())
-            else:
-                arguments.append("Any")
+            argument_type = get_inferred_node_qname(inferred_node)
+            arguments.append(argument_type)
 
         for keyword in keywords:
             arg_name = keyword.arg
             if not arg_name:
                 continue
             inferred_node = get_inferred_type(keyword.value)
-            if isinstance(inferred_node, LocalsDictNodeNG):
-                arguments.append(arg_name + "=" + inferred_node.qname())
-            else:
-                arguments.append(arg_name + "=" + "Any")
+            argument_type = get_inferred_node_qname(inferred_node)
+            arguments.append(f"{arg_name}={argument_type}")
 
         # Callee function
         called_func = call.func  # What is being called
@@ -131,15 +125,7 @@ def visit_function_return_node(function: FunctionDef):
     )
 
     for inferred_node in inferred_nodes:
-        return_type = None
-
-        if isinstance(inferred_node, LocalsDictNodeNG):
-            return_type = inferred_node.qname()
-        elif isinstance(inferred_node, BaseContainer):
-            return_type = inferred_node.pytype()
-        else:
-            return_type = type(inferred_node).__name__
-
+        return_type = get_inferred_node_qname(inferred_node)
         function_qualified_name = function.qname()
         class_qualified_name = return_type
         returns_rel = {
@@ -161,3 +147,12 @@ def get_function_subtype(function: FunctionDef):
         return "function"
     except Exception as e:
         raise e
+
+
+def get_inferred_node_qname(inferred_node):
+    if isinstance(inferred_node, LocalsDictNodeNG):
+        return inferred_node.qname()
+    elif isinstance(inferred_node, BaseContainer):
+        return inferred_node.pytype()
+    else:
+        return "Any"
