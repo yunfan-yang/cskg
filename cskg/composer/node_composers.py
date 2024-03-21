@@ -4,7 +4,22 @@ from typing import Any, Iterable
 
 class AbstractNodeComposer(ABC):
     @abstractmethod
-    def get_cypher(self, entity: dict[str, Any]): ...
+    def get_cypher(self, entity: dict[str, Any]) -> str: ...
+
+    def get_dictionary_cypher(
+        self, dictionary: dict[str, Any], excluded_fields: list[str] = None
+    ) -> str:
+        if not excluded_fields:
+            excluded_fields = ["_id"]
+
+        dictionary = _exclude_fields_dict(dictionary, excluded_fields)
+        keypairs = []
+        for key, value in dictionary.items():
+            if isinstance(value, str):
+                keypairs.append(f"{key}: '{value}'")
+            else:
+                keypairs.append(f"{key}: {value}")
+        return ", ".join(keypairs)
 
 
 class EntityComposer(AbstractNodeComposer):
@@ -15,20 +30,10 @@ class EntityComposer(AbstractNodeComposer):
 
     def get_cypher(self, entity: dict[str, Any]):
         entity_type = self.entity_type
-
-        included_fields_dict = _exclude_fields_dict(entity, ["_id"])
-        entity_properties = []
-
-        for key, value in included_fields_dict.items():
-            if isinstance(value, str):
-                entity_properties.append(f"{key}: '{value}'")
-            else:
-                entity_properties.append(f"{key}: {value}")
-
-        entity_properties_neo = ", ".join(entity_properties)
+        entity_properties = self.get_dictionary_cypher(entity)
 
         return f"""
-            CREATE (:{entity_type} {{ {entity_properties_neo} }}) 
+            CREATE (:{entity_type} {{ {entity_properties} }}) 
         """
 
 
