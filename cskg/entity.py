@@ -11,8 +11,9 @@ class EntityMeta(ABCMeta):
 
 class Entity(dict, ABC, metaclass=EntityMeta):
     __final_fields__ = ["type", "label"]
-    type = "entity"
-    label = "Entity"
+    type: str = "entity"
+    label: str = "Entity"
+    labels: set[str]
 
     def __init__(
         self,
