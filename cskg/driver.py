@@ -8,34 +8,25 @@ from loguru import logger
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 
-DRIVER_CONFIGURATIONS = dict[str, Any]
-# Configurations:
-# {
-#     "NEO4J_URL": str,
-#     "MONGO_URL": str,
-# }
-
 
 class Driver:
-    def __init__(self, folder_path: str, configurations: DRIVER_CONFIGURATIONS):
+    def __init__(self, folder_path: str, neo4j_url: str, mongo_url: str):
         self.folder_path = folder_path
-        self.configurations = configurations
+        self.neo4j_url = neo4j_url
+        self.mongo_url = mongo_url
         self.interpreter = None
         self.graph_composer = None
         self.__init_database()
 
     def __init_database(self):
-        neo4j_url = self.configurations.get("NEO4J_URL")
-        mongo_url = self.configurations.get("MONGO_URL")
-
         # Load neomodel configurations
-        neomodel.config.DATABASE_URL = neo4j_url
+        neomodel.config.DATABASE_URL = self.neo4j_url
         neomodel.config.AUTO_INSTALL_LABELS = True
         self.neo_db = neomodel.db
-        self.neo_db.set_connection(neo4j_url)
+        self.neo_db.set_connection(self.neo4j_url)
 
         # Instantiate mongo db client
-        mongo_client = MongoClient(mongo_url)
+        mongo_client = MongoClient(self.mongo_url)
         mongo_db = mongo_client.code_interpreter
         self.mongo_db = mongo_db
 
