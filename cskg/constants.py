@@ -15,5 +15,6 @@ class Relationship(StrEnum):
     CONTAINS = "CONTAINS"
     TAKES = "TAKES"
     RETURNS = "RETURNS"
+    YIELDS = "YIELDS"
     INSTANTIATES = "INSTANTIATES"
     USES = "USES"
