@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 import json
-from typing import Any, Iterable
+from typing import Any, Iterable, Type
+
+from cskg.entity import Entity
+from cskg.relationship import Relationship
 
 
-class AbstractNodeComposer(ABC):
+class AbstractComposer(ABC):
     @abstractmethod
     def get_cypher(self, entity: dict[str, Any]) -> str: ...
 
@@ -28,18 +31,13 @@ class AbstractNodeComposer(ABC):
         return ", ".join(keypairs)
 
 
-class EntityComposer(AbstractNodeComposer):
-    def __init__(self, entity_label: str | Iterable[str]):
-        self.entity_type = ":".join(
-            map(lambda x: x.capitalize(), ensure_list_of_strings(entity_label))
-        )
-
-    def get_cypher(self, entity: dict[str, Any]):
-        entity_type = self.entity_type
+class EntityComposer(AbstractComposer):
+    def get_cypher(self, entity: Entity):
+        entity_type = map(lambda label: f":{label}", entity.labels)
         entity_properties = self.get_dictionary_cypher(entity)
 
         return f"""
-            CREATE (:{entity_type} {{ {entity_properties} }}) 
+            CREATE ({entity_type} {{ {entity_properties} }}) 
         """
 
 
@@ -47,17 +45,14 @@ def _exclude_fields_dict(dict: dict[str, Any], fields: list[str]):
     return {key: dict.get(key) for key in dict if key not in fields}
 
 
-class RelationshipComposer(AbstractNodeComposer):
-    def __init__(self, relation_label: str):
-        self.relation_type = relation_label.upper()
+class RelationshipComposer(AbstractComposer):
+    def get_cypher(self, relationship: Relationship):
+        relation_type = f":{relationship.label}"
 
-    def get_cypher(self, relationship: dict[str, Any]):
-        relation_type = self.relation_type
-
+        field_a_type = relationship.get("from_type")
+        field_b_type = relationship.get("to_type")
         field_a_value = relationship.get("from_qualified_name")
         field_b_value = relationship.get("to_qualified_name")
-        field_a_type_neo = relationship.get("from_type").capitalize()
-        field_b_type_neo = relationship.get("to_type").capitalize()
 
         relationship_properties = self.get_dictionary_cypher(
             relationship,
@@ -65,8 +60,8 @@ class RelationshipComposer(AbstractNodeComposer):
         )
 
         return f"""
-            MATCH (a:{field_a_type_neo} {{qualified_name: "{field_a_value}"}}), (b:{field_b_type_neo} {{qualified_name: "{field_b_value}"}})
-            CREATE (a)-[:{relation_type} {{ {relationship_properties} }}]->(b)
+            MATCH (a:{field_a_type} {{qualified_name: "{field_a_value}"}}), (b:{field_b_type} {{qualified_name: "{field_b_value}"}})
+            CREATE (a)-[{relation_type} {{ {relationship_properties} }}]->(b)
         """
 
 
