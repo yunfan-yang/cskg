@@ -74,6 +74,7 @@ class Driver:
                 raise e
 
     def __compose_graph(self):
+        modules = self.mongo_db["module_ent"].find()
         classes = self.mongo_db["class_ent"].find()
         functions = self.mongo_db["function_ent"].find()
         methods = self.mongo_db["method_ent"].find()
@@ -86,6 +87,7 @@ class Driver:
         yields_rels = self.mongo_db["yields_rel"].find()
         instantiates_rels = self.mongo_db["instantiates_rel"].find()
 
+        self.graph_composer.add_entities(modules)
         self.graph_composer.add_entities(classes)
         self.graph_composer.add_entities(functions)
         self.graph_composer.add_entities(methods)
