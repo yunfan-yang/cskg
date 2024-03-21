@@ -75,32 +75,11 @@ class Driver:
                 raise e
 
     def __compose_graph(self):
-        module_composer = EntityComposer(
-            "Module", included_fields=["name", "qualified_name", "file_path"]
-        )
-        class_composer = EntityComposer(
-            "Class", included_fields=["name", "qualified_name", "file_path"]
-        )
-        function_composer = EntityComposer(
-            "Function",
-            included_fields=["name", "qualified_name", "file_path"],
-        )
-        method_composer = EntityComposer(
-            ("Method", "Function"),
-            included_fields=[
-                "name",
-                "qualified_name",
-                "subtype",
-                "args",
-                "file_path",
-                "class_name",
-                "class_qualified_name",
-            ],
-        )
-        variable_composer = EntityComposer(
-            "Variable",
-            included_fields=["type", "name", "qualified_name", "access", "file_path"],
-        )
+        module_composer = EntityComposer("Module")
+        class_composer = EntityComposer("Class")
+        function_composer = EntityComposer("Function")
+        method_composer = EntityComposer(("Method", "Function"))
+        variable_composer = EntityComposer("Variable")
         calls_rel_composer = RelationshipComposer(
             "CALLS",
             from_field=("caller_qualified_name", "function"),

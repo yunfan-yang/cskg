@@ -25,9 +25,10 @@ def visit_function(function: FunctionDef):
         # Function
         function_ent = {
             "type": "function_ent",
+            "file_path": file_path,
             "name": name,
             "qualified_name": qualified_name,
-            "file_path": file_path,
+            "subtype": function_subtype,
         }
         yield function_ent
 
