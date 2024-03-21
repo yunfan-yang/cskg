@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Self
 from abc import ABC, ABCMeta
 
 
@@ -10,10 +10,12 @@ class EntityMeta(ABCMeta):
 
 
 class Entity(dict, ABC, metaclass=EntityMeta):
-    __final_fields__ = ["type", "label"]
+    __final_fields__ = ["type", "label", "extra_labels"]
+    __required_fields__ = ["name", "qualified_name", "file_path"]
+
     type: str = "entity"
     label: str = "Entity"
-    labels: set[str]
+    extra_labels: set[str] = ()
 
     def __init__(
         self,
@@ -22,27 +24,26 @@ class Entity(dict, ABC, metaclass=EntityMeta):
         file_path: str,
         **kwargs,
     ):
-        if not hasattr(self, "labels"):
-            self.labels = (self.label,)
-
         super().__init__(
             type=self.type,
             label=self.label,
-            labels=self.labels,
+            extra_labels=self.extra_labels,
             name=name,
             qualified_name=qualified_name,
             file_path=file_path,
             **kwargs,
         )
 
+    @property
+    def labels(self):
+        return (self.label, *self.extra_labels)
+
     def __setitem__(self, key, value):
         if key in self.__final_fields__:
-            raise ValueError(f"Cannot set {key}")
+            raise ValueError(f"Not allowed to set attribute {key}")
         super().__setitem__(key, value)
 
     def __getitem__(self, key):
-        if key in self.__final_fields__:
-            return self.get(key)
         return super().__getitem__(key)
 
     def __getattribute__(self, __name: str) -> Any:
@@ -53,8 +54,38 @@ class Entity(dict, ABC, metaclass=EntityMeta):
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__final_fields__:
-            raise ValueError(f"Cannot set {__name}")
+            raise ValueError(f"Not allowed to set attribute {__name}")
         super().__setitem__(__name, __value)
+
+    def __internal_set(self, key, value):
+        super().__setitem__(key, value)
+
+    @classmethod
+    def from_json(cls, json: dict[str, Any]) -> Self:
+        excluded_final_fields_json = {
+            key: value
+            for key, value in json.items()
+            if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
+        }
+        instance = cls(
+            name=json["name"],
+            qualified_name=json["qualified_name"],
+            file_path=json["file_path"],
+            **excluded_final_fields_json,
+        )
+        instance.__internal_set("type", json["type"])
+        instance.__internal_set("label", json["label"])
+        instance.__internal_set("extra_labels", json["extra_labels"])
+        return instance
+
+    @classmethod
+    def get_class(cls, type: str):
+        subclasses = cls.__subclasses__()
+        for subclass in subclasses:
+            if subclass.label == type:
+                return subclass
+
+        raise ValueError(f'Could not find class for type "{type}" in {subclasses}')
 
 
 class ModuleEntity(Entity):
@@ -72,10 +103,10 @@ class FunctionEntity(Entity):
     label = "Function"
 
 
-class MethodEntity(FunctionEntity):
+class MethodEntity(Entity):
     type = "method_ent"
     label = "Method"
-    labels = ("Method", "Function")
+    extra_labels = "Function"
 
 
 class VariableEntity(Entity):

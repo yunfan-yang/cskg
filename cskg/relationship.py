@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Self, Type
 from abc import ABC, ABCMeta
 
 from cskg.entity import Entity
@@ -13,8 +13,15 @@ class RelationshipMeta(ABCMeta):
 
 class Relationship(dict, ABC, metaclass=RelationshipMeta):
     __final_fields__ = ["type", "label"]
-    type = "relationship"
-    label = "Relationship"
+    __required_fields__ = [
+        "from_type",
+        "from_qualified_name",
+        "to_type",
+        "to_qualified_name",
+    ]
+
+    type: str = "relationship"
+    label: str = "Relationship"
 
     def __init__(
         self,
@@ -36,12 +43,10 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
     def __setitem__(self, key, value):
         if key in self.__final_fields__:
-            raise ValueError("Cannot set type")
+            raise ValueError(f"Not allowed to set attribute {key}")
         super().__setitem__(key, value)
 
     def __getitem__(self, key):
-        if key in self.__final_fields__:
-            return self.get(key)
         return super().__getitem__(key)
 
     def __getattribute__(self, __name: str) -> Any:
@@ -52,8 +57,33 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__final_fields__:
-            raise ValueError(f"Cannot set {__name}")
+            raise ValueError(f"Not allowed to set attribute {__name}")
         super().__setitem__(__name, __value)
+
+    def __internal_set(self, key, value):
+        super().__setitem__(key, value)
+
+    @classmethod
+    def from_json(cls, json: dict[str, Any]) -> Self:
+        excluded_final_fields_json = {
+            key: value
+            for key, value in json.items()
+            if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
+        }
+
+        from_type_cls = Entity.get_class(json["from_type"])
+        to_type_cls = Entity.get_class(json["to_type"])
+
+        instance = cls(
+            from_type=from_type_cls,
+            from_qualified_name=json["from_qualified_name"],
+            to_type=to_type_cls,
+            to_qualified_name=json["to_qualified_name"],
+            **excluded_final_fields_json,
+        )
+        instance.__internal_set("type", json["type"])
+        instance.__internal_set("label", json["label"])
+        return instance
 
 
 class CallsRel(Relationship):

@@ -7,7 +7,6 @@ from loguru import logger
 
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
-from cskg.composer.node_composers import EntityComposer, RelationshipComposer
 
 DRIVER_CONFIGURATIONS = dict[str, Any]
 # Configurations:
@@ -75,72 +74,29 @@ class Driver:
                 raise e
 
     def __compose_graph(self):
-        module_composer = EntityComposer("Module")
-        class_composer = EntityComposer("Class")
-        function_composer = EntityComposer("Function")
-        method_composer = EntityComposer(("Method", "Function"))
-        variable_composer = EntityComposer("Variable")
-
-        calls_rel_composer = RelationshipComposer("CALLS")
-        inherits_rel_composer = RelationshipComposer("INHERITS")
-        contains_mc_rel_composer = RelationshipComposer("CONTAINS")
-        contains_mf_rel_composer = RelationshipComposer("CONTAINS")
-        contains_mv_rel_composer = RelationshipComposer("CONTAINS")
-        contains_cf_rel_composer = RelationshipComposer("CONTAINS")
-        contains_cv_rel_composer = RelationshipComposer("CONTAINS")
-        contains_fv_rel_composer = RelationshipComposer("CONTAINS")
-        takes_rel_composer = RelationshipComposer("TAKES")
-        returns_rel_composer = RelationshipComposer("RETURNS")
-        yields_rel_composer = RelationshipComposer("YIELDS")
-        instantiates_rel_composer = RelationshipComposer("INSTANTIATES")
-
         classes = self.mongo_db["class_ent"].find()
         functions = self.mongo_db["function_ent"].find()
         methods = self.mongo_db["method_ent"].find()
         variables = self.mongo_db["variable_ent"].find()
         calls_rels = self.mongo_db["calls_rel"].find()
         inherits_rels = self.mongo_db["inherits_rel"].find()
-        contains_mc_rels = self.mongo_db["contains_mc_rel"].find()
-        contains_mf_rels = self.mongo_db["contains_mf_rel"].find()
-        contains_mv_rels = self.mongo_db["contains_mv_rel"].find()
-        contains_cf_rels = self.mongo_db["contains_cf_rel"].find()
-        contains_cv_rels = self.mongo_db["contains_cv_rel"].find()
-        contains_fv_rels = self.mongo_db["contains_fv_rel"].find()
+        contains_rels = self.mongo_db["contains_rel"].find()
         takes_rels = self.mongo_db["takes_rel"].find()
         returns_rels = self.mongo_db["returns_rel"].find()
         yields_rels = self.mongo_db["yields_rel"].find()
         instantiates_rels = self.mongo_db["instantiates_rel"].find()
 
-        self.graph_composer.add_entities(classes, class_composer)
-        self.graph_composer.add_entities(functions, function_composer)
-        self.graph_composer.add_entities(methods, method_composer)
-        self.graph_composer.add_entities(variables, variable_composer)
-        self.graph_composer.add_relationships(calls_rels, calls_rel_composer)
-        self.graph_composer.add_relationships(inherits_rels, inherits_rel_composer)
-        self.graph_composer.add_relationships(
-            contains_mc_rels, contains_mc_rel_composer
-        )
-        self.graph_composer.add_relationships(
-            contains_mf_rels, contains_mf_rel_composer
-        )
-        self.graph_composer.add_relationships(
-            contains_mv_rels, contains_mv_rel_composer
-        )
-        self.graph_composer.add_relationships(
-            contains_cf_rels, contains_cf_rel_composer
-        )
-        self.graph_composer.add_relationships(
-            contains_cv_rels, contains_cv_rel_composer
-        )
-        self.graph_composer.add_relationships(
-            contains_fv_rels, contains_fv_rel_composer
-        )
-        self.graph_composer.add_relationships(takes_rels, takes_rel_composer)
-        self.graph_composer.add_relationships(returns_rels, returns_rel_composer)
-        self.graph_composer.add_relationships(yields_rels, yields_rel_composer)
-        self.graph_composer.add_relationships(
-            instantiates_rels, instantiates_rel_composer
-        )
+        self.graph_composer.add_entities(classes)
+        self.graph_composer.add_entities(functions)
+        self.graph_composer.add_entities(methods)
+        self.graph_composer.add_entities(variables)
+        self.graph_composer.add_relationships(calls_rels)
+        self.graph_composer.add_relationships(inherits_rels)
+        self.graph_composer.add_relationships(contains_rels)
+        self.graph_composer.add_relationships(takes_rels)
+        self.graph_composer.add_relationships(returns_rels)
+        self.graph_composer.add_relationships(yields_rels)
+        self.graph_composer.add_relationships(instantiates_rels)
 
         self.graph_composer.compose()
 
