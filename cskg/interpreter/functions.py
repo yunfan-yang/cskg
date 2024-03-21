@@ -2,9 +2,8 @@ from astroid import (
     FunctionDef,
     Call,
     ParentMissingError,
-    Const,
 )
-from astroid.nodes import LocalsDictNodeNG
+from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
 from cskg.interpreter import get_inferred_type, get_inferred_types
@@ -78,8 +77,6 @@ def visit_function_called_nodes(function: FunctionDef):
     """
 
     calls = list(function.nodes_of_class(Call))
-    # called_funcs = [call.func for call in calls]
-
     for call in calls:
         # Arguments
         args = call.args  # The positional arguments being given to the call
@@ -91,6 +88,8 @@ def visit_function_called_nodes(function: FunctionDef):
             inferred_node = get_inferred_type(arg)
             if isinstance(inferred_node, LocalsDictNodeNG):
                 arguments.append(inferred_node.qname())
+            elif isinstance(inferred_node, BaseContainer):
+                arguments.append(inferred_node.pytype())
             else:
                 arguments.append("Any")
 
@@ -134,10 +133,10 @@ def visit_function_return_node(function: FunctionDef):
     for inferred_node in inferred_nodes:
         return_type = None
 
-        if hasattr(inferred_node, "pytype"):
-            return_type = inferred_node.pytype()
-        elif hasattr(inferred_node, "qname"):
+        if isinstance(inferred_node, LocalsDictNodeNG):
             return_type = inferred_node.qname()
+        elif hasattr(inferred_node, "pytype"):
+            return_type = inferred_node.pytype()
         else:
             return_type = type(inferred_node).__name__
 
