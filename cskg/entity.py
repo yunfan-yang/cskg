@@ -25,7 +25,8 @@ class Entity(dict, ABC, metaclass=EntityMeta):
     ):
         super().__init__(
             type=self.type,
-            label=self.labels or self.label,
+            label=self.label,
+            labels=self.labels,
             name=name,
             qualified_name=qualified_name,
             file_path=file_path,
