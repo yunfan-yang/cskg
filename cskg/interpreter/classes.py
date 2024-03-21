@@ -1,6 +1,7 @@
 from astroid import ClassDef
 
-from cskg.entity import ClassEntity
+from cskg.entity import ModuleEntity, ClassEntity
+from cskg.relationship import ContainsRel, InheritsRel
 from cskg.interpreter.nodes import visit_children
 from cskg.interpreter.vars import visit_local_variables
 
@@ -20,13 +21,12 @@ def visit_class(cls: ClassDef):
     yield class_ent
 
     # Module contains class
-    contains_mc_rel = {
-        "type": "contains_mc_rel",
-        "from_type": "module",
-        "from_qualified_name": module_qname,
-        "to_type": "class",
-        "to_qualified_name": qualified_name,
-    }
+    contains_mc_rel = ContainsRel(
+        from_type=ModuleEntity,
+        from_qualified_name=module_qname,
+        to_type=ClassEntity,
+        to_qualified_name=qualified_name,
+    )
     yield contains_mc_rel
 
     # Visit parents
@@ -34,13 +34,12 @@ def visit_class(cls: ClassDef):
     for parent_class in parent_classes:
         child_qualified_name = qualified_name
         parent_qualified_name = parent_class.qname()
-        inherits_rel = {
-            "type": "inherits_rel",
-            "from_type": "class",
-            "from_qualified_name": child_qualified_name,
-            "to_type": "class",
-            "to_qualified_name": parent_qualified_name,
-        }  # CHILD -[INHERITS]-> PARENT
+        inherits_rel = InheritsRel(
+            from_type=ClassEntity,
+            from_qualified_name=child_qualified_name,
+            to_type=ClassEntity,
+            to_qualified_name=parent_qualified_name,
+        )  # CHILD -[INHERITS]-> PARENT
         yield inherits_rel
 
     # Visit children

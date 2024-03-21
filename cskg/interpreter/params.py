@@ -8,6 +8,8 @@ from astroid import (
 from astroid.exceptions import NoDefault
 from astroid.nodes import LocalsDictNodeNG
 
+from cskg.entity import FunctionEntity, ClassEntity
+from cskg.relationship import TakesRel
 from cskg.interpreter import get_inferred_type
 
 
@@ -28,16 +30,14 @@ def visit_parameters(function: FunctionDef):
         else:
             class_qname = None
 
-        # Takes rel
-        takes_rel = {
-            "type": "takes_rel",
-            "from_type": "function",
-            "from_qualified_name": function_qname,
-            "to_type": "parameter",
-            "to_class_qualified_name": class_qname,
-            "param_name": param_name,
-            "default_value": default_value,
-        }
+        takes_rel = TakesRel(
+            from_type=FunctionEntity,
+            from_qualified_name=function_qname,
+            to_type=ClassEntity,
+            to_qualified_name=class_qname,
+            param_name=param_name,
+            default_value=default_value,
+        )
         yield takes_rel
 
 

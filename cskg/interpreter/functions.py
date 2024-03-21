@@ -6,7 +6,8 @@ from astroid import (
 from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
-from cskg.entity import FunctionEntity, MethodEntity
+from cskg.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
+from cskg.relationship import ContainsRel, ReturnsRel, CallsRel, YieldRel
 from cskg.interpreter import get_inferred_type, get_inferred_types
 from cskg.interpreter.params import visit_parameters
 from cskg.interpreter.vars import visit_local_variables
@@ -34,13 +35,12 @@ def visit_function(function: FunctionDef):
 
         # Module
         module = function.root()
-        contains_mf_rel = {
-            "type": "contains_mf_rel",
-            "from_type": "module",
-            "from_qualified_name": module.qname(),
-            "to_type": "function",
-            "to_qualified_name": qualified_name,
-        }
+        contains_mf_rel = ContainsRel(
+            from_type=ModuleEntity,
+            from_qualified_name=module.qname(),
+            to_type=FunctionEntity,
+            to_qualified_name=qualified_name,
+        )
         yield contains_mf_rel
 
     else:
@@ -59,13 +59,12 @@ def visit_function(function: FunctionDef):
         yield method_ent
 
         # Class
-        contains_cf_rel = {
-            "type": "contains_cf_rel",
-            "from_type": "class",
-            "from_qualified_name": qualified_name,
-            "to_type": "method",
-            "to_qualified_name": qualified_name,
-        }
+        contains_cf_rel = ContainsRel(
+            from_type=ClassEntity,
+            from_qualified_name=class_qualified_name,
+            to_type=MethodEntity,
+            to_qualified_name=qualified_name,
+        )
         yield contains_cf_rel
 
     yield from visit_function_called_nodes(function)
@@ -110,14 +109,13 @@ def visit_function_called_nodes(function: FunctionDef):
 
         function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
-        calls_rel = {
-            "type": "calls_rel",
-            "from_type": "function",
-            "from_qualified_name": function_qualified_name,
-            "to_type": "function",
-            "to_qualified_name": callee_qualified_name,
-            "arguments": arguments,
-        }
+        calls_rel = CallsRel(
+            from_type=FunctionEntity,
+            from_qualified_name=function_qualified_name,
+            to_type=FunctionEntity,
+            to_qualified_name=callee_qualified_name,
+            arguments=arguments,
+        )
 
         yield calls_rel
 
@@ -134,13 +132,12 @@ def visit_function_return_node(function: FunctionDef):
         return_type = get_inferred_node_qname(inferred_node)
         function_qualified_name = function.qname()
         class_qualified_name = return_type
-        returns_rel = {
-            "type": "returns_rel",
-            "from_type": "function",
-            "from_qualified_name": function_qualified_name,
-            "to_type": "class",
-            "to_qualified_name": class_qualified_name,
-        }
+        returns_rel = ReturnsRel(
+            from_type=FunctionEntity,
+            from_qualified_name=function_qualified_name,
+            to_type=ClassEntity,
+            to_qualified_name=class_qualified_name,
+        )
         yield returns_rel
 
 
@@ -156,13 +153,12 @@ def visit_function_yield_node(function: FunctionDef):
         return_type = get_inferred_node_qname(inferred_node)
         function_qualified_name = function.qname()
         class_qualified_name = return_type
-        yields_rel = {
-            "type": "yields_rel",
-            "from_type": "function",
-            "from_qualified_name": function_qualified_name,
-            "to_type": "class",
-            "to_qualified_name": class_qualified_name,
-        }
+        yields_rel = YieldRel(
+            from_type=FunctionEntity,
+            from_qualified_name=function_qualified_name,
+            to_type=ClassEntity,
+            to_qualified_name=class_qualified_name,
+        )
         yield yields_rel
 
 

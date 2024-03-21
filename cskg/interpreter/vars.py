@@ -8,7 +8,8 @@ from astroid import (
 from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
 
-from cskg.entity import VariableEntity
+from cskg.entity import VariableEntity, ClassEntity, FunctionEntity, ModuleEntity
+from cskg.relationship import ContainsRel, InstantiatesRel
 from cskg.interpreter import get_inferred_type
 
 
@@ -46,13 +47,12 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
             continue
 
         inferred_type_qname = var_inferred_type.qname()
-        instantiates_rel = {
-            "type": "instantiates_rel",
-            "from_type": "class",
-            "from_qualified_name": inferred_type_qname,
-            "to_type": "variable",
-            "to_qualified_name": var_qname,
-        }
+        instantiates_rel = InstantiatesRel(
+            from_type=ClassEntity,
+            from_qualified_name=inferred_type_qname,
+            to_type=VariableEntity,
+            to_qualified_name=var_qname,
+        )
         yield instantiates_rel
 
 
@@ -68,31 +68,28 @@ def get_contains_rel(node: NodeNG, var_qname: str):
     qname = node.qname()
 
     if isinstance(node, ClassDef):
-        contains_cv_rel = {
-            "type": "contains_cv_rel",
-            "from_type": "class",
-            "from_qualified_name": qname,
-            "to_type": "variable",
-            "to_qualified_name": var_qname,
-        }
+        contains_cv_rel = ContainsRel(
+            from_type=ClassEntity,
+            from_qualified_name=qname,
+            to_type=VariableEntity,
+            to_qualified_name=var_qname,
+        )
         yield contains_cv_rel
     elif isinstance(node, FunctionDef):
-        contains_fv_rel = {
-            "type": "contains_fv_rel",
-            "from_type": "function",
-            "function_qualified_name": qname,
-            "to_type": "variable",
-            "variable_qualified_name": var_qname,
-        }
+        contains_fv_rel = ContainsRel(
+            from_type=FunctionEntity,
+            from_qualified_name=qname,
+            to_type=VariableEntity,
+            to_qualified_name=var_qname,
+        )
         yield contains_fv_rel
     elif isinstance(node, Module):
-        contains_mv_rel = {
-            "type": "contains_mv_rel",
-            "from_type": "module",
-            "module_qualified_name": qname,
-            "to_type": "variable",
-            "variable_qualified_name": var_qname,
-        }
+        contains_mv_rel = ContainsRel(
+            from_type=ModuleEntity,
+            from_qualified_name=qname,
+            to_type=VariableEntity,
+            to_qualified_name=var_qname,
+        )
         yield contains_mv_rel
     else:
         raise ValueError(f"Node {node} is not a ClassDef or FunctionDef")
