@@ -79,13 +79,13 @@ class Entity(dict, ABC, metaclass=EntityMeta):
         return instance
 
     @classmethod
-    def get_class(cls, type: str):
+    def get_class(cls, label: str):
         subclasses = cls.__subclasses__()
         for subclass in subclasses:
-            if subclass.label == type:
+            if subclass.label == label:
                 return subclass
 
-        raise ValueError(f'Could not find class for type "{type}" in {subclasses}')
+        raise ValueError(f'Could not find class for "{label}" in {subclasses}')
 
 
 class ModuleEntity(Entity):

@@ -14,9 +14,9 @@ class RelationshipMeta(ABCMeta):
 class Relationship(dict, ABC, metaclass=RelationshipMeta):
     __final_fields__ = ["type", "label"]
     __required_fields__ = [
-        "from_type",
+        "from_label",
         "from_qualified_name",
-        "to_type",
+        "to_label",
         "to_qualified_name",
     ]
 
@@ -25,18 +25,18 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
     def __init__(
         self,
-        from_type: Type[Entity],
+        from_label: Type[Entity],
         from_qualified_name: str,
-        to_type: Type[Entity],
+        to_label: Type[Entity],
         to_qualified_name: str,
         **kwargs,
     ):
         super().__init__(
             type=self.type,
             label=self.label,
-            from_type=from_type.label,
+            from_label=from_label.label,
             from_qualified_name=from_qualified_name,
-            to_type=to_type.label,
+            to_label=to_label.label,
             to_qualified_name=to_qualified_name,
             **kwargs,
         )
@@ -71,13 +71,13 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
             if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
         }
 
-        from_type_cls = Entity.get_class(json["from_type"])
-        to_type_cls = Entity.get_class(json["to_type"])
+        from_label_cls = Entity.get_class(json["from_label"])
+        to_label_cls = Entity.get_class(json["to_label"])
 
         instance = cls(
-            from_type=from_type_cls,
+            from_label=from_label_cls,
             from_qualified_name=json["from_qualified_name"],
-            to_type=to_type_cls,
+            to_label=to_label_cls,
             to_qualified_name=json["to_qualified_name"],
             **excluded_final_fields_json,
         )
