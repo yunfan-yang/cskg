@@ -29,9 +29,8 @@ class Driver:
         self.mongo_url = mongo_url
         self.interpreter = None
         self.graph_composer = None
-        self.__init_database()
 
-    def __init_database(self):
+    def init_database(self):
         # Load neomodel configurations
         neomodel.config.DATABASE_URL = self.neo4j_url
         neomodel.config.AUTO_INSTALL_LABELS = True
@@ -59,17 +58,17 @@ class Driver:
         self.graph_composer = GraphComposer()
 
         # Interpretate codebase
-        self.__interpret_code()
-        # self.__populate_external_entities()
+        self.interpret_code()
+        # self.populate_external_entities()
         logger.info("Interpretation done")
 
         # Compose graph
-        self.__compose_graph()
+        self.compose_graph()
         logger.info("Composition done")
 
         logger.info("Done")
 
-    def __interpret_code(self):
+    def interpret_code(self):
         generator = self.interpreter.interpret()
 
         with self.mongo_client.start_session() as session:
@@ -85,7 +84,7 @@ class Driver:
                 except Exception as e:
                     raise e
 
-    def __compose_graph(self):
+    def compose_graph(self):
         # All entities
         entity_classes = Entity.__subclasses__()
         for entity_class in entity_classes:
@@ -100,7 +99,7 @@ class Driver:
 
         self.graph_composer.compose()
 
-    def __populate_external_entities(self):
+    def populate_external_entities(self):
         with self.mongo_client.start_session() as session:
             for rel, ent in RELS_EXTERNAL_ENTITIES_MAPPING:
                 rels_collection = self.mongo_db[rel.type]
