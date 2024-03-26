@@ -48,6 +48,11 @@ class Driver:
         _mongo_drop_all(self.mongo_db)
         _neo_drop_all(self.neo_db)
 
+        # Create indexes (for only Entity classes)
+        entity_classes = Entity.__subclasses__()
+        for entity_class in entity_classes:
+            self.mongo_db[entity_class.type].create_index("qualified_name", unique=True)
+
     def run(self):
         # Instantiate
         self.interpreter = CodeInterpreter(self.folder_path)
@@ -55,7 +60,7 @@ class Driver:
 
         # Interpretate codebase
         self.__interpret_code()
-        self.__populate_external_entities()
+        # self.__populate_external_entities()
         logger.info("Interpretation done")
 
         # Compose graph
@@ -81,31 +86,17 @@ class Driver:
                     raise e
 
     def __compose_graph(self):
-        modules = self.mongo_db[ModuleEntity.type].find()
-        classes = self.mongo_db[ClassEntity.type].find()
-        functions = self.mongo_db[FunctionEntity.type].find()
-        methods = self.mongo_db[MethodEntity.type].find()
-        variables = self.mongo_db[VariableEntity.type].find()
-        calls_rels = self.mongo_db[CallsRel.type].find()
-        inherits_rels = self.mongo_db[InheritsRel.type].find()
-        contains_rels = self.mongo_db[ContainsRel.type].find()
-        takes_rels = self.mongo_db[TakesRel.type].find()
-        returns_rels = self.mongo_db[ReturnsRel.type].find()
-        yields_rels = self.mongo_db[YieldsRel.type].find()
-        instantiates_rels = self.mongo_db[InstantiatesRel.type].find()
+        # All entities
+        entity_classes = Entity.__subclasses__()
+        for entity_class in entity_classes:
+            entities = self.mongo_db[entity_class.type].find()
+            self.graph_composer.add_entities(entities)
 
-        self.graph_composer.add_entities(modules)
-        self.graph_composer.add_entities(classes)
-        self.graph_composer.add_entities(functions)
-        self.graph_composer.add_entities(methods)
-        self.graph_composer.add_entities(variables)
-        self.graph_composer.add_relationships(calls_rels)
-        self.graph_composer.add_relationships(inherits_rels)
-        self.graph_composer.add_relationships(contains_rels)
-        self.graph_composer.add_relationships(takes_rels)
-        self.graph_composer.add_relationships(returns_rels)
-        self.graph_composer.add_relationships(yields_rels)
-        self.graph_composer.add_relationships(instantiates_rels)
+        # All relationships
+        relationship_classes = Relationship.__subclasses__()
+        for relationship_class in relationship_classes:
+            relationships = self.mongo_db[relationship_class.type].find()
+            self.graph_composer.add_relationships(relationships)
 
         self.graph_composer.compose()
 
@@ -145,6 +136,8 @@ class Driver:
                     external_ents = rels_collection.aggregate(pipeline, session=session)
                     ents_collection.insert_many(external_ents, session=session)
                 except InvalidOperation as e:
+                    logger.error(e)
+                except DuplicateKeyError as e:
                     logger.error(e)
 
 
