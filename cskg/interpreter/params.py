@@ -7,8 +7,10 @@ from astroid import (
 )
 from astroid.exceptions import NoDefault
 from astroid.nodes import LocalsDictNodeNG
+from loguru import logger
 
 from cskg.entity import FunctionEntity, ClassEntity
+from cskg.interpreter.vars import get_variable_inferred_type_qname
 from cskg.relationship import TakesRel
 from cskg.interpreter import get_inferred_type
 
@@ -18,29 +20,20 @@ def visit_parameters(function: FunctionDef, function_subtype: str):
     arguments_obj = function.args
     is_method = function_subtype == "method" or function_subtype == "classmethod"
 
-    for index, assign_name_obj in enumerate(arguments_obj.arguments):
+    for index, param_assign_name in enumerate(arguments_obj.arguments):
         # Skip method self/cls
         if is_method and index == 0:
             continue
 
-        param_name = assign_name_obj.name
-        default_value = get_parameter_default_value(arguments_obj, assign_name_obj)
+        param_name = param_assign_name.name
+        default_value = get_parameter_default_value(arguments_obj, param_assign_name)
 
-        try:
-            inferred_type = get_inferred_type(assign_name_obj)
-        except Exception:
-            inferred_type = None
-
-        if isinstance(inferred_type, LocalsDictNodeNG):
-            class_qname = inferred_type.qname()
-        else:
-            class_qname = None
-
+        inferred_type_qname = get_variable_inferred_type_qname(param_assign_name)
         takes_rel = TakesRel(
             from_type=FunctionEntity,
             from_qualified_name=function_qname,
             to_type=ClassEntity,
-            to_qualified_name=class_qname,
+            to_qualified_name=inferred_type_qname,
             param_name=param_name,
             default_value=default_value,
         )

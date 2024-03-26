@@ -5,8 +5,13 @@ from astroid import (
     NodeNG,
     AssignName,
     Const,
+    Dict,
+    Tuple,
+    Set,
+    Slice,
+    List,
 )
-from astroid.nodes import LocalsDictNodeNG
+from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
 from cskg.entity import VariableEntity, ClassEntity, FunctionEntity, ModuleEntity
@@ -40,17 +45,7 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
         yield from get_contains_rel(node, var_qname)
 
         # Variable instantiate from class
-        var_inferred_type = get_inferred_type(var_assign_name)
-        if isinstance(var_inferred_type, Const):
-            inferred_type_qname = var_inferred_type.pytype()
-        elif not isinstance(var_inferred_type, LocalsDictNodeNG):
-            logger.error(
-                f"Invalid inferred type for var {var_assign_name}: {var_inferred_type}"
-            )
-            continue
-        else:
-            inferred_type_qname = var_inferred_type.qname()
-
+        inferred_type_qname = get_variable_inferred_type_qname(var_assign_name)
         instantiates_rel = InstantiatesRel(
             from_type=ClassEntity,
             from_qualified_name=inferred_type_qname,
@@ -97,3 +92,21 @@ def get_contains_rel(node: NodeNG, var_qname: str):
         yield contains_mv_rel
     else:
         raise ValueError(f"Node {node} is not a ClassDef or FunctionDef")
+
+
+def get_variable_inferred_type_qname(var_assign_name: AssignName):
+    try:
+        inferred_type = get_inferred_type(var_assign_name)
+    except:
+        return None
+
+    pytypes = [Const, Dict, Tuple, Set, Slice, List, BaseContainer]
+    if any(isinstance(inferred_type, pytype) for pytype in pytypes):
+        return inferred_type.pytype()
+    elif isinstance(inferred_type, LocalsDictNodeNG):
+        return inferred_type.qname()
+    elif inferred_type is None:
+        return None
+    else:
+        logger.error(f"Unhandled inferred type for {var_assign_name}: {inferred_type}")
+        return None
