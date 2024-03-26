@@ -48,44 +48,6 @@ class Driver:
         _mongo_drop_all(self.mongo_db)
         _neo_drop_all(self.neo_db)
 
-    def __populate_external_entities(self):
-        with self.mongo_client.start_session() as session:
-            for rel, ent in RELS_EXTERNAL_ENTITIES_MAPPING:
-                rels_collection = self.mongo_db[rel.type]
-                ents_collection = self.mongo_db[ent.type]
-
-                module_prefix = self.interpreter.get_module_prefix()
-                regex_expr = Regex(f"^(?!{module_prefix}\.)")
-
-                pipeline = [
-                    {
-                        "$match": {
-                            "to_type": ent.type,
-                            "to_qualified_name": regex_expr,
-                        }
-                    },
-                    {
-                        "$group": {
-                            "_id": "$to_qualified_name",
-                            "qualified_name": {"$first": "$to_qualified_name"},
-                        }
-                    },
-                    {
-                        "$project": ent(
-                            _id=False,
-                            name="$qualified_name",
-                            qualified_name="$qualified_name",
-                            file_path="<external>",
-                        )
-                    },
-                ]
-
-                try:
-                    external_ents = rels_collection.aggregate(pipeline, session=session)
-                    ents_collection.insert_many(external_ents, session=session)
-                except InvalidOperation as e:
-                    logger.error(e)
-
     def run(self):
         # Instantiate
         self.interpreter = CodeInterpreter(self.folder_path)
@@ -146,6 +108,44 @@ class Driver:
         self.graph_composer.add_relationships(instantiates_rels)
 
         self.graph_composer.compose()
+
+    def __populate_external_entities(self):
+        with self.mongo_client.start_session() as session:
+            for rel, ent in RELS_EXTERNAL_ENTITIES_MAPPING:
+                rels_collection = self.mongo_db[rel.type]
+                ents_collection = self.mongo_db[ent.type]
+
+                module_prefix = self.interpreter.get_module_prefix()
+                regex_expr = Regex(f"^(?!{module_prefix}\.)")
+
+                pipeline = [
+                    {
+                        "$match": {
+                            "to_type": ent.type,
+                            "to_qualified_name": regex_expr,
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$to_qualified_name",
+                            "qualified_name": {"$first": "$to_qualified_name"},
+                        }
+                    },
+                    {
+                        "$project": ent(
+                            _id=False,
+                            name="$qualified_name",
+                            qualified_name="$qualified_name",
+                            file_path="<external>",
+                        )
+                    },
+                ]
+
+                try:
+                    external_ents = rels_collection.aggregate(pipeline, session=session)
+                    ents_collection.insert_many(external_ents, session=session)
+                except InvalidOperation as e:
+                    logger.error(e)
 
 
 def _mongo_drop_all(mongo_db):
