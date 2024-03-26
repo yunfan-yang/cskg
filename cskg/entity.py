@@ -81,7 +81,13 @@ class Entity(dict, ABC, metaclass=EntityMeta):
 
     @classmethod
     def get_class(cls, type: str):
-        subclasses = cls.__subclasses__()
+        def get_subclasses(cls):
+            subclasses = cls.__subclasses__()
+            for subclass in subclasses:
+                yield from get_subclasses(subclass)
+                yield subclass
+
+        subclasses = get_subclasses(cls)
         for subclass in subclasses:
             if subclass.type == type:
                 return subclass
@@ -115,9 +121,26 @@ class VariableEntity(Entity):
     label = "Variable"
 
 
+class ExternalModuleEntity(ModuleEntity):
+    type = "external_" + ModuleEntity.type
+    extra_labels = ModuleEntity.extra_labels + (EXTERNAL_LABEL,)
+
+
 class ExternalClassEntity(ClassEntity):
+    type = "external_" + ClassEntity.type
     extra_labels = ClassEntity.extra_labels + (EXTERNAL_LABEL,)
 
 
 class ExternalFunctionEntity(FunctionEntity):
+    type = "external_" + FunctionEntity.type
     extra_labels = FunctionEntity.extra_labels + (EXTERNAL_LABEL,)
+
+
+class ExternalMethodEntity(MethodEntity):
+    type = "external_" + MethodEntity.type
+    extra_labels = MethodEntity.extra_labels + (EXTERNAL_LABEL,)
+
+
+class ExternalVariableEntity(VariableEntity):
+    type = "external_" + VariableEntity.type
+    extra_labels = VariableEntity.extra_labels + (EXTERNAL_LABEL,)

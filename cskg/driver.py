@@ -99,44 +99,27 @@ class Driver:
         self.graph_composer.compose()
 
     def populate_external_entities(self):
+        def populate(ent_type, ent_qname, session):
+            ent_collection = self.mongo_db[ent_type]
+            try:
+                ent_collection.insert_one(
+                    Entity.get_class(f"external_{ent_type}")(
+                        name=ent_qname,
+                        qualified_name=ent_qname,
+                        file_path="<external>",
+                    ),
+                    session=session,
+                )
+            except DuplicateKeyError:
+                pass
+
         with self.mongo_client.start_session() as session:
-            for rel, ent in RELS_EXTERNAL_ENTITIES_MAPPING:
-                rels_collection = self.mongo_db[rel.type]
-                ents_collection = self.mongo_db[ent.type]
-
-                module_prefix = self.interpreter.get_module_prefix()
-                regex_expr = Regex(f"^(?!{module_prefix}\.)")
-
-                pipeline = [
-                    {
-                        "$match": {
-                            "to_type": ent.type,
-                            "to_qualified_name": regex_expr,
-                        }
-                    },
-                    {
-                        "$group": {
-                            "_id": "$to_qualified_name",
-                            "qualified_name": {"$first": "$to_qualified_name"},
-                        }
-                    },
-                    {
-                        "$project": ent(
-                            _id=False,
-                            name="$qualified_name",
-                            qualified_name="$qualified_name",
-                            file_path="<external>",
-                        )
-                    },
-                ]
-
-                try:
-                    external_ents = rels_collection.aggregate(pipeline, session=session)
-                    ents_collection.insert_many(external_ents, session=session)
-                except InvalidOperation as e:
-                    logger.error(e)
-                except DuplicateKeyError as e:
-                    logger.error(e)
+            for rel_class in Relationship.__subclasses__():
+                rel_collection = self.mongo_db[rel_class.type]
+                rels = rel_collection.find()
+                for rel in rels:
+                    populate(rel["from_type"], rel["from_qualified_name"], session)
+                    populate(rel["to_type"], rel["to_qualified_name"], session)
 
 
 def _mongo_drop_all(mongo_db):
