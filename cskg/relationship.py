@@ -45,26 +45,27 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
         )
 
     def __setitem__(self, key, value):
-        if key in self.__final_fields__:
-            raise ValueError(f"Not allowed to set attribute {key}")
-        super().__setitem__(key, value)
+        self.__setattr__(key, value)
 
     def __getitem__(self, key):
-        return super().__getitem__(key)
+        return self.__getattribute__(key)
 
     def __getattribute__(self, __name: str) -> Any:
         try:
             return super().__getattribute__(__name)
-        except KeyError:
+        except AttributeError:
             return super().__getitem__(__name)
+        except KeyError:
+            raise AttributeError(f"Field {__name} not found")
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__final_fields__:
             raise ValueError(f"Not allowed to set attribute {__name}")
 
+        super().__setattr__(__name, __value)
+
         if __name in ["from_type", "to_type"]:
             super().__setitem__(__name, __value.type)
-            super().__setitem__(__name, __value)
         else:
             super().__setitem__(__name, __value)
 
@@ -76,14 +77,14 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
             if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
         }
 
-        from_type_cls = Entity.get_class(json["from_type"])
-        to_type_cls = Entity.get_class(json["to_type"])
-        relationship_cls = Relationship.get_class(json["type"])
+        from_type = Entity.get_class(json["from_type"])
+        to_type = Entity.get_class(json["to_type"])
+        relationship = Relationship.get_class(json["type"])
 
-        instance = relationship_cls(
-            from_type=from_type_cls,
+        instance = relationship(
+            from_type=from_type,
             from_qualified_name=json["from_qualified_name"],
-            to_type=to_type_cls,
+            to_type=to_type,
             to_qualified_name=json["to_qualified_name"],
             **excluded_final_fields_json,
         )
