@@ -19,6 +19,7 @@ def visit_class(cls: ClassDef):
         qualified_name=qualified_name,
         file_path=file_path,
         is_abstract=is_abstract,
+        is_external_entity=False,
     )
     yield class_ent
 
