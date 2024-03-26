@@ -57,9 +57,6 @@ class Entity(dict, ABC, metaclass=EntityMeta):
             raise ValueError(f"Not allowed to set attribute {__name}")
         super().__setitem__(__name, __value)
 
-    def __internal_set(self, key, value):
-        super().__setitem__(key, value)
-
     @classmethod
     def from_json(cls, json: dict[str, Any]) -> Self:
         excluded_final_fields_json = {
@@ -67,15 +64,16 @@ class Entity(dict, ABC, metaclass=EntityMeta):
             for key, value in json.items()
             if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
         }
-        instance = cls(
+
+        entity_cls = Entity.get_class(json["label"])
+
+        instance = entity_cls(
             name=json["name"],
             qualified_name=json["qualified_name"],
             file_path=json["file_path"],
             **excluded_final_fields_json,
         )
-        instance.__internal_set("type", json["type"])
-        instance.__internal_set("label", json["label"])
-        instance.__internal_set("extra_labels", json["extra_labels"])
+
         return instance
 
     @classmethod
