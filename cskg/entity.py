@@ -1,6 +1,8 @@
 from typing import Any, Self
 from abc import ABC, ABCMeta
 
+EXTERNAL_LABEL = "External"
+
 
 class EntityMeta(ABCMeta):
     def __init__(cls, name, bases, dct):
@@ -15,7 +17,7 @@ class Entity(dict, ABC, metaclass=EntityMeta):
 
     type: str = "entity"
     label: str = "Entity"
-    extra_labels: set[str] = ()
+    extra_labels: tuple[str] = ()
 
     def __init__(
         self,
@@ -95,6 +97,9 @@ class ModuleEntity(Entity):
 class ClassEntity(Entity):
     type = "class_ent"
     label = "Class"
+
+class ExternalClassEntity(ClassEntity):
+    extra_labels = (EXTERNAL_LABEL,)
 
 
 class FunctionEntity(Entity):

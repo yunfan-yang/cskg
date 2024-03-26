@@ -5,7 +5,7 @@ from neomodel import clear_neo4j_database
 from bson.regex import Regex
 from loguru import logger
 
-from cskg.entity import ClassEntity
+from cskg.entity import ExternalClassEntity
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 
@@ -46,7 +46,7 @@ class Driver:
             pipeline = [
                 {
                     "$match": {
-                        "to_type": ClassEntity.type,
+                        "to_type": ExternalClassEntity.type,
                         "to_qualified_name": regex_expr,
                     }
                 },
@@ -57,12 +57,11 @@ class Driver:
                     }
                 },
                 {
-                    "$project": ClassEntity(
+                    "$project": ExternalClassEntity(
                         _id=False,
                         name="$qualified_name",
                         qualified_name="$qualified_name",
                         file_path="<external>",
-                        is_external_entity={"$literal": True},
                     )
                 },
             ]
