@@ -4,12 +4,7 @@ from astroid import (
     FunctionDef,
     NodeNG,
     AssignName,
-    Const,
-    Dict,
-    Tuple,
-    Set,
-    Slice,
-    List,
+    Instance,
 )
 from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
@@ -101,8 +96,7 @@ def get_variable_inferred_type_qname(var_assign_name: AssignName):
     except:
         return None
 
-    pytypes = [Const, Dict, Tuple, Set, Slice, List, BaseContainer]
-    if any(isinstance(inferred_type, pytype) for pytype in pytypes):
+    if isinstance(inferred_type, Instance) or isinstance(inferred_type, BaseContainer):
         return inferred_type.pytype()
     elif isinstance(inferred_type, LocalsDictNodeNG):
         return inferred_type.qname()
