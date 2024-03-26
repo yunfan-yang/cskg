@@ -17,6 +17,7 @@ def visit_function(function: FunctionDef):
     name = function.name
     qualified_name = function.qname()
     file_path = function.root().file
+    is_abstract = function.is_abstract()
 
     # Function subtype
     function_subtype = get_function_subtype(function)
@@ -55,6 +56,7 @@ def visit_function(function: FunctionDef):
             subtype=function_subtype,
             class_name=class_name,
             class_qualified_name=class_qualified_name,
+            is_abstract=is_abstract,
         )
         yield method_ent
 
