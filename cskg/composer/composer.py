@@ -53,8 +53,8 @@ class GraphComposer:
     def compose_relationship_cypher(self, relationship: Relationship):
         relation_type = f":{relationship.label}"
 
-        field_a_type = relationship.from_type.label
-        field_b_type = relationship.to_type.label
+        field_a_label = relationship.from_type.label
+        field_b_label = relationship.to_type.label
         field_a_value = relationship.from_qualified_name
         field_b_value = relationship.to_qualified_name
 
@@ -63,7 +63,7 @@ class GraphComposer:
         )
 
         return f"""
-            MATCH (a:{field_a_type} {{qualified_name: "{field_a_value}"}}), (b:{field_b_type} {{qualified_name: "{field_b_value}"}})
+            MATCH (a:{field_a_label} {{qualified_name: "{field_a_value}"}}), (b:{field_b_label} {{qualified_name: "{field_b_value}"}})
             CREATE (a)-[{relation_type} {{ {relationship_properties} }}]->(b)
         """
 
