@@ -7,7 +7,7 @@ from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
 from cskg.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
-from cskg.relationship import ContainsRel, ReturnsRel, CallsRel, YieldRel
+from cskg.relationship import ContainsRel, ReturnsRel, CallsRel, YieldsRel
 from cskg.interpreter import FunctionType, get_inferred_type, get_inferred_types
 from cskg.interpreter.params import visit_parameters
 from cskg.interpreter.vars import visit_local_variables
@@ -155,7 +155,7 @@ def visit_function_yield_node(function: FunctionDef):
         return_type = get_inferred_node_qname(inferred_node)
         function_qualified_name = function.qname()
         class_qualified_name = return_type
-        yields_rel = YieldRel(
+        yields_rel = YieldsRel(
             from_type=FunctionEntity,
             from_qualified_name=function_qualified_name,
             to_type=ClassEntity,

@@ -124,8 +124,8 @@ class ReturnsRel(Relationship):
     label = "RETURNS"
 
 
-class YieldRel(Relationship):
-    type = "yield_rel"
+class YieldsRel(Relationship):
+    type = "yields_rel"
     label = "YIELDS"
 
 
