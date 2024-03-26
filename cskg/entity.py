@@ -98,9 +98,6 @@ class ClassEntity(Entity):
     type = "class_ent"
     label = "Class"
 
-class ExternalClassEntity(ClassEntity):
-    extra_labels = (EXTERNAL_LABEL,)
-
 
 class FunctionEntity(Entity):
     type = "function_ent"
@@ -116,3 +113,11 @@ class MethodEntity(Entity):
 class VariableEntity(Entity):
     type = "variable_ent"
     label = "Variable"
+
+
+class ExternalClassEntity(ClassEntity):
+    extra_labels = ClassEntity.extra_labels + (EXTERNAL_LABEL,)
+
+
+class ExternalFunctionEntity(FunctionEntity):
+    extra_labels = FunctionEntity.extra_labels + (EXTERNAL_LABEL,)

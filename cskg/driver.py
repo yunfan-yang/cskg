@@ -1,13 +1,25 @@
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, InvalidOperation
 import neomodel
 from neomodel import clear_neo4j_database
 from bson.regex import Regex
+from typing import Type
 from loguru import logger
 
-from cskg.entity import ExternalClassEntity
+from cskg.entity import *
+from cskg.relationship import *
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
+
+
+RELS_EXTERNAL_ENTITIES_MAPPING: list[tuple[Type[Relationship], Type[Entity]]] = [
+    (CallsRel, ExternalFunctionEntity),
+    (InheritsRel, ExternalClassEntity),
+    (ReturnsRel, ExternalClassEntity),
+    (YieldsRel, ExternalClassEntity),
+    (InstantiatesRel, ExternalClassEntity),
+    (TakesRel, ExternalClassEntity),
+]
 
 
 class Driver:
@@ -38,36 +50,41 @@ class Driver:
 
     def __populate_external_entities(self):
         with self.mongo_client.start_session() as session:
-            takes_rels = self.mongo_db.takes_rel
-            class_ents = self.mongo_db["class_ent"]
-            module_prefix = self.interpreter.get_module_prefix()
-            regex_expr = Regex(f"^(?!{module_prefix}\.)")
+            for rel, ent in RELS_EXTERNAL_ENTITIES_MAPPING:
+                rels_collection = self.mongo_db[rel.type]
+                ents_collection = self.mongo_db[ent.type]
 
-            pipeline = [
-                {
-                    "$match": {
-                        "to_type": ExternalClassEntity.type,
-                        "to_qualified_name": regex_expr,
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": "$to_qualified_name",
-                        "qualified_name": {"$first": "$to_qualified_name"},
-                    }
-                },
-                {
-                    "$project": ExternalClassEntity(
-                        _id=False,
-                        name="$qualified_name",
-                        qualified_name="$qualified_name",
-                        file_path="<external>",
-                    )
-                },
-            ]
+                module_prefix = self.interpreter.get_module_prefix()
+                regex_expr = Regex(f"^(?!{module_prefix}\.)")
 
-            external_classes = takes_rels.aggregate(pipeline, session=session)
-            class_ents.insert_many(external_classes, session=session)
+                pipeline = [
+                    {
+                        "$match": {
+                            "to_type": ent.type,
+                            "to_qualified_name": regex_expr,
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$to_qualified_name",
+                            "qualified_name": {"$first": "$to_qualified_name"},
+                        }
+                    },
+                    {
+                        "$project": ent(
+                            _id=False,
+                            name="$qualified_name",
+                            qualified_name="$qualified_name",
+                            file_path="<external>",
+                        )
+                    },
+                ]
+
+                try:
+                    external_ents = rels_collection.aggregate(pipeline, session=session)
+                    ents_collection.insert_many(external_ents, session=session)
+                except InvalidOperation as e:
+                    logger.error(e)
 
     def run(self):
         # Instantiate
@@ -91,10 +108,9 @@ class Driver:
         with self.mongo_client.start_session() as session:
             while True:
                 try:
-                    node = next(generator)
-                    logger.info(node)
-                    node_type = node.get("type")
-                    self.mongo_db[node_type].insert_one(node, session=session)
+                    obj = next(generator)
+                    self.mongo_db[obj.type].insert_one(obj, session=session)
+                    logger.info(obj)
                 except StopIteration:
                     break
                 except DuplicateKeyError as e:
@@ -103,18 +119,18 @@ class Driver:
                     raise e
 
     def __compose_graph(self):
-        modules = self.mongo_db["module_ent"].find()
-        classes = self.mongo_db["class_ent"].find()
-        functions = self.mongo_db["function_ent"].find()
-        methods = self.mongo_db["method_ent"].find()
-        variables = self.mongo_db["variable_ent"].find()
-        calls_rels = self.mongo_db["calls_rel"].find()
-        inherits_rels = self.mongo_db["inherits_rel"].find()
-        contains_rels = self.mongo_db["contains_rel"].find()
-        takes_rels = self.mongo_db["takes_rel"].find()
-        returns_rels = self.mongo_db["returns_rel"].find()
-        yields_rels = self.mongo_db["yields_rel"].find()
-        instantiates_rels = self.mongo_db["instantiates_rel"].find()
+        modules = self.mongo_db[ModuleEntity.type].find()
+        classes = self.mongo_db[ClassEntity.type].find()
+        functions = self.mongo_db[FunctionEntity.type].find()
+        methods = self.mongo_db[MethodEntity.type].find()
+        variables = self.mongo_db[VariableEntity.type].find()
+        calls_rels = self.mongo_db[CallsRel.type].find()
+        inherits_rels = self.mongo_db[InheritsRel.type].find()
+        contains_rels = self.mongo_db[ContainsRel.type].find()
+        takes_rels = self.mongo_db[TakesRel.type].find()
+        returns_rels = self.mongo_db[ReturnsRel.type].find()
+        yields_rels = self.mongo_db[YieldsRel.type].find()
+        instantiates_rels = self.mongo_db[InstantiatesRel.type].find()
 
         self.graph_composer.add_entities(modules)
         self.graph_composer.add_entities(classes)
