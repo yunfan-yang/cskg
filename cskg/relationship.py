@@ -60,9 +60,6 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
             raise ValueError(f"Not allowed to set attribute {__name}")
         super().__setitem__(__name, __value)
 
-    def __internal_set(self, key, value):
-        super().__setitem__(key, value)
-
     @classmethod
     def from_json(cls, json: dict[str, Any]) -> Self:
         excluded_final_fields_json = {
@@ -73,17 +70,25 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
         from_label_cls = Entity.get_class(json["from_label"])
         to_label_cls = Entity.get_class(json["to_label"])
+        relationship_cls = Relationship.get_class(json["label"])
 
-        instance = cls(
+        instance = relationship_cls(
             from_label=from_label_cls,
             from_qualified_name=json["from_qualified_name"],
             to_label=to_label_cls,
             to_qualified_name=json["to_qualified_name"],
             **excluded_final_fields_json,
         )
-        instance.__internal_set("type", json["type"])
-        instance.__internal_set("label", json["label"])
         return instance
+
+    @classmethod
+    def get_class(cls, label: str):
+        subclasses = cls.__subclasses__()
+        for subclass in subclasses:
+            if subclass.label == label:
+                return subclass
+
+        raise ValueError(f'Could not find class for "{label}" in {subclasses}')
 
 
 class CallsRel(Relationship):
