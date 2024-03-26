@@ -26,9 +26,10 @@ def visit_parameters(function: FunctionDef, function_subtype: str):
         param_name = assign_name_obj.name
         default_value = get_parameter_default_value(arguments_obj, assign_name_obj)
 
-        inferred_type = get_inferred_type(
-            assign_name_obj, lambda: assign_name_obj.infer_lhs()
-        )
+        try:
+            inferred_type = get_inferred_type(assign_name_obj)
+        except Exception:
+            inferred_type = None
 
         if isinstance(inferred_type, LocalsDictNodeNG):
             class_qname = inferred_type.qname()
