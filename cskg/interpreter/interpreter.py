@@ -1,5 +1,5 @@
 import os
-from astroid import FunctionDef, Module, ClassDef, NodeNG
+from astroid import FunctionDef, Module, ClassDef
 from astroid.manager import AstroidManager
 from loguru import logger
 
@@ -38,3 +38,6 @@ class CodeInterpreter:
             original_qname_function(), self.folder_path
         )
         return node
+
+    def get_module_prefix(self):
+        return self.folder_path.split("/")[-1]
