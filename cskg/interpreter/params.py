@@ -29,15 +29,16 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
         default_value = get_parameter_default_value(arguments_obj, param_assign_name)
 
         inferred_type_qname = get_variable_inferred_type_qname(param_assign_name)
-        takes_rel = TakesRel(
-            from_type=FunctionEntity,
-            from_qualified_name=function_qname,
-            to_type=ClassEntity,
-            to_qualified_name=inferred_type_qname,
-            param_name=param_name,
-            default_value=default_value,
-        )
-        yield takes_rel
+        if inferred_type_qname:
+            takes_rel = TakesRel(
+                from_type=FunctionEntity,
+                from_qualified_name=function_qname,
+                to_type=ClassEntity,
+                to_qualified_name=inferred_type_qname,
+                param_name=param_name,
+                default_value=default_value,
+            )
+            yield takes_rel
 
 
 def get_parameter_default_value(arguments_obj: Arguments, assign_name: AssignName):

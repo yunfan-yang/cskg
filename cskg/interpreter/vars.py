@@ -46,13 +46,14 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
 
         # Variable instantiate from class
         inferred_type_qname = get_variable_inferred_type_qname(var_assign_name)
-        instantiates_rel = InstantiatesRel(
-            from_type=ClassEntity,
-            from_qualified_name=inferred_type_qname,
-            to_type=VariableEntity,
-            to_qualified_name=var_qname,
-        )
-        yield instantiates_rel
+        if inferred_type_qname:
+            instantiates_rel = InstantiatesRel(
+                from_type=ClassEntity,
+                from_qualified_name=inferred_type_qname,
+                to_type=VariableEntity,
+                to_qualified_name=var_qname,
+            )
+            yield instantiates_rel
 
 
 def get_variable_access(variable_name: str):
