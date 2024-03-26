@@ -11,12 +11,14 @@ def visit_class(cls: ClassDef):
     qualified_name = cls.qname()
     module_qname = cls.root().qname()
     file_path = cls.root().file
+    is_abstract = is_abstract_class(cls)
 
     # Create class
     class_ent = ClassEntity(
         name=name,
         qualified_name=qualified_name,
         file_path=file_path,
+        is_abstract=is_abstract,
     )
     yield class_ent
 
@@ -45,3 +47,18 @@ def visit_class(cls: ClassDef):
     # Visit children
     yield from visit_children(cls)
     yield from visit_local_variables(cls)
+
+
+def is_abstract_class(cls: ClassDef):
+    """Check if the provided class node is an abstract class."""
+    # Check if it has abstract method
+    for method in cls.mymethods():
+        if method.is_abstract():
+            return True
+
+    # Check if it inherits from ABC
+    for parent in cls.ancestors():
+        if parent.name == "ABC":
+            return True
+
+    return False
