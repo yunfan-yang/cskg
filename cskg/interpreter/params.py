@@ -12,13 +12,13 @@ from loguru import logger
 from cskg.entity import FunctionEntity, ClassEntity
 from cskg.interpreter.vars import get_variable_inferred_type_qname
 from cskg.relationship import TakesRel
-from cskg.interpreter import get_inferred_type
+from cskg.interpreter import FunctionType, get_inferred_type
 
 
-def visit_parameters(function: FunctionDef, function_subtype: str):
+def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
     function_qname = function.qname()
     arguments_obj = function.args
-    is_method = function_subtype in ["method", "classmethod"]
+    is_method = function_subtype in [FunctionType.METHOD, FunctionType.CLASSMETHOD]
 
     for index, param_assign_name in enumerate(arguments_obj.arguments):
         # Skip method self/cls

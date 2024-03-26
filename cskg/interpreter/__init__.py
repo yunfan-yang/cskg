@@ -1,3 +1,4 @@
+from enum import StrEnum
 from astroid import NodeNG, InferenceError
 from astroid.typing import SuccessfulInferenceResult
 from astroid.util import Uninferable
@@ -43,3 +44,10 @@ def get_inferred_type(node: NodeNG, inferred_type_method=None) -> NodeNG | None:
         return inferred_type._proxied
 
     return None
+
+
+class FunctionType(StrEnum):
+    FUNCTION = "function"
+    METHOD = "method"
+    CLASSMETHOD = "classmethod"
+    STATICMETHOD = "staticmethod"

@@ -8,7 +8,7 @@ from loguru import logger
 
 from cskg.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
 from cskg.relationship import ContainsRel, ReturnsRel, CallsRel, YieldRel
-from cskg.interpreter import get_inferred_type, get_inferred_types
+from cskg.interpreter import FunctionType, get_inferred_type, get_inferred_types
 from cskg.interpreter.params import visit_parameters
 from cskg.interpreter.vars import visit_local_variables
 
@@ -164,14 +164,14 @@ def visit_function_yield_node(function: FunctionDef):
         yield yields_rel
 
 
-def get_function_subtype(function: FunctionDef):
+def get_function_subtype(function: FunctionDef) -> FunctionType:
     """
     Get function subtype: `function`, `method`, `classmethod`, `staticmethod`
     """
     try:
-        return function.type
+        return FunctionType(function.type)
     except ParentMissingError:
-        return "function"
+        return FunctionType.FUNCTION
     except Exception as e:
         raise e
 
