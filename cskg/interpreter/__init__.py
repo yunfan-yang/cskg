@@ -1,4 +1,3 @@
-from typing import Iterator, overload
 from astroid import NodeNG, InferenceError
 from astroid.typing import SuccessfulInferenceResult
 from astroid.util import Uninferable
