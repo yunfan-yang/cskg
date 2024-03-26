@@ -73,7 +73,7 @@ def visit_function(function: FunctionDef):
     yield from visit_function_return_node(function)
     yield from visit_function_yield_node(function)
     yield from visit_local_variables(function)
-    yield from visit_parameters(function)
+    yield from visit_parameters(function, function_subtype)
 
 
 def visit_function_called_nodes(function: FunctionDef):

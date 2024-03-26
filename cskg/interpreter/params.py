@@ -13,11 +13,16 @@ from cskg.relationship import TakesRel
 from cskg.interpreter import get_inferred_type
 
 
-def visit_parameters(function: FunctionDef):
+def visit_parameters(function: FunctionDef, function_subtype: str):
     function_qname = function.qname()
     arguments_obj = function.args
+    is_method = "method" in function_subtype
 
-    for assign_name_obj in arguments_obj.arguments:
+    for index, assign_name_obj in enumerate(arguments_obj.arguments):
+        # Skip method self/cls
+        if is_method and index == 0:
+            continue
+
         param_name = assign_name_obj.name
         default_value = get_parameter_default_value(arguments_obj, assign_name_obj)
 
