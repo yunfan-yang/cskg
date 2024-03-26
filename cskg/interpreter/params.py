@@ -18,7 +18,7 @@ from cskg.interpreter import get_inferred_type
 def visit_parameters(function: FunctionDef, function_subtype: str):
     function_qname = function.qname()
     arguments_obj = function.args
-    is_method = function_subtype == "method" or function_subtype == "classmethod"
+    is_method = function_subtype in ["method", "classmethod"]
 
     for index, param_assign_name in enumerate(arguments_obj.arguments):
         # Skip method self/cls
