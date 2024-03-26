@@ -65,7 +65,7 @@ class Entity(dict, ABC, metaclass=EntityMeta):
             if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
         }
 
-        entity_cls = Entity.get_class(json["label"])
+        entity_cls = Entity.get_class(json["type"])
 
         instance = entity_cls(
             name=json["name"],
@@ -77,13 +77,13 @@ class Entity(dict, ABC, metaclass=EntityMeta):
         return instance
 
     @classmethod
-    def get_class(cls, label: str):
+    def get_class(cls, type: str):
         subclasses = cls.__subclasses__()
         for subclass in subclasses:
-            if subclass.label == label:
+            if subclass.type == type:
                 return subclass
 
-        raise ValueError(f'Could not find class for "{label}" in {subclasses}')
+        raise ValueError(f'Could not find class for "{type}" in {subclasses}')
 
 
 class ModuleEntity(Entity):

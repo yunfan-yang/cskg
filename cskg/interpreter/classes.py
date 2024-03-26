@@ -24,9 +24,9 @@ def visit_class(cls: ClassDef):
 
     # Module contains class
     contains_mc_rel = ContainsRel(
-        from_label=ModuleEntity,
+        from_type=ModuleEntity,
         from_qualified_name=module_qname,
-        to_label=ClassEntity,
+        to_type=ClassEntity,
         to_qualified_name=qualified_name,
     )
     yield contains_mc_rel
@@ -37,9 +37,9 @@ def visit_class(cls: ClassDef):
         child_qualified_name = qualified_name
         parent_qualified_name = parent_class.qname()
         inherits_rel = InheritsRel(
-            from_label=ClassEntity,
+            from_type=ClassEntity,
             from_qualified_name=child_qualified_name,
-            to_label=ClassEntity,
+            to_type=ClassEntity,
             to_qualified_name=parent_qualified_name,
         )  # CHILD -[INHERITS]-> PARENT
         yield inherits_rel

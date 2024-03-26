@@ -48,9 +48,9 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
 
         inferred_type_qname = var_inferred_type.qname()
         instantiates_rel = InstantiatesRel(
-            from_label=ClassEntity,
+            from_type=ClassEntity,
             from_qualified_name=inferred_type_qname,
-            to_label=VariableEntity,
+            to_type=VariableEntity,
             to_qualified_name=var_qname,
         )
         yield instantiates_rel
@@ -69,25 +69,25 @@ def get_contains_rel(node: NodeNG, var_qname: str):
 
     if isinstance(node, ClassDef):
         contains_cv_rel = ContainsRel(
-            from_label=ClassEntity,
+            from_type=ClassEntity,
             from_qualified_name=qname,
-            to_label=VariableEntity,
+            to_type=VariableEntity,
             variable_qualified_name=var_qname,
         )
         yield contains_cv_rel
     elif isinstance(node, FunctionDef):
         contains_fv_rel = ContainsRel(
-            from_label=FunctionEntity,
+            from_type=FunctionEntity,
             function_qualified_name=qname,
-            to_label=VariableEntity,
+            to_type=VariableEntity,
             variable_qualified_name=var_qname,
         )
         yield contains_fv_rel
     elif isinstance(node, Module):
         contains_mv_rel = ContainsRel(
-            from_label=ModuleEntity,
+            from_type=ModuleEntity,
             module_qualified_name=qname,
-            to_label=VariableEntity,
+            to_type=VariableEntity,
             variable_qualified_name=var_qname,
         )
         yield contains_mv_rel

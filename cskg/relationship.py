@@ -14,9 +14,9 @@ class RelationshipMeta(ABCMeta):
 class Relationship(dict, ABC, metaclass=RelationshipMeta):
     __final_fields__ = ["type", "label"]
     __required_fields__ = [
-        "from_label",
+        "from_type",
         "from_qualified_name",
-        "to_label",
+        "to_type",
         "to_qualified_name",
     ]
 
@@ -25,18 +25,21 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
     def __init__(
         self,
-        from_label: Type[Entity],
+        from_type: Type[Entity],
         from_qualified_name: str,
-        to_label: Type[Entity],
+        to_type: Type[Entity],
         to_qualified_name: str,
         **kwargs,
     ):
+        self.from_type = from_type
+        self.to_type = to_type
+
         super().__init__(
             type=self.type,
             label=self.label,
-            from_label=from_label.label,
+            from_type=from_type.type,
             from_qualified_name=from_qualified_name,
-            to_label=to_label.label,
+            to_type=to_type.type,
             to_qualified_name=to_qualified_name,
             **kwargs,
         )
@@ -51,14 +54,19 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
 
     def __getattribute__(self, __name: str) -> Any:
         try:
-            return super().__getitem__(__name)
-        except KeyError:
             return super().__getattribute__(__name)
+        except KeyError:
+            return super().__getitem__(__name)
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__final_fields__:
             raise ValueError(f"Not allowed to set attribute {__name}")
-        super().__setitem__(__name, __value)
+
+        if __name in ["from_type", "to_type"]:
+            super().__setitem__(__name, __value.type)
+            super().__setitem__(__name, __value)
+        else:
+            super().__setitem__(__name, __value)
 
     @classmethod
     def from_json(cls, json: dict[str, Any]) -> Self:
@@ -68,27 +76,26 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
             if (key not in cls.__final_fields__ and key not in cls.__required_fields__)
         }
 
-        from_label_cls = Entity.get_class(json["from_label"])
-        to_label_cls = Entity.get_class(json["to_label"])
-        relationship_cls = Relationship.get_class(json["label"])
+        from_type_cls = Entity.get_class(json["from_type"])
+        to_type_cls = Entity.get_class(json["to_type"])
+        relationship_cls = Relationship.get_class(json["type"])
 
         instance = relationship_cls(
-            from_label=from_label_cls,
+            from_type=from_type_cls,
             from_qualified_name=json["from_qualified_name"],
-            to_label=to_label_cls,
+            to_type=to_type_cls,
             to_qualified_name=json["to_qualified_name"],
             **excluded_final_fields_json,
         )
         return instance
 
     @classmethod
-    def get_class(cls, label: str):
+    def get_class(cls, type: str):
         subclasses = cls.__subclasses__()
         for subclass in subclasses:
-            if subclass.label == label:
+            if subclass.type == type:
                 return subclass
-
-        raise ValueError(f'Could not find class for "{label}" in {subclasses}')
+        raise ValueError(f'Could not find class for "{type}" in {subclasses}')
 
 
 class CallsRel(Relationship):

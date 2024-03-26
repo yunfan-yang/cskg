@@ -53,8 +53,8 @@ class GraphComposer:
     def compose_relationship_cypher(self, relationship: Relationship):
         relation_type = f":{relationship.label}"
 
-        field_a_type = relationship.get("from_label")
-        field_b_type = relationship.get("to_label")
+        field_a_type = relationship.get("from_type")
+        field_b_type = relationship.get("to_type")
         field_a_value = relationship.get("from_qualified_name")
         field_b_value = relationship.get("to_qualified_name")
 

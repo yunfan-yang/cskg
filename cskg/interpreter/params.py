@@ -36,9 +36,9 @@ def visit_parameters(function: FunctionDef, function_subtype: str):
             class_qname = None
 
         takes_rel = TakesRel(
-            from_label=FunctionEntity,
+            from_type=FunctionEntity,
             from_qualified_name=function_qname,
-            to_label=ClassEntity,
+            to_type=ClassEntity,
             to_qualified_name=class_qname,
             param_name=param_name,
             default_value=default_value,

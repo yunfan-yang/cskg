@@ -37,9 +37,9 @@ def visit_function(function: FunctionDef):
         # Module
         module = function.root()
         contains_mf_rel = ContainsRel(
-            from_label=ModuleEntity,
+            from_type=ModuleEntity,
             from_qualified_name=module.qname(),
-            to_label=FunctionEntity,
+            to_type=FunctionEntity,
             to_qualified_name=qualified_name,
         )
         yield contains_mf_rel
@@ -62,9 +62,9 @@ def visit_function(function: FunctionDef):
 
         # Class
         contains_cf_rel = ContainsRel(
-            from_label=ClassEntity,
+            from_type=ClassEntity,
             from_qualified_name=class_qualified_name,
-            to_label=MethodEntity,
+            to_type=MethodEntity,
             to_qualified_name=qualified_name,
         )
         yield contains_cf_rel
@@ -112,9 +112,9 @@ def visit_function_called_nodes(function: FunctionDef):
         function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
         calls_rel = CallsRel(
-            from_label=FunctionEntity,
+            from_type=FunctionEntity,
             from_qualified_name=function_qualified_name,
-            to_label=FunctionEntity,
+            to_type=FunctionEntity,
             to_qualified_name=callee_qualified_name,
             arguments=arguments,
         )
@@ -135,9 +135,9 @@ def visit_function_return_node(function: FunctionDef):
         function_qualified_name = function.qname()
         class_qualified_name = return_type
         returns_rel = ReturnsRel(
-            from_label=FunctionEntity,
+            from_type=FunctionEntity,
             from_qualified_name=function_qualified_name,
-            to_label=ClassEntity,
+            to_type=ClassEntity,
             to_qualified_name=class_qualified_name,
         )
         yield returns_rel
@@ -156,9 +156,9 @@ def visit_function_yield_node(function: FunctionDef):
         function_qualified_name = function.qname()
         class_qualified_name = return_type
         yields_rel = YieldRel(
-            from_label=FunctionEntity,
+            from_type=FunctionEntity,
             from_qualified_name=function_qualified_name,
-            to_label=ClassEntity,
+            to_type=ClassEntity,
             to_qualified_name=class_qualified_name,
         )
         yield yields_rel
