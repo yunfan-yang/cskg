@@ -4,6 +4,7 @@ from astroid import (
     FunctionDef,
     NodeNG,
     AssignName,
+    Const,
 )
 from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
@@ -40,13 +41,16 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
 
         # Variable instantiate from class
         var_inferred_type = get_inferred_type(var_assign_name)
-        if not isinstance(var_inferred_type, LocalsDictNodeNG):
+        if isinstance(var_inferred_type, Const):
+            inferred_type_qname = var_inferred_type.pytype()
+        elif not isinstance(var_inferred_type, LocalsDictNodeNG):
             logger.error(
                 f"Invalid inferred type for var {var_assign_name}: {var_inferred_type}"
             )
             continue
+        else:
+            inferred_type_qname = var_inferred_type.qname()
 
-        inferred_type_qname = var_inferred_type.qname()
         instantiates_rel = InstantiatesRel(
             from_type=ClassEntity,
             from_qualified_name=inferred_type_qname,
