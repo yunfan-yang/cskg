@@ -1,10 +1,11 @@
-from typing import Any
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 import neomodel
 from neomodel import clear_neo4j_database
+from bson.regex import Regex
 from loguru import logger
 
+from cskg.entity import ClassEntity
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 
@@ -28,11 +29,46 @@ class Driver:
         # Instantiate mongo db client
         mongo_client = MongoClient(self.mongo_url)
         mongo_db = mongo_client.code_interpreter
+        self.mongo_client = mongo_client
         self.mongo_db = mongo_db
 
         # Clean up
         _mongo_drop_all(self.mongo_db)
         _neo_drop_all(self.neo_db)
+
+    def __populate_external_entities(self):
+        with self.mongo_client.start_session() as session:
+            takes_rels = self.mongo_db.takes_rel
+            class_ents = self.mongo_db["class_ent"]
+            module_prefix = self.interpreter.get_module_prefix()
+            regex_expr = Regex(f"^(?!{module_prefix}\.)")
+
+            pipeline = [
+                {
+                    "$match": {
+                        "to_type": ClassEntity.type,
+                        "to_qualified_name": regex_expr,
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$to_qualified_name",
+                        "qualified_name": {"$first": "$to_qualified_name"},
+                    }
+                },
+                {
+                    "$project": ClassEntity(
+                        _id=False,
+                        name="$qualified_name",
+                        qualified_name="$qualified_name",
+                        file_path="<external>",
+                        is_external_entity={"$literal": True},
+                    )
+                },
+            ]
+
+            external_classes = takes_rels.aggregate(pipeline, session=session)
+            class_ents.insert_many(external_classes, session=session)
 
     def run(self):
         # Instantiate
@@ -41,6 +77,7 @@ class Driver:
 
         # Interpretate codebase
         self.__interpret_code()
+        self.__populate_external_entities()
         logger.info("Interpretation done")
 
         # Compose graph
@@ -51,18 +88,20 @@ class Driver:
 
     def __interpret_code(self):
         generator = self.interpreter.interpret()
-        while True:
-            try:
-                node = next(generator)
-                logger.info(node)
-                node_type = node.get("type")
-                self.mongo_db[node_type].insert_one(node)
-            except StopIteration:
-                break
-            except DuplicateKeyError as e:
-                logger.error(e)
-            except Exception as e:
-                raise e
+
+        with self.mongo_client.start_session() as session:
+            while True:
+                try:
+                    node = next(generator)
+                    logger.info(node)
+                    node_type = node.get("type")
+                    self.mongo_db[node_type].insert_one(node, session=session)
+                except StopIteration:
+                    break
+                except DuplicateKeyError as e:
+                    logger.error(e)
+                except Exception as e:
+                    raise e
 
     def __compose_graph(self):
         modules = self.mongo_db["module_ent"].find()
