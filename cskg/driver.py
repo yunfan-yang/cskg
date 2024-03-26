@@ -30,7 +30,6 @@ class Driver:
         self.interpreter = None
         self.graph_composer = None
 
-    def init_database(self):
         # Load neomodel configurations
         neomodel.config.DATABASE_URL = self.neo4j_url
         neomodel.config.AUTO_INSTALL_LABELS = True
@@ -59,7 +58,7 @@ class Driver:
 
         # Interpretate codebase
         self.interpret_code()
-        # self.populate_external_entities()
+        self.populate_external_entities()
         logger.info("Interpretation done")
 
         # Compose graph
