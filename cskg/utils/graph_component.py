@@ -1,5 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from typing import Any, Self, Type
+from typing import Any, Self
 
 from loguru import logger
 
@@ -22,14 +22,19 @@ class GraphComponentMeta(ABCMeta):
 class GraphComponent(
     dict, ABC, VisitSubclassesMixin, CreateInstanceMixin, metaclass=GraphComponentMeta
 ):
+    __final_fields__: list[str] = ["type", "label", "extra_labels"]
+    __required_fields__: list[str] = ["name", "qualified_name"]
+
     type: str = None
     label: str = None
-
-    __final_fields__: list[str] = ["type", "label"]
+    extra_labels: tuple[str] = ()
 
     def __init__(self, **kwargs):
         kwargs["type"] = self.type
         kwargs["label"] = self.label
+
+        if not all(field in kwargs for field in self.__required_fields__):
+            raise ValueError(f"Missing one of the required fields")
 
         for key, value in kwargs.items():
             super().__setattr__(key, value)
@@ -66,5 +71,8 @@ class GraphComponent(
             return value.type
         return value
 
-    @abstractmethod
-    def from_json(cls, json: dict[str, Any]) -> Self: ...
+    @classmethod
+    def from_json(cls, json: dict[str, Any]) -> Self:
+        component_cls = cls.get_class(json["type"])
+        instance = component_cls.create_instance(**json)
+        return instance
