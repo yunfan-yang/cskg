@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Any, Self
 
 from cskg.utils.graph_component import GraphComponent
@@ -5,7 +6,7 @@ from cskg.utils.graph_component import GraphComponent
 EXTERNAL_LABEL = "External"
 
 
-class Entity(GraphComponent):
+class Entity(GraphComponent, ABC):
     __final_fields__ = ["type", "label", "extra_labels"]
     __required_fields__ = ["name", "qualified_name", "file_path"]
 

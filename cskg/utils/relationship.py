@@ -1,10 +1,11 @@
+from abc import ABC
 from typing import Any, Self, Type
 
 from cskg.utils.entity import Entity
 from cskg.utils.graph_component import GraphComponent
 
 
-class Relationship(GraphComponent):
+class Relationship(GraphComponent, ABC):
     __final_fields__ = ["type", "label"]
     __required_fields__ = [
         "from_type",
