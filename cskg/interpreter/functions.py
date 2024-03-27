@@ -8,7 +8,12 @@ from loguru import logger
 
 from cskg.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
 from cskg.relationship import ContainsRel, ReturnsRel, CallsRel, YieldsRel
-from cskg.interpreter import FunctionType, get_inferred_type, get_inferred_types
+from cskg.interpreter import (
+    FunctionType,
+    get_inferred_type,
+    get_inferred_types,
+    visit_external_entity,
+)
 from cskg.interpreter.params import visit_parameters
 from cskg.interpreter.vars import visit_local_variables
 
@@ -109,6 +114,8 @@ def visit_function_called_nodes(function: FunctionDef):
             logger.error(f"Could not infer function call (soft): {called_func}")
             continue
 
+        yield from visit_external_entity(inferred_node)
+
         function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
         calls_rel = CallsRel(
@@ -131,6 +138,8 @@ def visit_function_return_node(function: FunctionDef):
     )
 
     for inferred_node in inferred_nodes:
+        yield from visit_external_entity(inferred_node)
+
         return_type = get_inferred_node_qname(inferred_node)
         function_qualified_name = function.qname()
         class_qualified_name = return_type
@@ -152,6 +161,8 @@ def visit_function_yield_node(function: FunctionDef):
     )
 
     for inferred_node in inferred_nodes:
+        yield from visit_external_entity(inferred_node)
+
         return_type = get_inferred_node_qname(inferred_node)
         function_qualified_name = function.qname()
         class_qualified_name = return_type

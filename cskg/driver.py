@@ -58,7 +58,7 @@ class Driver:
 
         # Interpretate codebase
         self.interpret_code()
-        self.populate_external_entities()
+        # self.populate_external_entities()
         logger.info("Interpretation done")
 
         # Compose graph

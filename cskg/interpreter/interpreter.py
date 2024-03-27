@@ -9,7 +9,9 @@ from cskg.interpreter.nodes import visit_node
 
 class CodeInterpreter:
     def __init__(self, folder_path):
+        os.chdir(folder_path)
         self.folder_path = folder_path
+        self.folder_full_path = os.getcwd()
         self.manager = AstroidManager()
         self.manager.register_transform(Module, self.format_qname)
         self.manager.register_transform(ClassDef, self.format_qname)
@@ -21,7 +23,7 @@ class CodeInterpreter:
     def traverse_files(self):
         asts = {}
 
-        for root, dirs, files in os.walk(self.folder_path):
+        for root, dirs, files in os.walk(self.folder_full_path):
             for file in files:
                 if file.endswith(".py"):  # Only handles python file
                     file_path = os.path.join(root, file)
@@ -37,7 +39,13 @@ class CodeInterpreter:
         node.qname = lambda: remove_module_prefix(
             original_qname_function(), self.folder_path
         )
+
+        # Set file path to None if it is not internal entity
+        node_root_file = node.root().file
+        if node_root_file and not node_root_file.startswith(self.folder_full_path):
+            node.root().file = None
+
         return node
 
     def get_module_prefix(self):
-        return self.folder_path.split("/")[-1]
+        return self.folder_full_path.split("/")[-1]

@@ -1,8 +1,16 @@
 from enum import StrEnum
-from astroid import NodeNG, InferenceError
+from astroid import NodeNG, InferenceError, Module, ClassDef, FunctionDef, Const
 from astroid.typing import SuccessfulInferenceResult
 from astroid.util import Uninferable
 from astroid.bases import Proxy
+from loguru import logger
+
+from cskg.entity import (
+    ExternalModuleEntity,
+    ExternalClassEntity,
+    ExternalFunctionEntity,
+    ExternalVariableEntity,
+)
 
 
 def get_module_prefix(folder_path: str):
@@ -51,3 +59,40 @@ class FunctionType(StrEnum):
     METHOD = "method"
     CLASSMETHOD = "classmethod"
     STATICMETHOD = "staticmethod"
+
+
+def visit_external_entity(node: Module | ClassDef | FunctionDef | Const):
+    if node is None:
+        return
+
+    logger.debug(f"Visiting external entity: {type(node)} {node.qname()} {node.root()}")
+
+    root = node.root()
+    if isinstance(root, Module) and root.file is not None:
+        return
+
+    if isinstance(node, Module):
+        yield ExternalModuleEntity(
+            name=node.name,
+            qualified_name=node.qname(),
+            file_path=None,
+        )
+    elif isinstance(node, ClassDef):
+        yield ExternalClassEntity(
+            name=node.name,
+            qualified_name=node.qname(),
+            file_path=None,
+        )
+    elif isinstance(node, FunctionDef):
+        yield ExternalFunctionEntity(
+            name=node.name,
+            qualified_name=node.qname(),
+            file_path=None,
+            subtype=FunctionType(node.type),
+        )
+    elif isinstance(node, Const):
+        yield ExternalVariableEntity(
+            name=node.name,
+            qualified_name=node.pytype(),
+            file_path=None,
+        )

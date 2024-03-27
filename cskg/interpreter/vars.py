@@ -11,7 +11,7 @@ from loguru import logger
 
 from cskg.entity import VariableEntity, ClassEntity, FunctionEntity, ModuleEntity
 from cskg.relationship import ContainsRel, InstantiatesRel
-from cskg.interpreter import get_inferred_type
+from cskg.interpreter import get_inferred_type, visit_external_entity
 
 
 def visit_local_variables(node: Module | ClassDef | FunctionDef):
@@ -40,6 +40,9 @@ def visit_local_variables(node: Module | ClassDef | FunctionDef):
         yield from get_contains_rel(node, var_qname)
 
         # Variable instantiate from class
+        inferred_type = get_variable_inferred_type(var_assign_name)
+        yield from visit_external_entity(inferred_type)
+
         inferred_type_qname = get_variable_inferred_type_qname(var_assign_name)
         if inferred_type_qname:
             instantiates_rel = InstantiatesRel(
@@ -90,11 +93,15 @@ def get_contains_rel(node: NodeNG, var_qname: str):
         raise ValueError(f"Node {node} is not a ClassDef or FunctionDef")
 
 
-def get_variable_inferred_type_qname(var_assign_name: AssignName):
+def get_variable_inferred_type(var_assign_name: AssignName):
     try:
-        inferred_type = get_inferred_type(var_assign_name)
+        return get_inferred_type(var_assign_name)
     except:
         return None
+
+
+def get_variable_inferred_type_qname(var_assign_name: AssignName):
+    inferred_type = get_variable_inferred_type(var_assign_name)
 
     if isinstance(inferred_type, Instance) or isinstance(inferred_type, BaseContainer):
         return inferred_type.pytype()

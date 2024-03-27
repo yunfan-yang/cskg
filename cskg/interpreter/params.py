@@ -10,9 +10,12 @@ from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
 
 from cskg.entity import FunctionEntity, ClassEntity
-from cskg.interpreter.vars import get_variable_inferred_type_qname
+from cskg.interpreter.vars import (
+    get_variable_inferred_type_qname,
+    get_variable_inferred_type,
+)
 from cskg.relationship import TakesRel
-from cskg.interpreter import FunctionType, get_inferred_type
+from cskg.interpreter import FunctionType, get_inferred_type, visit_external_entity
 
 
 def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
@@ -27,6 +30,9 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
 
         param_name = param_assign_name.name
         default_value = get_parameter_default_value(arguments_obj, param_assign_name)
+
+        inferred_type = get_variable_inferred_type(param_assign_name)
+        yield from visit_external_entity(inferred_type)
 
         inferred_type_qname = get_variable_inferred_type_qname(param_assign_name)
         if inferred_type_qname:

@@ -1,7 +1,9 @@
 from astroid import ClassDef
+from loguru import logger
 
 from cskg.entity import ModuleEntity, ClassEntity
 from cskg.relationship import ContainsRel, InheritsRel
+from cskg.interpreter import visit_external_entity
 from cskg.interpreter.nodes import visit_children
 from cskg.interpreter.vars import visit_local_variables
 
@@ -34,6 +36,8 @@ def visit_class(cls: ClassDef):
     # Visit parents
     parent_classes = cls.ancestors(recurs=False)
     for parent_class in parent_classes:
+        yield from visit_external_entity(parent_class)
+
         child_qualified_name = qualified_name
         parent_qualified_name = parent_class.qname()
         inherits_rel = InheritsRel(
