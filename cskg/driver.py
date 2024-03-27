@@ -12,16 +12,6 @@ from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 
 
-RELS_EXTERNAL_ENTITIES_MAPPING: list[tuple[Type[Relationship], Type[Entity]]] = [
-    (CallsRel, ExternalFunctionEntity),
-    (InheritsRel, ExternalClassEntity),
-    (ReturnsRel, ExternalClassEntity),
-    (YieldsRel, ExternalClassEntity),
-    (InstantiatesRel, ExternalClassEntity),
-    (TakesRel, ExternalClassEntity),
-]
-
-
 class Driver:
     def __init__(self, folder_path: str, neo4j_url: str, mongo_url: str):
         self.folder_path = folder_path
