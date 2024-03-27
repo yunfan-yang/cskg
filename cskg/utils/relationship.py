@@ -1,18 +1,10 @@
 from typing import Any, Self, Type
-from abc import ABC, ABCMeta
 
 from cskg.utils.entity import Entity
-from cskg.utils.mixins import VisitSubclassesMixin
+from cskg.utils.graph_component import GraphComponent
 
 
-class RelationshipMeta(ABCMeta):
-    def __init__(cls, name, bases, dct):
-        if not hasattr(cls, "type") or not hasattr(cls, "label"):
-            raise AttributeError(f"Class {name} lacks required 'label' class attribute")
-        super().__init__(name, bases, dct)
-
-
-class Relationship(dict, ABC, VisitSubclassesMixin, metaclass=RelationshipMeta):
+class Relationship(GraphComponent):
     __final_fields__ = ["type", "label"]
     __required_fields__ = [
         "from_type",

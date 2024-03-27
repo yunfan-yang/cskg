@@ -1,19 +1,11 @@
 from typing import Any, Self
-from abc import ABC, ABCMeta
 
-from cskg.utils.mixins import VisitSubclassesMixin
+from cskg.utils.graph_component import GraphComponent
 
 EXTERNAL_LABEL = "External"
 
 
-class EntityMeta(ABCMeta):
-    def __init__(cls, name, bases, dct):
-        if not hasattr(cls, "type") or not hasattr(cls, "label"):
-            raise AttributeError(f"Class {name} lacks required 'label' class attribute")
-        super().__init__(name, bases, dct)
-
-
-class Entity(dict, ABC, VisitSubclassesMixin, metaclass=EntityMeta):
+class Entity(GraphComponent):
     __final_fields__ = ["type", "label", "extra_labels"]
     __required_fields__ = ["name", "qualified_name", "file_path"]
 
