@@ -9,8 +9,8 @@ from astroid import (
 from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
-from cskg.entity import VariableEntity, ClassEntity, FunctionEntity, ModuleEntity
-from cskg.relationship import ContainsRel, InstantiatesRel
+from cskg.utils.entity import VariableEntity, ClassEntity, FunctionEntity, ModuleEntity
+from cskg.utils.relationship import ContainsRel, InstantiatesRel
 from cskg.interpreter import get_inferred_type, visit_external_entity
 
 

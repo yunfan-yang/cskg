@@ -1,8 +1,8 @@
 from astroid import ClassDef
 from loguru import logger
 
-from cskg.entity import ModuleEntity, ClassEntity
-from cskg.relationship import ContainsRel, InheritsRel
+from cskg.utils.entity import ModuleEntity, ClassEntity
+from cskg.utils.relationship import ContainsRel, InheritsRel
 from cskg.interpreter import visit_external_entity
 from cskg.interpreter.nodes import visit_children
 from cskg.interpreter.vars import visit_local_variables

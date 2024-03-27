@@ -4,8 +4,8 @@ import neomodel
 from neomodel import clear_neo4j_database
 from loguru import logger
 
-from cskg.entity import *
-from cskg.relationship import *
+from cskg.utils.entity import *
+from cskg.utils.relationship import *
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 from cskg.detectors.detector import AbstractDetector

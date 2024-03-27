@@ -5,7 +5,7 @@ from astroid.util import Uninferable
 from astroid.bases import Proxy
 from loguru import logger
 
-from cskg.entity import (
+from cskg.utils.entity import (
     ExternalModuleEntity,
     ExternalClassEntity,
     ExternalFunctionEntity,

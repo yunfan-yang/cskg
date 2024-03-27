@@ -1,7 +1,7 @@
 from typing import Any, Self, Type
 from abc import ABC, ABCMeta
 
-from cskg.entity import Entity
+from cskg.utils.entity import Entity
 
 
 class RelationshipMeta(ABCMeta):

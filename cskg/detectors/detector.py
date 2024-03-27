@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from neomodel import Database as NeoDatabase
 
-from cskg.mixins import VisitSubclassesMixin, CreateInstanceMixin
+from cskg.utils.mixins import VisitSubclassesMixin, CreateInstanceMixin
 
 
 class AbstractDetector(ABC, VisitSubclassesMixin, CreateInstanceMixin):

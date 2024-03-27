@@ -1,6 +1,6 @@
 from astroid import Module
 
-from cskg.entity import ModuleEntity
+from cskg.utils.entity import ModuleEntity
 from cskg.interpreter.nodes import visit_children
 from cskg.interpreter.vars import visit_local_variables
 

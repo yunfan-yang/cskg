@@ -9,12 +9,12 @@ from astroid.exceptions import NoDefault
 from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
 
-from cskg.entity import FunctionEntity, ClassEntity
+from cskg.utils.entity import FunctionEntity, ClassEntity
+from cskg.utils.relationship import TakesRel
 from cskg.interpreter.vars import (
     get_variable_inferred_type_qname,
     get_variable_inferred_type,
 )
-from cskg.relationship import TakesRel
 from cskg.interpreter import FunctionType, get_inferred_type, visit_external_entity
 
 

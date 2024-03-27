@@ -4,8 +4,8 @@ from typing import Any, Iterable, TypeVar
 from loguru import logger
 from neomodel import db
 
-from cskg.entity import Entity
-from cskg.relationship import Relationship
+from cskg.utils.entity import Entity
+from cskg.utils.relationship import Relationship
 
 
 CHUNK_SIZE = 1000

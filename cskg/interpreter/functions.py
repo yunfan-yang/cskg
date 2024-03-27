@@ -6,8 +6,8 @@ from astroid import (
 from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
 
-from cskg.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
-from cskg.relationship import ContainsRel, ReturnsRel, CallsRel, YieldsRel
+from cskg.utils.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
+from cskg.utils.relationship import ContainsRel, ReturnsRel, CallsRel, YieldsRel
 from cskg.interpreter import (
     FunctionType,
     get_inferred_type,
