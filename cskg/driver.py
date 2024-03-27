@@ -58,7 +58,6 @@ class Driver:
 
         # Interpretate codebase
         self.interpret_code()
-        # self.populate_external_entities()
         logger.info("Interpretation done")
 
         # Compose graph
@@ -97,29 +96,6 @@ class Driver:
             self.graph_composer.add_relationships(relationships)
 
         self.graph_composer.compose()
-
-    def populate_external_entities(self):
-        def populate(ent_type, ent_qname, session):
-            ent_collection = self.mongo_db[ent_type]
-            try:
-                ent_collection.insert_one(
-                    Entity.get_class(f"external_{ent_type}")(
-                        name=ent_qname,
-                        qualified_name=ent_qname,
-                        file_path="<external>",
-                    ),
-                    session=session,
-                )
-            except DuplicateKeyError:
-                pass
-
-        with self.mongo_client.start_session() as session:
-            for rel_class in Relationship.__subclasses__():
-                rel_collection = self.mongo_db[rel_class.type]
-                rels = rel_collection.find()
-                for rel in rels:
-                    populate(rel["from_type"], rel["from_qualified_name"], session)
-                    populate(rel["to_type"], rel["to_qualified_name"], session)
 
 
 def _mongo_drop_all(mongo_db):
