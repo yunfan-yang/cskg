@@ -81,18 +81,21 @@ class Entity(dict, ABC, metaclass=EntityMeta):
 
     @classmethod
     def get_class(cls, type: str):
-        def get_subclasses(cls):
-            subclasses = cls.__subclasses__()
-            for subclass in subclasses:
-                yield from get_subclasses(subclass)
-                yield subclass
-
-        subclasses = get_subclasses(cls)
-        for subclass in subclasses:
+        for subclass in cls.visit_subclasses():
             if subclass.type == type:
                 return subclass
 
-        raise ValueError(f'Could not find class for "{type}" in {subclasses}')
+        raise ValueError(f'Could not find class for type "{type}"')
+
+    @classmethod
+    def visit_subclasses(cls):
+        yield cls
+        for subclass in cls.__subclasses__():
+            yield from subclass.visit_subclasses()
+
+    @classmethod
+    def get_subclasses(cls):
+        return list(cls.visit_subclasses())
 
 
 class ModuleEntity(Entity):

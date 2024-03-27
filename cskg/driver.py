@@ -47,8 +47,7 @@ class Driver:
         _neo_drop_all(self.neo_db)
 
         # Create indexes (for only Entity classes)
-        entity_classes = Entity.__subclasses__()
-        for entity_class in entity_classes:
+        for entity_class in Entity.visit_subclasses():
             self.mongo_db[entity_class.type].create_index("qualified_name", unique=True)
 
     def run(self):
@@ -84,8 +83,7 @@ class Driver:
 
     def compose_graph(self):
         # All entities
-        entity_classes = Entity.__subclasses__()
-        for entity_class in entity_classes:
+        for entity_class in Entity.visit_subclasses():
             entities = self.mongo_db[entity_class.type].find()
             self.graph_composer.add_entities(entities)
 
