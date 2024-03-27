@@ -8,6 +8,7 @@ from cskg.entity import *
 from cskg.relationship import *
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
+from cskg.detectors.detector import AbstractDetector
 
 
 class Driver:
@@ -51,6 +52,10 @@ class Driver:
         self.compose_graph()
         logger.info("Composition done")
 
+        # Detect smells
+        self.detect_smells()
+        logger.info("Smell detection done")
+
         logger.info("Done")
 
     def interpret_code(self):
@@ -81,6 +86,15 @@ class Driver:
             self.graph_composer.add_relationships(relationships)
 
         self.graph_composer.compose()
+
+    def detect_smells(self):
+        detectors = AbstractDetector.visit_subclasses()
+        # next(detectors)  # Skip the AbstractDetector class itself
+        logger.info(f"Detectors: {list(detectors)}")
+        # for detector_class in detectors:
+        #     logger.info(f"Detecting {detector_class.__name__}")
+        #     detector = detector_class.create_instance(self.neo_db)
+        #     detector.detect()
 
 
 def _mongo_drop_all(mongo_db):
