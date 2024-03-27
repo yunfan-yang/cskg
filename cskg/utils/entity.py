@@ -1,6 +1,8 @@
 from typing import Any, Self
 from abc import ABC, ABCMeta
 
+from cskg.utils.mixins import VisitSubclassesMixin
+
 EXTERNAL_LABEL = "External"
 
 
@@ -11,7 +13,7 @@ class EntityMeta(ABCMeta):
         super().__init__(name, bases, dct)
 
 
-class Entity(dict, ABC, metaclass=EntityMeta):
+class Entity(dict, ABC, VisitSubclassesMixin, metaclass=EntityMeta):
     __final_fields__ = ["type", "label", "extra_labels"]
     __required_fields__ = ["name", "qualified_name", "file_path"]
 
@@ -78,24 +80,6 @@ class Entity(dict, ABC, metaclass=EntityMeta):
         )
 
         return instance
-
-    @classmethod
-    def get_class(cls, type: str):
-        for subclass in cls.visit_subclasses():
-            if subclass.type == type:
-                return subclass
-
-        raise ValueError(f'Could not find class for type "{type}"')
-
-    @classmethod
-    def visit_subclasses(cls):
-        yield cls
-        for subclass in cls.__subclasses__():
-            yield from subclass.visit_subclasses()
-
-    @classmethod
-    def get_subclasses(cls):
-        return list(cls.visit_subclasses())
 
 
 class ModuleEntity(Entity):

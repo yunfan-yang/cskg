@@ -2,6 +2,7 @@ from typing import Any, Self, Type
 from abc import ABC, ABCMeta
 
 from cskg.utils.entity import Entity
+from cskg.utils.mixins import VisitSubclassesMixin
 
 
 class RelationshipMeta(ABCMeta):
@@ -11,7 +12,7 @@ class RelationshipMeta(ABCMeta):
         super().__init__(name, bases, dct)
 
 
-class Relationship(dict, ABC, metaclass=RelationshipMeta):
+class Relationship(dict, ABC, VisitSubclassesMixin, metaclass=RelationshipMeta):
     __final_fields__ = ["type", "label"]
     __required_fields__ = [
         "from_type",
@@ -89,24 +90,6 @@ class Relationship(dict, ABC, metaclass=RelationshipMeta):
             **excluded_final_fields_json,
         )
         return instance
-
-    @classmethod
-    def get_class(cls, type: str):
-        for subclass in cls.visit_subclasses():
-            if subclass.type == type:
-                return subclass
-
-        raise ValueError(f'Could not find class for type "{type}"')
-
-    @classmethod
-    def visit_subclasses(cls):
-        yield cls
-        for subclass in cls.__subclasses__():
-            yield from subclass.visit_subclasses()
-
-    @classmethod
-    def get_subclasses(cls):
-        return list(cls.visit_subclasses())
 
 
 class CallsRel(Relationship):
