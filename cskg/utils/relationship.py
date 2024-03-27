@@ -1,43 +1,37 @@
 from abc import ABC
+from typing import Type
 
+from cskg.utils.entity import Entity
 from cskg.utils.graph_component import GraphComponent
 
 
 class Relationship(GraphComponent, ABC):
-    __required_fields__ = [
-        "from_type",
-        "from_qualified_name",
-        "to_type",
-        "to_qualified_name",
-    ]
-
-    # def __init__(
-    #     self,
-    #     from_type: Type[Entity],
-    #     from_qualified_name: str,
-    #     to_type: Type[Entity],
-    #     to_qualified_name: str,
-    #     **kwargs,
-    # ):
-    #     super().__init__(
-    #         type=self.type,
-    #         label=self.label,
-    #         from_type=from_type,
-    #         from_qualified_name=from_qualified_name,
-    #         to_type=to_type,
-    #         to_qualified_name=to_qualified_name,
-    #         **kwargs,
-    #     )
+    def __init__(
+        self,
+        from_type: Type[Entity],
+        from_qualified_name: str,
+        to_type: Type[Entity],
+        to_qualified_name: str,
+        **kwargs,
+    ):
+        kwargs = {
+            **kwargs,
+            "from_type": from_type,
+            "from_qualified_name": from_qualified_name,
+            "to_type": to_type,
+            "to_qualified_name": to_qualified_name,
+        }
+        super().__init__(**kwargs)
 
     @classmethod
-    def from_json(cls, json):
-        instance = super().from_json(json)
+    def from_dict(cls, dict):
+        instance = super().from_dict(dict)
 
         from_type_str = instance.from_type
         to_type_str = instance.to_type
 
-        from_type = GraphComponent.get_class(from_type_str)  # Expect entity
-        to_type = GraphComponent.get_class(to_type_str)  # Expect entity
+        from_type = Entity.get_class(from_type_str)
+        to_type = Entity.get_class(to_type_str)
 
         instance.from_type = from_type
         instance.to_type = to_type

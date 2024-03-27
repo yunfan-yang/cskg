@@ -27,7 +27,7 @@ class GraphComposer:
             for chunk in _chunk(entities_iterable, CHUNK_SIZE):
                 with db.transaction:
                     for entity in chunk:
-                        cypher = self.compose_entity_cypher(Entity.from_json(entity))
+                        cypher = self.compose_entity_cypher(Entity.from_dict(entity))
                         logger.debug(f"cypher: {cypher}")
                         db.cypher_query(cypher)
 
@@ -45,7 +45,7 @@ class GraphComposer:
                 with db.transaction:
                     for relationship in chunk:
                         cypher = self.compose_relationship_cypher(
-                            Relationship.from_json(relationship)
+                            Relationship.from_dict(relationship)
                         )
                         db.cypher_query(cypher)
                         logger.debug(f"cypher: {cypher}")

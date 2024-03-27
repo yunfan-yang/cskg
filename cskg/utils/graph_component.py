@@ -1,7 +1,5 @@
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, ABCMeta
 from typing import Any, Self
-
-from loguru import logger
 
 from cskg.utils.mixins import VisitSubclassesMixin, CreateInstanceMixin
 
@@ -23,7 +21,6 @@ class GraphComponent(
     dict, ABC, VisitSubclassesMixin, CreateInstanceMixin, metaclass=GraphComponentMeta
 ):
     __final_fields__: list[str] = ["type", "label", "extra_labels"]
-    __required_fields__: list[str] = []
 
     type: str = None
     label: str = None
@@ -33,9 +30,6 @@ class GraphComponent(
         kwargs["type"] = self.type
         kwargs["label"] = self.label
         kwargs["extra_labels"] = self.extra_labels
-
-        if not all(field in kwargs for field in self.__required_fields__):
-            raise ValueError(f"Missing one of the required fields")
 
         for key, value in kwargs.items():
             super().__setattr__(key, value)
@@ -73,7 +67,7 @@ class GraphComponent(
         return value
 
     @classmethod
-    def from_json(cls, json: dict[str, Any]) -> Self:
-        component_cls = cls.get_class(json["type"])
-        instance = component_cls.create_instance(**json)
+    def from_dict(cls, dict: dict[str, Any]) -> Self:
+        component_cls = cls.get_class(dict["type"])
+        instance = component_cls.create_instance(**dict)
         return instance
