@@ -11,7 +11,6 @@ class CodeInterpreter:
     def __init__(self, folder_path):
         self.folder_path = folder_path
         self.folder_abs_path = os.path.abspath(folder_path)
-        logger.debug(f"Interpreting code in folder: {self.folder_abs_path}")
         self.manager = AstroidManager()
         self.manager.register_transform(Module, self.format_qname)
         self.manager.register_transform(ClassDef, self.format_qname)
