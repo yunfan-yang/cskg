@@ -10,8 +10,6 @@ class Entity(GraphComponent, ABC):
     __final_fields__ = ["type", "label", "extra_labels"]
     __required_fields__ = ["name", "qualified_name", "file_path"]
 
-    type: str = "entity"
-    label: str = "Entity"
     extra_labels: tuple[str] = ()
 
     def __init__(

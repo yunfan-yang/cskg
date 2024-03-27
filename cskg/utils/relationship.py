@@ -14,9 +14,6 @@ class Relationship(GraphComponent, ABC):
         "to_qualified_name",
     ]
 
-    type: str = "relationship"
-    label: str = "Relationship"
-
     def __init__(
         self,
         from_type: Type[Entity],
