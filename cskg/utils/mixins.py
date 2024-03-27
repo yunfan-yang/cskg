@@ -1,4 +1,4 @@
-class VisitSubclassesMixin:
+class VisitSubclassesMixin(object):
     @classmethod
     def visit_subclasses(cls):
         yield cls
@@ -10,7 +10,7 @@ class VisitSubclassesMixin:
         return list(cls.visit_subclasses())
 
 
-class CreateInstanceMixin:
+class CreateInstanceMixin(object):
     @classmethod
     def create_instance(cls, *args, **kwargs):
         return cls(*args, **kwargs)
