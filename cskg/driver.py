@@ -88,8 +88,7 @@ class Driver:
             self.graph_composer.add_entities(entities)
 
         # All relationships
-        relationship_classes = Relationship.__subclasses__()
-        for relationship_class in relationship_classes:
+        for relationship_class in Relationship.visit_subclasses():
             relationships = self.mongo_db[relationship_class.type].find()
             self.graph_composer.add_relationships(relationships)
 
