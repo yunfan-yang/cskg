@@ -91,13 +91,9 @@ class Driver:
         self.graph_composer.compose()
 
     def detect_smells(self):
-        detectors = AbstractDetector.visit_subclasses()
-        # next(detectors)  # Skip the AbstractDetector class itself
-        logger.info(f"Detectors: {list(detectors)}")
-        # for detector_class in detectors:
-        #     logger.info(f"Detecting {detector_class.__name__}")
-        #     detector = detector_class.create_instance(self.neo_db)
-        #     detector.detect()
+        for detector_class in AbstractDetector.visit_subclasses():
+            detector = detector_class.create_instance(self.neo_db)
+            detector.detect()
 
 
 def _mongo_drop_all(mongo_db):

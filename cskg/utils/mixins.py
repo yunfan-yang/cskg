@@ -1,6 +1,9 @@
+from typing import Generator, Self
+
+
 class VisitSubclassesMixin(object):
     @classmethod
-    def visit_subclasses(cls):
+    def visit_subclasses(cls) -> Generator[type[Self], None, None]:
         for subclass in cls.__subclasses__():
             yield subclass
             yield from subclass.visit_subclasses()
@@ -12,8 +15,8 @@ class VisitSubclassesMixin(object):
 
 class CreateInstanceMixin(object):
     @classmethod
-    def create_instance(cls, **kwargs):
-        return cls(**kwargs)
+    def create_instance(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
 
 
 class ExternalComponentMixin(object):

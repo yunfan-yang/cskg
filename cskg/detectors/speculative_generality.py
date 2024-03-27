@@ -5,7 +5,7 @@ from cskg.detectors.detector import AbstractDetector
 class SpeculativeGeneralityDetector(AbstractDetector):
     def detect(self):
         query = """
-            MATCH (a:Class {{is_abstract: true}})
+            MATCH (a:Class {is_abstract: true})
             OPTIONAL MATCH (a)<-[:INHERITS]-(inheriting_class)
             WITH a,
                 COUNT(inheriting_class) AS inherits_count
