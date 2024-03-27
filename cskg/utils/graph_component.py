@@ -10,9 +10,6 @@ class GraphComponentMeta(ABCMeta):
             raise AttributeError(f"Class {name} lacks required 'label' class attribute")
 
 
-class GraphComponent(dict, ABC, VisitSubclassesMixin, meta=GraphComponentMeta):
-    def __init__(self, *args, **kwargs):
-        super().__init__(**args, **kwargs)
-
-    def __init_subclass__(cls, *args, **kargs):
-        super().__init_subclass__(**args, **kargs)
+class GraphComponent(dict, ABC, VisitSubclassesMixin, metaclass=GraphComponentMeta):
+    type = "graph_component"
+    label = "GraphComponent"
