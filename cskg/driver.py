@@ -39,9 +39,8 @@ class Driver:
         # Create indexes (for only Entity classes)
         for entity_class in GraphComponent.visit_subclasses():
             if entity_class.type:
-                self.mongo_db[entity_class.type].create_index(
-                    "qualified_name", unique=True
-                )
+                collection = self.mongo_db[entity_class.type]
+                collection.create_index("qualified_name", unique=True)
 
     def run(self):
         # Instantiate
