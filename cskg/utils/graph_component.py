@@ -21,6 +21,9 @@ class GraphComponentMeta(ABCMeta):
 class GraphComponent(
     dict, ABC, VisitSubclassesMixin, CreateInstanceMixin, metaclass=GraphComponentMeta
 ):
+    type = None
+    label = None
+
     @classmethod
     def get_class(cls, type: str):
         for subclass in cls.visit_subclasses():

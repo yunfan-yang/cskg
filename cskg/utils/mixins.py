@@ -1,8 +1,8 @@
 class VisitSubclassesMixin(object):
     @classmethod
     def visit_subclasses(cls):
-        yield cls
         for subclass in cls.__subclasses__():
+            yield subclass
             yield from subclass.visit_subclasses()
 
     @classmethod
