@@ -1,9 +1,7 @@
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError, InvalidOperation
+from pymongo.errors import DuplicateKeyError
 import neomodel
 from neomodel import clear_neo4j_database
-from bson.regex import Regex
-from typing import Type
 from loguru import logger
 
 from cskg.entity import *
