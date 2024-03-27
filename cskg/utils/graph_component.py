@@ -33,7 +33,7 @@ class GraphComponent(
 
         for key, value in kwargs.items():
             super().__setattr__(key, value)
-            super().__setitem__(key, self.translate_dict_value(value))
+            super().__setitem__(key, self.encode_dict_value(value))
 
     @classmethod
     def get_class(cls, type: str) -> Self:
@@ -58,9 +58,9 @@ class GraphComponent(
             raise ValueError(f"Not allowed to set attribute {__name}")
 
         super().__setattr__(__name, __value)
-        super().__setitem__(__name, self.translate_dict_value(__value))
+        super().__setitem__(__name, self.encode_dict_value(__value))
 
-    def translate_dict_value(self, value):
+    def encode_dict_value(self, value):
         if isinstance(value, type(GraphComponent)):
             return value.type
         return value
