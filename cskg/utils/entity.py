@@ -7,12 +7,7 @@ EXTERNAL_LABEL = "External"
 
 class Entity(GraphComponent, ABC):
     def __init__(self, name: str, qualified_name: str, **kwargs):
-        kwargs = {
-            **kwargs,
-            "name": name,
-            "qualified_name": qualified_name,
-        }
-        super().__init__(**kwargs)
+        super().__init__(name=name, qualified_name=qualified_name, **kwargs)
 
 
 class ModuleEntity(Entity):

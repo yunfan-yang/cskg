@@ -14,14 +14,13 @@ class Relationship(GraphComponent, ABC):
         to_qualified_name: str,
         **kwargs,
     ):
-        kwargs = {
+        super().__init__(
+            from_type=from_type,
+            from_qualified_name=from_qualified_name,
+            to_type=to_type,
+            to_qualified_name=to_qualified_name,
             **kwargs,
-            "from_type": from_type,
-            "from_qualified_name": from_qualified_name,
-            "to_type": to_type,
-            "to_qualified_name": to_qualified_name,
-        }
-        super().__init__(**kwargs)
+        )
 
     @classmethod
     def from_dict(cls, dict):
