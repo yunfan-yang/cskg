@@ -23,7 +23,7 @@ class GraphComponent(
     dict, ABC, VisitSubclassesMixin, CreateInstanceMixin, metaclass=GraphComponentMeta
 ):
     __final_fields__: list[str] = ["type", "label", "extra_labels"]
-    __required_fields__: list[str] = ["name", "qualified_name"]
+    __required_fields__: list[str] = []
 
     type: str = None
     label: str = None
@@ -32,6 +32,7 @@ class GraphComponent(
     def __init__(self, **kwargs):
         kwargs["type"] = self.type
         kwargs["label"] = self.label
+        kwargs["extra_labels"] = self.extra_labels
 
         if not all(field in kwargs for field in self.__required_fields__):
             raise ValueError(f"Missing one of the required fields")

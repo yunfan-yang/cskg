@@ -1,12 +1,12 @@
 from abc import ABC
-from typing import Any, Self
 
 from cskg.utils.graph_component import GraphComponent
 
 EXTERNAL_LABEL = "External"
 
 
-class Entity(GraphComponent, ABC): ...
+class Entity(GraphComponent, ABC):
+    __required_fields__ = ["name", "qualified_name"]
 
 
 class ModuleEntity(Entity):

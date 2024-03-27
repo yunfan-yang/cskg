@@ -12,5 +12,5 @@ class VisitSubclassesMixin(object):
 
 class CreateInstanceMixin(object):
     @classmethod
-    def create_instance(cls, *args, **kwargs):
-        return cls(*args, **kwargs)
+    def create_instance(cls, **kwargs):
+        return cls(**kwargs)
