@@ -29,30 +29,6 @@ class Entity(GraphComponent, ABC):
             **kwargs,
         )
 
-    @property
-    def labels(self):
-        return {self.label, *self.extra_labels}
-
-    def __setitem__(self, key, value):
-        self.__setattr__(key, value)
-
-    def __getitem__(self, key):
-        return self.__getattribute__(key)
-
-    def __getattribute__(self, __name: str) -> Any:
-        try:
-            return super().__getattribute__(__name)
-        except AttributeError:
-            return super().__getitem__(__name)
-        except KeyError:
-            raise AttributeError(f"Field {__name} not found")
-
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        if __name in self.__final_fields__:
-            raise ValueError(f"Not allowed to set attribute {__name}")
-        super().__setattr__(__name, __value)
-        super().__setitem__(__name, __value)
-
     @classmethod
     def from_json(cls, json: dict[str, Any]) -> Self:
         excluded_final_fields_json = {

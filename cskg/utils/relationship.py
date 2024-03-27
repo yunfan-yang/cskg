@@ -1,7 +1,9 @@
 from abc import ABC
 from typing import Any, Self, Type
 
-from cskg.utils.entity import Entity
+from loguru import logger
+
+from cskg.utils.entity import Entity, ModuleEntity
 from cskg.utils.graph_component import GraphComponent
 
 
@@ -22,43 +24,15 @@ class Relationship(GraphComponent, ABC):
         to_qualified_name: str,
         **kwargs,
     ):
-        self.from_type = from_type
-        self.to_type = to_type
-
         super().__init__(
             type=self.type,
             label=self.label,
-            from_type=from_type.type,
+            from_type=from_type,
             from_qualified_name=from_qualified_name,
-            to_type=to_type.type,
+            to_type=to_type,
             to_qualified_name=to_qualified_name,
             **kwargs,
         )
-
-    def __setitem__(self, key, value):
-        self.__setattr__(key, value)
-
-    def __getitem__(self, key):
-        return self.__getattribute__(key)
-
-    def __getattribute__(self, __name: str) -> Any:
-        try:
-            return super().__getattribute__(__name)
-        except AttributeError:
-            return super().__getitem__(__name)
-        except KeyError:
-            raise AttributeError(f"Field {__name} not found")
-
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        if __name in self.__final_fields__:
-            raise ValueError(f"Not allowed to set attribute {__name}")
-
-        super().__setattr__(__name, __value)
-
-        if __name in ["from_type", "to_type"]:
-            super().__setitem__(__name, __value.type)
-        else:
-            super().__setitem__(__name, __value)
 
     @classmethod
     def from_json(cls, json: dict[str, Any]) -> Self:

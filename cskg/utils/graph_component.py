@@ -1,4 +1,5 @@
-from abc import ABC, ABCMeta
+from abc import ABC, ABCMeta, abstractmethod
+from typing import Any, Self, Type
 
 from loguru import logger
 
@@ -21,13 +22,49 @@ class GraphComponentMeta(ABCMeta):
 class GraphComponent(
     dict, ABC, VisitSubclassesMixin, CreateInstanceMixin, metaclass=GraphComponentMeta
 ):
-    type = None
-    label = None
+    type: str = None
+    label: str = None
+
+    __final_fields__: list[str] = ["type", "label"]
+
+    def __init__(self, **kwargs):
+        kwargs["type"] = self.type
+        kwargs["label"] = self.label
+
+        for key, value in kwargs.items():
+            super().__setattr__(key, value)
+            super().__setitem__(key, self.__translate_dict_value__(value))
 
     @classmethod
-    def get_class(cls, type: str):
+    def get_class(cls, type: str) -> Self:
         for subclass in cls.visit_subclasses():
             if subclass.type == type:
                 return subclass
 
         raise ValueError(f'Could not find class for type "{type}"')
+
+    @property
+    def labels(self):
+        return {self.label, *self.extra_labels}
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def __getitem__(self, key):
+        return self.__getattribute__(key)
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name in self.__final_fields__:
+            raise ValueError(f"Not allowed to set attribute {__name}")
+
+        super().__setattr__(__name, __value)
+        super().__setitem__(__name, self.__translate_dict_value__(__value))
+
+    def __translate_dict_value__(self, value):
+        # If refers to a type of GraphComponent, return its type
+        if isinstance(value, type(GraphComponent)):
+            return value.type
+        return value
+
+    @abstractmethod
+    def from_json(cls, json: dict[str, Any]) -> Self: ...
