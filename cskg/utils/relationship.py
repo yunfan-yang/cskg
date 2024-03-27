@@ -1,5 +1,4 @@
 from abc import ABC
-from typing import override
 
 from cskg.utils.graph_component import GraphComponent
 
@@ -31,12 +30,11 @@ class Relationship(GraphComponent, ABC):
     #     )
 
     @classmethod
-    @override
     def from_json(cls, json):
         instance = super().from_json(json)
 
-        from_type_str = json["from_type"]
-        to_type_str = json["to_type"]
+        from_type_str = instance.from_type
+        to_type_str = instance.to_type
 
         from_type = GraphComponent.get_class(from_type_str)  # Expect entity
         to_type = GraphComponent.get_class(to_type_str)  # Expect entity
