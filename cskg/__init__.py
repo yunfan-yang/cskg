@@ -31,5 +31,10 @@ def import_classes_from_directory(directory):
             sys.modules[module_name] = module
             spec.loader.exec_module(module)
 
+        elif os.path.isdir(os.path.join(directory, filename)):
+            import_classes_from_directory(os.path.join(directory, filename))
 
-import_classes_from_directory("cskg/detectors")
+
+cfp = os.path.dirname(os.path.realpath(__file__))
+logger.debug(f"Importing classes in directory {cfp}")
+import_classes_from_directory(cfp)
