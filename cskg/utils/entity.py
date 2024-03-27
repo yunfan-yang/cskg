@@ -1,8 +1,7 @@
 from abc import ABC
 
 from cskg.utils.graph_component import GraphComponent
-
-EXTERNAL_LABEL = "External"
+from cskg.utils.mixins import ExternalComponentMixin
 
 
 class Entity(GraphComponent, ABC):
@@ -36,26 +35,16 @@ class VariableEntity(Entity):
     label = "Variable"
 
 
-class ExternalModuleEntity(ModuleEntity):
-    type = "external_" + ModuleEntity.type
-    extra_labels = ModuleEntity.extra_labels + (EXTERNAL_LABEL,)
+class ExternalModuleEntity(ModuleEntity, ExternalComponentMixin): ...
 
 
-class ExternalClassEntity(ClassEntity):
-    type = "external_" + ClassEntity.type
-    extra_labels = ClassEntity.extra_labels + (EXTERNAL_LABEL,)
+class ExternalClassEntity(ClassEntity, ExternalComponentMixin): ...
 
 
-class ExternalFunctionEntity(FunctionEntity):
-    type = "external_" + FunctionEntity.type
-    extra_labels = FunctionEntity.extra_labels + (EXTERNAL_LABEL,)
+class ExternalFunctionEntity(FunctionEntity, ExternalComponentMixin): ...
 
 
-class ExternalMethodEntity(MethodEntity):
-    type = "external_" + MethodEntity.type
-    extra_labels = MethodEntity.extra_labels + (EXTERNAL_LABEL,)
+class ExternalMethodEntity(MethodEntity, ExternalComponentMixin): ...
 
 
-class ExternalVariableEntity(VariableEntity):
-    type = "external_" + VariableEntity.type
-    extra_labels = VariableEntity.extra_labels + (EXTERNAL_LABEL,)
+class ExternalVariableEntity(VariableEntity, ExternalComponentMixin): ...
