@@ -8,7 +8,7 @@ from loguru import logger
 
 from cskg.utils.entity import FunctionEntity, MethodEntity, ModuleEntity, ClassEntity
 from cskg.utils.relationship import ContainsRel, ReturnsRel, CallsRel, YieldsRel
-from cskg.interpreter import (
+from cskg.interpreter.utils import (
     FunctionType,
     get_inferred_type,
     get_inferred_types,

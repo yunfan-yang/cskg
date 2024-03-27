@@ -11,7 +11,7 @@ from loguru import logger
 
 from cskg.utils.entity import VariableEntity, ClassEntity, FunctionEntity, ModuleEntity
 from cskg.utils.relationship import ContainsRel, InstantiatesRel
-from cskg.interpreter import get_inferred_type, visit_external_entity
+from cskg.interpreter.utils import get_inferred_type, visit_external_entity
 
 
 def visit_local_variables(node: Module | ClassDef | FunctionDef):

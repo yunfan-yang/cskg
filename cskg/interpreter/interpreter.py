@@ -3,7 +3,7 @@ from astroid import FunctionDef, Module, ClassDef
 from astroid.manager import AstroidManager
 from loguru import logger
 
-from cskg.interpreter import remove_module_prefix
+from cskg.interpreter.utils import remove_module_prefix
 from cskg.interpreter.nodes import visit_node
 
 

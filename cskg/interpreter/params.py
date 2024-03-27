@@ -15,7 +15,7 @@ from cskg.interpreter.vars import (
     get_variable_inferred_type_qname,
     get_variable_inferred_type,
 )
-from cskg.interpreter import FunctionType, get_inferred_type, visit_external_entity
+from cskg.interpreter.utils import FunctionType, get_inferred_type, visit_external_entity
 
 
 def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
