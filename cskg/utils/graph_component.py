@@ -1,6 +1,6 @@
 from abc import ABC, ABCMeta
 
-from cskg.utils.mixins import VisitSubclassesMixin
+from cskg.utils.mixins import VisitSubclassesMixin, CreateInstanceMixin
 
 
 class GraphComponentMeta(ABCMeta):
@@ -13,7 +13,9 @@ class GraphComponentMeta(ABCMeta):
             raise AttributeError(f"Class {name} lacks required `label` class attribute")
 
 
-class GraphComponent(dict, ABC, VisitSubclassesMixin, metaclass=GraphComponentMeta):
+class GraphComponent(
+    dict, ABC, VisitSubclassesMixin, CreateInstanceMixin, metaclass=GraphComponentMeta
+):
     type = "graph_component"
     label = "GraphComponent"
 

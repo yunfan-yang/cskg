@@ -65,7 +65,7 @@ class Entity(GraphComponent, ABC):
 
         entity_cls = Entity.get_class(json["type"])
 
-        instance = entity_cls(
+        instance = entity_cls.create_instance(
             name=json["name"],
             qualified_name=json["qualified_name"],
             file_path=json["file_path"],

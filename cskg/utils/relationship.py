@@ -73,9 +73,9 @@ class Relationship(GraphComponent, ABC):
 
         from_type = Entity.get_class(json["from_type"])
         to_type = Entity.get_class(json["to_type"])
-        relationship = Relationship.get_class(json["type"])
+        relationship_cls = Relationship.get_class(json["type"])
 
-        instance = relationship(
+        instance = relationship_cls.create_instance(
             from_type=from_type,
             from_qualified_name=json["from_qualified_name"],
             to_type=to_type,
