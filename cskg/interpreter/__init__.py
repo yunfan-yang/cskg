@@ -65,8 +65,6 @@ def visit_external_entity(node: Module | ClassDef | FunctionDef | Const):
     if node is None:
         return
 
-    logger.debug(f"Visiting external entity: {type(node)} {node.qname()} {node.root()}")
-
     root = node.root()
     if isinstance(root, Module) and root.file is not None:
         return
