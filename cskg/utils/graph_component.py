@@ -37,6 +37,9 @@ class GraphComponent(
 
     @classmethod
     def get_class(cls, type: str) -> Self:
+        if cls.type == type:
+            return cls
+
         for subclass in cls.visit_subclasses():
             if subclass.type == type:
                 return subclass
