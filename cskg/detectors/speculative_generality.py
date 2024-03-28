@@ -1,5 +1,7 @@
 from loguru import logger
+
 from cskg.detectors.detector import AbstractDetector
+from cskg.utils.entity import ClassEntity
 
 
 class SpeculativeGeneralityDetector(AbstractDetector):
@@ -14,5 +16,10 @@ class SpeculativeGeneralityDetector(AbstractDetector):
         """
         logger.debug(query)
 
-        r = self.neo_db.cypher_query(query)
-        logger.debug(list(r))
+        results, meta = self.neo_db.cypher_query(query)
+
+        logger.debug(results)
+
+        for result in results:
+            ents = self.response_to_ent(result)
+            logger.debug(ents)
