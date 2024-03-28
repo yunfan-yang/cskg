@@ -6,25 +6,25 @@ from cskg.utils.mixins import VisitSubclassesMixin, CreateInstanceMixin
 
 class GraphComponentMeta(ABCMeta):
     def __init__(cls, name, bases, props):
+        def check_meta_fields(cls, field_name, field_type):
+            if not hasattr(cls, field_name):
+                raise AttributeError(
+                    f"Class `{cls.__name__}` lacks `{field_name}` class attribute"
+                )
+            if not getattr(cls, field_name):
+                raise ValueError(
+                    f"Class `{cls.__name__}` lacks `{field_name}` class attribute"
+                )
+            if not isinstance(getattr(cls, field_name), field_type):
+                raise ValueError(
+                    f"Class `{cls.__name__}` `{field_name}` class attribute must be of type {field_type}"
+                )
+
         super().__init__(name, bases, props)
 
         if not ABC in bases:
-            cls.check_meta_fields(cls, "type", str)
-            cls.check_meta_fields(cls, "label", str)
-
-    def check_meta_fields(cls, field_name, field_type):
-        if not hasattr(cls, field_name):
-            raise AttributeError(
-                f"Class `{cls.__name__}` lacks `{field_name}` class attribute"
-            )
-        if not getattr(cls, field_name):
-            raise ValueError(
-                f"Class `{cls.__name__}` lacks `{field_name}` class attribute"
-            )
-        if not isinstance(getattr(cls, field_name), field_type):
-            raise ValueError(
-                f"Class `{cls.__name__}` `{field_name}` class attribute must be of type {field_type}"
-            )
+            check_meta_fields(cls, "type", str)
+            check_meta_fields(cls, "label", str)
 
 
 class GraphComponent(
