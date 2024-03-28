@@ -35,24 +35,11 @@ class Driver:
         _mongo_drop_all(self.mongo_db)
         _neo_drop_all(self.neo_db)
 
-        # Create indexes
+        # Create indexes (only for entity classes)
         for entity_class in Entity.visit_subclasses():
             if entity_class.type:
                 collection = self.mongo_db[entity_class.type]
                 collection.create_index("qualified_name", unique=True)
-
-        for relationship_class in Relationship.visit_subclasses():
-            if relationship_class.type:
-                collection = self.mongo_db[relationship_class.type]
-                collection.create_index(
-                    (
-                        "from_type",
-                        "from_qualified_name",
-                        "to_type",
-                        "to_qualified_name",
-                    ),
-                    unique=True,
-                )
 
     def run(self):
         # Instantiate
