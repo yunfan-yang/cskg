@@ -28,7 +28,7 @@ class GraphComposer:
                 with db.transaction:
                     for entity in chunk:
                         cypher = self.compose_entity_cypher(Entity.from_dict(entity))
-                        logger.debug(f"cypher: {cypher}")
+                        logger.debug(cypher)
                         db.cypher_query(cypher)
 
     def compose_entity_cypher(self, entity: Entity):
@@ -47,24 +47,24 @@ class GraphComposer:
                         cypher = self.compose_relationship_cypher(
                             Relationship.from_dict(relationship)
                         )
+                        logger.debug(cypher)
                         db.cypher_query(cypher)
-                        logger.debug(f"cypher: {cypher}")
 
     def compose_relationship_cypher(self, relationship: Relationship):
-        relation_type = f":{relationship.label}"
+        relation_type = relationship.label
 
-        field_a_label = relationship.from_type.label
-        field_b_label = relationship.to_type.label
-        field_a_value = relationship.from_qualified_name
-        field_b_value = relationship.to_qualified_name
+        from_ent_label = relationship.from_type.label
+        from_ent_qname = relationship.from_qualified_name
+        to_ent_label = relationship.to_type.label
+        to_ent_qname = relationship.to_qualified_name
 
         relationship_properties = _get_dictionary_cypher(
             relationship, relationship.__final_fields__
         )
 
         return f"""
-            MATCH (a:{field_a_label} {{qualified_name: "{field_a_value}"}}), (b:{field_b_label} {{qualified_name: "{field_b_value}"}})
-            CREATE (a)-[{relation_type} {{ {relationship_properties} }}]->(b)
+            MATCH (a:{from_ent_label} {{qualified_name: "{from_ent_qname}"}}), (b:{to_ent_label} {{qualified_name: "{to_ent_qname}"}})
+            CREATE (a)-[:{relation_type} {{ {relationship_properties} }}]->(b)
         """
 
     def compose(self):
@@ -91,7 +91,7 @@ def _chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
 def _get_dictionary_cypher(
     dictionary: dict[str, Any], excluded_fields: list[str] = None
 ) -> str:
-    excluded_fields += ["_id"]
+    excluded_fields = ["_id", "label"]
     dictionary = _exclude_fields_dict(dictionary, excluded_fields)
 
     keypairs = []
