@@ -87,7 +87,7 @@ def _chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
 
 
 def _get_dictionary_cypher(dictionary: dict[str, Any]) -> str:
-    dictionary = _exclude_fields_dict(dictionary, ["_id", "label"])
+    dictionary = _exclude_fields_dict(dictionary, ["_id", "label", "extra_labels"])
 
     keypairs = []
     for key, value in dictionary.items():
