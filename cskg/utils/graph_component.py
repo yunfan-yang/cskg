@@ -8,13 +8,23 @@ class GraphComponentMeta(ABCMeta):
     def __init__(cls, name, bases, props):
         super().__init__(name, bases, props)
 
-        if ABC in bases:
-            return
+        if not ABC in bases:
+            cls.check_meta_fields(cls, "type", str)
+            cls.check_meta_fields(cls, "label", str)
 
-        if not hasattr(cls, "type") or not getattr(cls, "type"):
-            raise AttributeError(f"Class `{name}` lacks `type` class attribute")
-        elif not hasattr(cls, "label") or not getattr(cls, "label"):
-            raise AttributeError(f"Class `{name}` lacks `label` class attribute")
+    def check_meta_fields(cls, field_name, field_type):
+        if not hasattr(cls, field_name):
+            raise AttributeError(
+                f"Class `{cls.__name__}` lacks `{field_name}` class attribute"
+            )
+        if not getattr(cls, field_name):
+            raise ValueError(
+                f"Class `{cls.__name__}` lacks `{field_name}` class attribute"
+            )
+        if not isinstance(getattr(cls, field_name), field_type):
+            raise ValueError(
+                f"Class `{cls.__name__}` `{field_name}` class attribute must be of type {field_type}"
+            )
 
 
 class GraphComponent(
