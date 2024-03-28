@@ -73,6 +73,9 @@ class GraphComponent(
         super().__setattr__(__name, __value)
         super().__setitem__(__name, self.encode_dict_value(__value))
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} {super().__repr__()}>"
+
     def encode_dict_value(self, value):
         if isinstance(value, type(GraphComponent)):
             return value.type
