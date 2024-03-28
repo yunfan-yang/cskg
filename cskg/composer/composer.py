@@ -33,7 +33,7 @@ class GraphComposer:
 
     def compose_entity_cypher(self, entity: Entity):
         entity_type = "".join(map(lambda label: f":{label}", entity.labels))
-        entity_properties = _get_dictionary_cypher(entity, entity.__final_fields__)
+        entity_properties = _get_dictionary_cypher(entity)
 
         return f"""
             CREATE ({entity_type} {{ {entity_properties} }}) 
@@ -58,9 +58,7 @@ class GraphComposer:
         to_ent_label = relationship.to_type.label
         to_ent_qname = relationship.to_qualified_name
 
-        relationship_properties = _get_dictionary_cypher(
-            relationship, relationship.__final_fields__
-        )
+        relationship_properties = _get_dictionary_cypher(relationship)
 
         return f"""
             MATCH (a:{from_ent_label} {{qualified_name: "{from_ent_qname}"}}), (b:{to_ent_label} {{qualified_name: "{to_ent_qname}"}})
@@ -88,11 +86,8 @@ def _chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
         yield chain([first], islice(iterator, size - 1))
 
 
-def _get_dictionary_cypher(
-    dictionary: dict[str, Any], excluded_fields: list[str] = None
-) -> str:
-    excluded_fields = ["_id", "label"]
-    dictionary = _exclude_fields_dict(dictionary, excluded_fields)
+def _get_dictionary_cypher(dictionary: dict[str, Any]) -> str:
+    dictionary = _exclude_fields_dict(dictionary, ["_id", "label"])
 
     keypairs = []
     for key, value in dictionary.items():
