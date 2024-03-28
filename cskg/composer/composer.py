@@ -100,8 +100,12 @@ def _get_dictionary_cypher(
             keypairs.append(f"{key}: '{value}'")
         elif value is None:
             keypairs.append(f"{key}: NULL")
-        elif isinstance(value, (list, dict, tuple, set)):
-            return key + ": " + json.dumps(list(value)).replace("'", "")
+        elif isinstance(value, (list, tuple, set)):
+            keypairs.append(key + ": " + json.dumps(list(value)).replace("'", ""))
+        elif isinstance(value, dict):
+            keypairs.append(key + ": " + json.dumps(value).replace("'", ""))
+        elif isinstance(value, bool):
+            keypairs.append(f"{key}: {str(value).lower()}")
         else:
             keypairs.append(f"{key}: {value}")
     return ", ".join(keypairs)
