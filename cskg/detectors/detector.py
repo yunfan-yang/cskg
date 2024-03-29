@@ -3,7 +3,7 @@ from loguru import logger
 from neo4j.graph import Node
 from neomodel import Database as NeoDatabase
 
-from cskg.utils.entity import Entity
+from cskg.utils.graph_component import GraphComponent
 from cskg.utils.mixins import VisitSubclassesMixin, CreateInstanceMixin
 
 
@@ -15,8 +15,8 @@ class AbstractDetector(ABC, VisitSubclassesMixin, CreateInstanceMixin):
     def detect(self): ...
 
     def response_to_ent(self, nodes: list[Node]):
-        ents = []
+        components = []
         for node in nodes:
-            ent = Entity.from_dict(dict(node))
-            ents.append(ent)
-        return ents
+            ent = GraphComponent.from_dict(dict(node))
+            components.append(ent)
+        return components
