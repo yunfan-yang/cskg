@@ -167,9 +167,7 @@ def visit_function_return_node(function: FunctionDef):
     """
     Visit body and write down node function returns
     """
-    inferred_nodes = get_inferred_types(
-        function, lambda: function.infer_call_result(None)
-    )
+    inferred_nodes = get_inferred_types(lambda: function.infer_call_result(None))
 
     for inferred_node in inferred_nodes:
         yield from visit_external_entity(inferred_node)
@@ -190,9 +188,7 @@ def visit_function_yield_node(function: FunctionDef):
     """
     Visit body and write down node function yields
     """
-    inferred_nodes = get_inferred_types(
-        function, lambda: function.infer_yield_result(None)
-    )
+    inferred_nodes = get_inferred_types(lambda: function.infer_yield_result(None))
 
     for inferred_node in inferred_nodes:
         yield from visit_external_entity(inferred_node)

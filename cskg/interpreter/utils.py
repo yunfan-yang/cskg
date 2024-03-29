@@ -1,6 +1,7 @@
 from enum import StrEnum
-from astroid import NodeNG, InferenceError, Module, ClassDef, FunctionDef, Const
-from astroid.typing import SuccessfulInferenceResult
+from typing import Callable, overload
+from astroid import NodeNG, InferenceError, Module, ClassDef, FunctionDef
+from astroid.typing import SuccessfulInferenceResult, InferenceResult
 from astroid.util import Uninferable
 from astroid.bases import Proxy
 from loguru import logger
@@ -24,14 +25,24 @@ def remove_module_prefix(qualified_name: str, folder_path: str):
     return qualified_name
 
 
+@overload
+def get_inferred_types(node: NodeNG) -> list[SuccessfulInferenceResult]: ...
+
+
+@overload
 def get_inferred_types(
-    node: NodeNG, inferred_type_method=None
+    lambda_x: Callable[[], list[InferenceResult]]
+) -> list[SuccessfulInferenceResult]: ...
+
+
+def get_inferred_types(
+    node_or_lambda: NodeNG | Callable[[], list[InferenceResult]],
 ) -> list[SuccessfulInferenceResult]:
     try:
-        if inferred_type_method:
-            inferred_types = inferred_type_method()
+        if isinstance(node_or_lambda, NodeNG):
+            inferred_types = node_or_lambda.inferred()
         else:
-            inferred_types = node.inferred()
+            inferred_types = node_or_lambda()
 
         inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
         inferred_types = list(inferred_types)
@@ -40,8 +51,21 @@ def get_inferred_types(
         return []
 
 
-def get_inferred_type(node: NodeNG, inferred_type_method=None) -> NodeNG | None:
-    inferred_types = get_inferred_types(node, inferred_type_method)
+@overload
+def get_inferred_type(node: NodeNG) -> NodeNG | None: ...
+
+
+@overload
+def get_inferred_type(
+    node: NodeNG,
+    inferred_type_method: Callable[[], list[InferenceResult]],
+) -> NodeNG | None: ...
+
+
+def get_inferred_type(
+    node_or_lambda: NodeNG | Callable[[], list[InferenceResult]],
+) -> NodeNG | None:
+    inferred_types = get_inferred_types(node_or_lambda)
     inferred_type = inferred_types[0] if len(inferred_types) > 0 else None
 
     if isinstance(inferred_type, NodeNG):
