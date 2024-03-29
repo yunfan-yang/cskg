@@ -12,11 +12,36 @@ services:
       - $HOME/neo4j/logs:/logs
       - $HOME/neo4j/import:/var/lib/neo4j/import
       - $HOME/neo4j/plugins:/plugins
+
+  neo4j_requests:
+    image: neo4j:latest
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7475:7474" # HTTP
+      - "7688:7687" # Bolt
+    volumes:
+      - $HOME/neo4j_requests/data:/data
+      - $HOME/neo4j_requests/logs:/logs
+      - $HOME/neo4j_requests/import:/var/lib/neo4j/import
+      - $HOME/neo4j_requests/plugins:/plugins
+
   mongo:
     image: mongo
     restart: always
     ports:
       - 27017:27017
+    expose:
+      - "27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  mongo_requests:
+    image: mongo
+    restart: always
+    ports:
+      - 27018:27017
     expose:
       - "27017"
     environment:
