@@ -6,7 +6,7 @@ from astroid import (
 from astroid.exceptions import NoDefault
 from loguru import logger
 
-from cskg.utils.entity import FunctionEntity, ClassEntity
+from cskg.utils.entity import ExternalClassEntity, FunctionEntity, ClassEntity
 from cskg.utils.relationship import TakesRel
 from cskg.interpreter.vars import (
     get_variable_inferred_type_qname,
@@ -29,15 +29,32 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
         default_value = get_parameter_default_value(arguments_obj, param_assign_name)
 
         inferred_type = get_variable_inferred_type(param_assign_name)
-        yield from visit_external_entity(inferred_type)
-
         inferred_type_qname = get_variable_inferred_type_qname(param_assign_name)
+
         if inferred_type_qname:
+            yield from visit_external_entity(inferred_type)
             takes_rel = TakesRel(
                 from_type=FunctionEntity,
                 from_qualified_name=function_qname,
                 to_type=ClassEntity,
                 to_qualified_name=inferred_type_qname,
+                param_name=param_name,
+                default_value=default_value,
+            )
+            yield takes_rel
+        else:
+            any_ent = ExternalClassEntity(
+                name="Any",
+                qualified_name="builtins.Any",
+                file_path=None,
+            )
+            yield any_ent
+
+            takes_rel = TakesRel(
+                from_type=FunctionEntity,
+                from_qualified_name=function_qname,
+                to_type=ClassEntity,
+                to_qualified_name=any_ent.qualified_name,
                 param_name=param_name,
                 default_value=default_value,
             )
