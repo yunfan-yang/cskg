@@ -5,6 +5,7 @@ from neomodel import clear_neo4j_database
 from neo4j.exceptions import ClientError
 from os.path import abspath
 from loguru import logger
+from tqdm import tqdm
 
 from cskg.utils.graph_component import GraphComponent
 from cskg.utils.entity import *
@@ -105,23 +106,36 @@ class Driver:
         # Instantiate graph composer
         graph_composer = GraphComposer()
 
+        total_components = 0
+
         # Add all entities to composer
         for entity_class in Entity.visit_subclasses():
             collection = self.mongo_db.get_collection(entity_class.type)
-            entity_collection = collection.find()
-            graph_composer.add_entity_collections(entity_collection)
+
+            entity_count = collection.count_documents({})
+            total_components += entity_count
+
+            entity_collection_iter = collection.find()
+            graph_composer.add_entity_collections(entity_collection_iter)
 
         # Add all relationships to composer
         for relationship_class in Relationship.visit_subclasses():
             collection = self.mongo_db.get_collection(relationship_class.type)
-            relationship_collection = collection.find()
-            graph_composer.add_relationship_collection(relationship_collection)
+
+            relationship_count = collection.count_documents({})
+            total_components += relationship_count
+
+            relationship_collection_iter = collection.find()
+            graph_composer.add_relationship_collection(relationship_collection_iter)
 
         # Compose graph
+        bar = tqdm(total=total_components, desc="Composing graph", unit="components")
         with self.neo_db.transaction:
             for cypher, params in graph_composer.visit():
                 logger.debug(f"{cypher}\n{params}")
                 self.neo_db.cypher_query(cypher, params)
+                bar.update(1)
+        bar.close()
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():
