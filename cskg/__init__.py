@@ -19,6 +19,8 @@ logger.add(
     filter=lambda record: record["level"].name == "ERROR"
     or record["level"].name == "WARNING",
 )
+logger.remove(0)
+logger.add(sys.stderr, filter=lambda record: record["level"].name == "INFO")
 
 
 # Import all modules
