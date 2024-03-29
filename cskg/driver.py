@@ -27,12 +27,19 @@ class Driver:
         neomodel.config.AUTO_INSTALL_LABELS = True
         self.neo_db = neomodel.db
         self.neo_db.set_connection(self.neo4j_url)
+        logger.info(f"Connected to neo4j database at {self.neo_db.url}")
+        logger.info(f"Database edition: {self.neo_db.database_edition}")
+        logger.info(f"Database version: {self.neo_db.database_version}")
 
         # Instantiate mongo db client
         mongo_client = MongoClient(self.mongo_url)
         mongo_db = mongo_client.code_interpreter
         self.mongo_client = mongo_client
         self.mongo_db = mongo_db
+        logger.info(
+            f"Connected to mongo database at {self.mongo_client.HOST}:{self.mongo_client.PORT}"
+        )
+        logger.info(f"MongoDB version: {self.mongo_client.server_info()['version']}")
 
     def run(self, interpret=True, compose=True, detect=True):
         # Interpretate codebase
