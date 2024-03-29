@@ -89,12 +89,14 @@ class Driver:
 
         # Add all entities to composer
         for entity_class in Entity.visit_subclasses():
-            entities = self.mongo_db[entity_class.type].find()
+            collection = self.mongo_db.get_collection(entity_class.type)
+            entities = collection.find()
             graph_composer.add_entities(entities)
 
         # Add all relationships to composer
         for relationship_class in Relationship.visit_subclasses():
-            relationships = self.mongo_db[relationship_class.type].find()
+            collection = self.mongo_db.get_collection(relationship_class.type)
+            relationships = collection.find()
             graph_composer.add_relationships(relationships)
 
         # Compose graph
