@@ -63,7 +63,7 @@ class Driver:
                 )
 
                 # Create index for entity classes
-                if isinstance(component_class, Entity):
+                if issubclass(component_class, Entity):
                     collection.create_index("qualified_name", unique=True)
 
         # Instantiate code interpreter
