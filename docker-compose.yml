@@ -1,6 +1,6 @@
 version: '3'
 services:
-  neo4j:
+  neo4j_requests:
     image: neo4j:latest
     environment:
       NEO4J_AUTH: neo4j/password
@@ -13,7 +13,7 @@ services:
       - $HOME/neo4j/import:/var/lib/neo4j/import
       - $HOME/neo4j/plugins:/plugins
 
-  neo4j_requests:
+  neo4j_transformers:
     image: neo4j:latest
     environment:
       NEO4J_AUTH: neo4j/password
@@ -26,7 +26,7 @@ services:
       - $HOME/neo4j_requests/import:/var/lib/neo4j/import
       - $HOME/neo4j_requests/plugins:/plugins
 
-  mongo:
+  mongo_requests:
     image: mongo
     restart: always
     ports:
@@ -37,7 +37,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
 
-  mongo_requests:
+  mongo_transformers:
     image: mongo
     restart: always
     ports:
