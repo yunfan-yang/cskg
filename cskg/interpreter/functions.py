@@ -140,6 +140,28 @@ def visit_function_called_nodes(function: FunctionDef):
 
         yield calls_rel
 
+        # Lambda function need to be visited
+        if isinstance(inferred_node, Lambda):
+            called_name = inferred_node.name
+
+            lambda_ent = FunctionEntity(
+                name=called_name,
+                qualified_name=callee_qualified_name,
+                file_path=inferred_node.root().file,
+                subtype=FunctionType.LAMBDA,
+            )
+
+            yield lambda_ent
+
+            # Function parent
+            contains_rel = ContainsRel(
+                from_type=FunctionEntity,
+                from_qualified_name=function_qualified_name,
+                to_type=FunctionEntity,
+                to_qualified_name=callee_qualified_name,
+            )
+            yield contains_rel
+
 
 def visit_function_return_node(function: FunctionDef):
     """

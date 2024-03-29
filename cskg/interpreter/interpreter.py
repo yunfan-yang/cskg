@@ -3,6 +3,7 @@ from typing import Generator
 from astroid import FunctionDef, Module, ClassDef, Lambda
 from astroid.manager import AstroidManager
 from loguru import logger
+from hashlib import md5
 
 from cskg.utils.graph_component import GraphComponent
 from cskg.interpreter.utils import remove_module_prefix
@@ -17,7 +18,7 @@ class CodeInterpreter:
         self.manager.register_transform(Module, self.format_qname)
         self.manager.register_transform(ClassDef, self.format_qname)
         self.manager.register_transform(FunctionDef, self.format_qname)
-        self.manager.register_transform(Lambda, self.format_lambda_qname)
+        self.manager.register_transform(Lambda, self.format_lambda_name)
 
     def visit(self) -> Generator[GraphComponent, None, None]:
         asts = {}
@@ -45,13 +46,9 @@ class CodeInterpreter:
 
         return node
 
-    def format_lambda_qname(self, lambda_func: Lambda):
-        original_qname_function = lambda_func.qname
-        lambda_hash = hash(lambda_func.as_string())
-        lambda_func.qname = lambda: original_qname_function().replace(
-            "lambda", str(lambda_hash)
-        )
-        lambda_func.name = f"<{lambda_hash}>"
+    def format_lambda_name(self, lambda_func: Lambda):
+        lambda_hash = md5(lambda_func.as_string().encode()).hexdigest()[:8]
+        lambda_func.name = f"lambda_{lambda_hash}"
         return lambda_func
 
     def get_module_prefix(self):

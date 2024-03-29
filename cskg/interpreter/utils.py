@@ -59,6 +59,7 @@ class FunctionType(StrEnum):
     METHOD = "method"
     CLASSMETHOD = "classmethod"
     STATICMETHOD = "staticmethod"
+    LAMBDA = "lambda"
 
 
 def visit_external_entity(node: Module | ClassDef | FunctionDef | Const):
