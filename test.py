@@ -25,4 +25,4 @@ driver_transformers = Driver(
     neo4j_url=NEO4J_URL_TRANSFORMERS,
     mongo_url=MONGO_URL_TRANSFORMERS,
 )
-driver_transformers.run(interpret=True, compose=True, detect=True)
+driver_transformers.run(interpret=False, compose=False, detect=True)
