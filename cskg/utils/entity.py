@@ -6,6 +6,8 @@ from cskg.utils.mixins import ExternalComponentMixin
 
 class Entity(GraphComponent, ABC):
     def __init__(self, name: str, qualified_name: str, **kwargs):
+        self.name: str
+        self.qualified_name: str
         super().__init__(name=name, qualified_name=qualified_name, **kwargs)
 
 

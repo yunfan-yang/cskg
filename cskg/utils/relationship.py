@@ -14,6 +14,10 @@ class Relationship(GraphComponent, ABC):
         to_qualified_name: str,
         **kwargs,
     ):
+        self.from_type: Type[Entity]
+        self.from_qualified_name: str
+        self.to_type: Type[Entity]
+        self.to_qualified_name: str
         super().__init__(
             from_type=from_type,
             from_qualified_name=from_qualified_name,
