@@ -37,16 +37,19 @@ class Driver:
     def run(self, interpret=True, compose=True, detect=True):
         # Interpretate codebase
         if interpret:
+            logger.info("Interpreting code")
             self.interpret_code()
             logger.info("Interpretation done")
 
         # Compose graph
         if compose:
+            logger.info("Composing graph")
             self.compose_graph()
             logger.info("Composition done")
 
         # Detect smells
         if detect:
+            logger.info("Detecting smells")
             self.detect_smells()
             logger.info("Detection done")
 
