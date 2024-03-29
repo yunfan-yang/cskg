@@ -1,9 +1,11 @@
+from glob import glob
 import os
 from typing import Generator
 from astroid import FunctionDef, Module, ClassDef, Lambda
 from astroid.manager import AstroidManager
 from loguru import logger
 from hashlib import md5
+from tqdm import tqdm
 
 from cskg.utils.graph_component import GraphComponent
 from cskg.interpreter.utils import remove_module_prefix
@@ -21,17 +23,24 @@ class CodeInterpreter:
         self.manager.register_transform(Lambda, self.format_lambda_name)
 
     def visit(self) -> Generator[GraphComponent, None, None]:
-        asts = {}
+        python_files = glob(
+            os.path.join(self.folder_abs_path, "**", "*.py"), recursive=True
+        )
+        python_files_count = len(python_files)
 
+        modules = []
+        bar = tqdm(total=python_files_count, desc="Parsing files", unit="files")
         for root, dirs, files in os.walk(self.folder_abs_path):
             for file in files:
                 if str(file).endswith(".py"):  # Only handles python file
                     file_path = os.path.join(root, file)
-                    asts[file_path] = self.manager.ast_from_file(file_path)
+                    modules.append(self.manager.ast_from_file(file_path))
                     logger.debug(f"Ast from file: {file_path}")
+                    bar.update(1)
+        bar.close()
 
-        for file_path, ast in asts.items():
-            yield from visit_node(ast)
+        for module in tqdm(modules, desc="Visiting nodes", unit="modules"):
+            yield from visit_node(module)
 
     def format_qname(self, node: Module | ClassDef | FunctionDef):
         original_qname_function = node.qname
