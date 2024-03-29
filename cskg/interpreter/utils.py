@@ -32,13 +32,12 @@ def get_inferred_types(
             inferred_types = inferred_type_method()
         else:
             inferred_types = node.inferred()
+
+        inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
+        inferred_types = list(inferred_types)
+        return inferred_types
     except InferenceError or StopIteration:
         return []
-
-    inferred_types = filter(lambda node: node is not Uninferable, inferred_types)
-    inferred_types = list(inferred_types)
-
-    return inferred_types
 
 
 def get_inferred_type(node: NodeNG, inferred_type_method=None) -> NodeNG | None:
@@ -62,15 +61,13 @@ class FunctionType(StrEnum):
     LAMBDA = "lambda"
 
 
-def visit_external_entity(node: Module | ClassDef | FunctionDef | Const):
+def visit_external_entity(node: NodeNG):
     if node is None:
         return
 
     root = node.root()
     if isinstance(root, Module) and root.file is not None:
         return
-
-    logger.debug(f"Visiting external entity {node.qname()} {node}")
 
     if isinstance(node, Module):
         yield ExternalModuleEntity(

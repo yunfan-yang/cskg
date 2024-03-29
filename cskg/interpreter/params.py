@@ -1,12 +1,9 @@
 from astroid import (
     AssignName,
-    Name,
     Arguments,
     FunctionDef,
-    Const,
 )
 from astroid.exceptions import NoDefault
-from astroid.nodes import LocalsDictNodeNG
 from loguru import logger
 
 from cskg.utils.entity import FunctionEntity, ClassEntity
@@ -15,7 +12,7 @@ from cskg.interpreter.vars import (
     get_variable_inferred_type_qname,
     get_variable_inferred_type,
 )
-from cskg.interpreter.utils import FunctionType, get_inferred_type, visit_external_entity
+from cskg.interpreter.utils import FunctionType, visit_external_entity
 
 
 def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
@@ -52,26 +49,6 @@ def get_parameter_default_value(arguments_obj: Arguments, assign_name: AssignNam
 
     try:
         default_value_obj = arguments_obj.default_value(param_name)
-
-        # If default value is a Name, infer its type
-        if isinstance(default_value_obj, Name):
-            default_value_inferred_type = get_inferred_type(default_value_obj)
-
-            # If inferrable and inferred type is a LocalsDictNodeNG, get its qname
-            if isinstance(default_value_inferred_type, LocalsDictNodeNG):
-                return default_value_inferred_type.qname()
-
-            # Pure name
-            else:
-                return default_value_obj.name
-
-        # If default value is a Const, get its value
-        elif isinstance(default_value_obj, Const):
-            return default_value_obj.value
-
-        # If default value is not a Name or a Const, need further investigation
-        else:
-            raise Exception(f"Unknown default value type: {type(default_value_obj)}")
-
+        return default_value_obj.as_string()
     except NoDefault:
         return None
