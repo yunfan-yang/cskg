@@ -2,7 +2,6 @@ from astroid import (
     Module,
     ClassDef,
     FunctionDef,
-    NodeNG,
     AssignName,
     Instance,
 )
@@ -14,7 +13,7 @@ from cskg.utils.relationship import ContainsRel, InstantiatesRel
 from cskg.interpreter.utils import get_inferred_type, visit_external_entity
 
 
-def visit_local_variables(node: Module | ClassDef | FunctionDef):
+def visit_local_variables(node: LocalsDictNodeNG):
     qname = node.qname()
     file_path = node.root().file
 
@@ -62,7 +61,7 @@ def get_variable_access(variable_name: str):
     return "public"
 
 
-def get_contains_rel(node: NodeNG, var_qname: str):
+def get_contains_rel(node: LocalsDictNodeNG, var_qname: str):
     qname = node.qname()
 
     if isinstance(node, ClassDef):

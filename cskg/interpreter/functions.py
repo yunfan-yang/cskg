@@ -4,6 +4,7 @@ from astroid import (
     FunctionDef,
     Call,
     ParentMissingError,
+    Lambda,
 )
 from astroid.nodes import LocalsDictNodeNG, BaseContainer
 from loguru import logger
@@ -118,7 +119,7 @@ def visit_function_called_nodes(function: FunctionDef):
 
         yield from visit_external_entity(inferred_node)
 
-        if isinstance(inferred_node, FunctionDef):
+        if isinstance(inferred_node, FunctionDef) or isinstance(inferred_node, Lambda):
             to_type = FunctionEntity
         elif isinstance(inferred_node, ClassDef):
             to_type = ClassEntity
