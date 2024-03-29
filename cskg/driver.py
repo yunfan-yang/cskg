@@ -91,8 +91,14 @@ class Driver:
                 CREATE INDEX {entity_type}_qualified_name FOR (n:{entity_label}) ON (n.qualified_name)
             """
             logger.debug(index_cypher)
+            constraint_cypher = f"""
+                CREATE CONSTRAINT {entity_type}_qualified_name_constraint ON (n:{entity_label}) ASSERT n.qualified_name IS UNIQUE
+            """
+            logger.debug(constraint_cypher)
+
             try:
                 self.neo_db.cypher_query(index_cypher)
+                self.neo_db.cypher_query(constraint_cypher)
             except ClientError:
                 ...
 
