@@ -37,9 +37,11 @@ class CodeInterpreter:
                     modules.append(self.manager.ast_from_file(file_path))
                     logger.debug(f"Ast from file: {file_path}")
                     bar.update(1)
+                    bar.write(f"File: {file_path}")
         bar.close()
 
-        for module in tqdm(modules, desc="Visiting nodes", unit="modules"):
+        for module in (bar := tqdm(modules, desc="Visiting nodes", unit="modules")):
+            bar.write(f"Module: {module.name}")
             yield from visit_node(module)
 
     def format_qname(self, node: Module | ClassDef | FunctionDef):
