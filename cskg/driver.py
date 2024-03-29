@@ -45,11 +45,13 @@ class Driver:
             mongo_db = mongo_client.code_interpreter
             self.mongo_client = mongo_client
             self.mongo_db = mongo_db
-            self.mongo_db.command("dbstats")
-            self.is_mongo_connected = True
 
             host_port = f"{self.mongo_client.HOST}:{self.mongo_client.PORT}"
             version = self.mongo_client.server_info()["version"]
+
+            self.mongo_db.command("dbstats")
+            self.is_mongo_connected = True
+
             logger.info(f"Connected to mongo database at {host_port}")
             logger.info(f"MongoDB version: {version}")
         except:
