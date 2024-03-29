@@ -20,28 +20,46 @@ class Driver:
         self.folder_path = folder_path
         self.folder_abs_path = abspath(folder_path)
         self.neo4j_url = neo4j_url
+        self.is_neo4j_connected = False
         self.mongo_url = mongo_url
+        self.is_mongo_connected = False
 
-        # Load neomodel configurations
-        neomodel.config.DATABASE_URL = self.neo4j_url
-        neomodel.config.AUTO_INSTALL_LABELS = True
-        self.neo_db = neomodel.db
-        self.neo_db.set_connection(self.neo4j_url)
-        logger.info(f"Connected to neo4j database at {self.neo_db.url}")
-        logger.info(f"Database edition: {self.neo_db.database_edition}")
-        logger.info(f"Database version: {self.neo_db.database_version}")
+        # Connect to neo4j
+        try:
+            neomodel.config.DATABASE_URL = self.neo4j_url
+            neomodel.config.AUTO_INSTALL_LABELS = True
+            self.neo_db = neomodel.db
+            self.neo_db.set_connection(self.neo4j_url)
+            self.neo_db.cypher_query("RETURN datetime() AS datetime")
+            self.is_neo4j_connected = True
+            logger.info(f"Connected to neo4j database at {self.neo_db.url}")
+            logger.info(f"Database edition: {self.neo_db.database_edition}")
+            logger.info(f"Database version: {self.neo_db.database_version}")
+        except:
+            self.is_neo4j_connected = False
+            logger.info(f"Failed to connect to neo4j database at {self.neo_db.url}")
 
-        # Instantiate mongo db client
-        mongo_client = MongoClient(self.mongo_url)
-        mongo_db = mongo_client.code_interpreter
-        self.mongo_client = mongo_client
-        self.mongo_db = mongo_db
-        logger.info(
-            f"Connected to mongo database at {self.mongo_client.HOST}:{self.mongo_client.PORT}"
-        )
-        logger.info(f"MongoDB version: {self.mongo_client.server_info()['version']}")
+        # Connect to mongo
+        try:
+            mongo_client = MongoClient(self.mongo_url)
+            mongo_db = mongo_client.code_interpreter
+            self.mongo_client = mongo_client
+            self.mongo_db = mongo_db
+            self.mongo_db.command("dbstats")
+            self.is_mongo_connected = True
+
+            host_port = f"{self.mongo_client.HOST}:{self.mongo_client.PORT}"
+            version = self.mongo_client.server_info()["version"]
+            logger.info(f"Connected to mongo database at {host_port}")
+            logger.info(f"MongoDB version: {version}")
+        except:
+            logger.info(f"Failed to connect to mongo database at {host_port}")
+            self.is_mongo_connected = False
 
     def run(self, interpret=True, compose=True, detect=True):
+        if not self.is_neo4j_connected and not self.is_mongo_connected:
+            return
+
         # Interpretate codebase
         if interpret:
             logger.info("Interpreting code")
