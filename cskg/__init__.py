@@ -5,6 +5,7 @@ import importlib
 from loguru import logger
 
 # Initialize logger file
+logger.remove(0)
 filename = time.strftime("%Y-%m-%d_%H-%M-%S")
 logger.add(
     f"logs/{filename}.log",
@@ -19,7 +20,6 @@ logger.add(
     filter=lambda record: record["level"].name == "ERROR"
     or record["level"].name == "WARNING",
 )
-logger.remove(0)
 logger.add(sys.stderr, filter=lambda record: record["level"].name == "INFO")
 
 
