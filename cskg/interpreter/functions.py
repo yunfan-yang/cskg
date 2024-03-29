@@ -183,8 +183,6 @@ def get_function_subtype(function: FunctionDef) -> FunctionType:
         return FunctionType(function.type)
     except ParentMissingError:
         return FunctionType.FUNCTION
-    except Exception as e:
-        raise e
 
 
 def get_inferred_node_qname(inferred_node):

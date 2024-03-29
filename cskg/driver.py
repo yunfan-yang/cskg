@@ -35,7 +35,7 @@ class Driver:
 
     def run(self):
         # Interpretate codebase
-        # self.interpret_code()
+        self.interpret_code()
         logger.info("Interpretation done")
 
         # Compose graph
@@ -78,8 +78,6 @@ class Driver:
                     logger.info(component)
                 except DuplicateKeyError as e:
                     logger.warning(e)  # Ignore duplicate key error
-                except Exception as e:
-                    raise e
 
     def compose_graph(self):
         # Drop everything in neo4j
@@ -123,3 +121,8 @@ class Driver:
         for detector_class in AbstractDetector.visit_subclasses():
             detector = detector_class.create_instance(self.neo_db)
             detector.detect()
+
+    def __del__(self):
+        self.mongo_client.close()
+        self.neo_db.close_connection()
+        logger.info("Connections closed")
