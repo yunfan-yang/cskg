@@ -152,7 +152,7 @@ class Driver:
                 if bar.n % batch_size == 0:
                     self.neo_db.commit()
                     self.neo_db.begin()
-                    bar.write(f"Batch committed ({bar.n}/{bar.total} components)")
+                    bar.write(f"Batch committed ({bar.n}/{bar.total})")
         bar.close()
 
     def detect_smells(self):
