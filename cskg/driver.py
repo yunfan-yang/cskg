@@ -34,20 +34,21 @@ class Driver:
         self.mongo_client = mongo_client
         self.mongo_db = mongo_db
 
-    def run(self):
+    def run(self, interpret=True, compose=True, detect=True):
         # Interpretate codebase
-        self.interpret_code()
-        logger.info("Interpretation done")
+        if interpret:
+            self.interpret_code()
+            logger.info("Interpretation done")
 
         # Compose graph
-        self.compose_graph()
-        logger.info("Composition done")
+        if compose:
+            self.compose_graph()
+            logger.info("Composition done")
 
         # Detect smells
-        self.detect_smells()
-        logger.info("Smell detection done")
-
-        logger.info("Done")
+        if detect:
+            self.detect_smells()
+            logger.info("Detection done")
 
     def interpret_code(self):
         # Drop everything in mongo
