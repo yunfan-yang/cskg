@@ -124,6 +124,8 @@ def visit_function_called_nodes(function: FunctionDef):
             to_type = ClassEntity
         elif isinstance(inferred_node, Module):
             to_type = ModuleEntity
+        else:
+            raise ValueError(f"Unknown type {inferred_node}")
 
         function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
