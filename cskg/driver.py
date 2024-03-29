@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 import neomodel
 from neomodel import clear_neo4j_database
+from neo4j.exceptions import ClientError
 from os.path import abspath
 from loguru import logger
 
@@ -34,7 +35,7 @@ class Driver:
 
     def run(self):
         # Interpretate codebase
-        self.interpret_code()
+        # self.interpret_code()
         logger.info("Interpretation done")
 
         # Compose graph
@@ -83,6 +84,19 @@ class Driver:
     def compose_graph(self):
         # Drop everything in neo4j
         clear_neo4j_database(self.neo_db, clear_constraints=True, clear_indexes=True)
+
+        # Create indexes for entities
+        for entity_class in Entity.visit_subclasses():
+            entity_type = entity_class.type
+            entity_label = entity_class.label
+            index_cypher = f"""
+                CREATE INDEX {entity_type}_qualified_name FOR (n:{entity_label}) ON (n.qualified_name)
+            """
+            logger.debug(index_cypher)
+            try:
+                self.neo_db.cypher_query(index_cypher)
+            except ClientError:
+                ...
 
         # Instantiate graph composer
         graph_composer = GraphComposer()
