@@ -2,8 +2,10 @@ from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 import neomodel
 from neomodel import clear_neo4j_database
+from os.path import abspath
 from loguru import logger
 
+from cskg.utils.graph_component import GraphComponent
 from cskg.utils.entity import *
 from cskg.utils.relationship import *
 from cskg.interpreter.interpreter import CodeInterpreter
@@ -14,10 +16,9 @@ from cskg.detectors.detector import AbstractDetector
 class Driver:
     def __init__(self, folder_path: str, neo4j_url: str, mongo_url: str):
         self.folder_path = folder_path
+        self.folder_abs_path = abspath(folder_path)
         self.neo4j_url = neo4j_url
         self.mongo_url = mongo_url
-        self.interpreter = None
-        self.graph_composer = None
 
         # Load neomodel configurations
         neomodel.config.DATABASE_URL = self.neo4j_url
@@ -31,21 +32,7 @@ class Driver:
         self.mongo_client = mongo_client
         self.mongo_db = mongo_db
 
-        # Clean up
-        _mongo_drop_all(self.mongo_db)
-        _neo_drop_all(self.neo_db)
-
-        # Create indexes (only for entity classes)
-        for entity_class in Entity.visit_subclasses():
-            if entity_class.type:
-                collection = self.mongo_db[entity_class.type]
-                collection.create_index("qualified_name", unique=True)
-
     def run(self):
-        # Instantiate
-        self.interpreter = CodeInterpreter(self.folder_path)
-        self.graph_composer = GraphComposer()
-
         # Interpretate codebase
         self.interpret_code()
         logger.info("Interpretation done")
@@ -61,44 +48,59 @@ class Driver:
         logger.info("Done")
 
     def interpret_code(self):
-        generator = self.interpreter.interpret()
+        # Drop everything in mongo
+        for collection_name in self.mongo_db.list_collection_names():
+            self.mongo_db.drop_collection(collection_name)
 
+        # Create collections
+        for component_class in GraphComponent.visit_subclasses():
+            if component_class.type:
+                # Create collection
+                collection = self.mongo_db.create_collection(
+                    component_class.type,
+                    check_exists=False,
+                )
+
+                # Create index for entity classes
+                if isinstance(component_class, Entity):
+                    collection.create_index("qualified_name", unique=True)
+
+        # Instantiate code interpreter
+        interpreter = CodeInterpreter(self.folder_path)
+
+        # Insert components into mongo
         with self.mongo_client.start_session() as session:
-            while True:
+            for component in interpreter.visit():
                 try:
-                    obj = next(generator)
-                    self.mongo_db[obj.type].insert_one(obj, session=session)
-                    logger.info(obj)
-                except StopIteration:
-                    break
+                    colection = self.mongo_db.get_collection(component.type)
+                    colection.insert_one(component, session=session)
+                    logger.info(component)
                 except DuplicateKeyError as e:
-                    logger.error(e)
+                    logger.warning(e)  # Ignore duplicate key error
                 except Exception as e:
                     raise e
 
     def compose_graph(self):
-        # All entities
+        # Drop everything in neo4j
+        clear_neo4j_database(self.neo_db, clear_constraints=True, clear_indexes=True)
+
+        # Instantiate graph composer
+        graph_composer = GraphComposer()
+
+        # Add all entities to composer
         for entity_class in Entity.visit_subclasses():
             entities = self.mongo_db[entity_class.type].find()
-            self.graph_composer.add_entities(entities)
+            graph_composer.add_entities(entities)
 
-        # All relationships
+        # Add all relationships to composer
         for relationship_class in Relationship.visit_subclasses():
             relationships = self.mongo_db[relationship_class.type].find()
-            self.graph_composer.add_relationships(relationships)
+            graph_composer.add_relationships(relationships)
 
-        self.graph_composer.compose()
+        # Compose graph
+        graph_composer.compose()
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():
             detector = detector_class.create_instance(self.neo_db)
             detector.detect()
-
-
-def _mongo_drop_all(mongo_db):
-    for collection_name in mongo_db.list_collection_names():
-        mongo_db.drop_collection(collection_name)
-
-
-def _neo_drop_all(neo_db):
-    clear_neo4j_database(neo_db, clear_constraints=True, clear_indexes=True)

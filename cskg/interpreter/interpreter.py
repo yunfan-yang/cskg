@@ -1,8 +1,10 @@
 import os
+from typing import Generator
 from astroid import FunctionDef, Module, ClassDef
 from astroid.manager import AstroidManager
 from loguru import logger
 
+from cskg.utils.graph_component import GraphComponent
 from cskg.interpreter.utils import remove_module_prefix
 from cskg.interpreter.nodes import visit_node
 
@@ -16,18 +18,14 @@ class CodeInterpreter:
         self.manager.register_transform(ClassDef, self.format_qname)
         self.manager.register_transform(FunctionDef, self.format_qname)
 
-    def interpret(self):
-        yield from self.traverse_files()
-
-    def traverse_files(self):
+    def visit(self) -> Generator[GraphComponent, None, None]:
         asts = {}
 
         for root, dirs, files in os.walk(self.folder_abs_path):
             for file in files:
-                if file.endswith(".py"):  # Only handles python file
+                if str(file).endswith(".py"):  # Only handles python file
                     file_path = os.path.join(root, file)
-                    ast = self.manager.ast_from_file(file_path)
-                    asts[file_path] = ast
+                    asts[file_path] = self.manager.ast_from_file(file_path)
                     logger.debug(f"Ast from file: {file_path}")
 
         for file_path, ast in asts.items():
