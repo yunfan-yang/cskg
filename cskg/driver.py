@@ -134,11 +134,19 @@ class Driver:
 
         # Compose graph
         bar = tqdm(total=total_components, desc="Composing graph", unit="components")
+        batch_size = 10000
+        query_count = 0
+
         with self.neo_db.transaction:
             for cypher, params in graph_composer.visit():
                 logger.debug(f"{cypher}\n{params}")
                 self.neo_db.cypher_query(cypher, params)
+                query_count += 1
                 bar.update(1)
+
+                if query_count % batch_size == 0:
+                    self.neo_db.commit()
+                    self.neo_db.begin()
         bar.close()
 
     def detect_smells(self):
