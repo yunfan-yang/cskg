@@ -69,6 +69,8 @@ def visit_external_entity(node: Module | ClassDef | FunctionDef | Const):
     if isinstance(root, Module) and root.file is not None:
         return
 
+    logger.debug(f"Visiting external entity {node.qname()} {node}")
+
     if isinstance(node, Module):
         yield ExternalModuleEntity(
             name=node.name,
@@ -88,9 +90,9 @@ def visit_external_entity(node: Module | ClassDef | FunctionDef | Const):
             file_path=None,
             subtype=FunctionType(node.type),
         )
-    elif isinstance(node, Const):
-        yield ExternalVariableEntity(
-            name=node.name,
-            qualified_name=node.pytype(),
-            file_path=None,
-        )
+    # elif isinstance(node, Const):
+    #     yield ExternalVariableEntity(
+    #         name=node.name,
+    #         qualified_name=node.pytype(),
+    #         file_path=None,
+    #     )

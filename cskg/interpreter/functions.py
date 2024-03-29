@@ -1,4 +1,6 @@
 from astroid import (
+    Module,
+    ClassDef,
     FunctionDef,
     Call,
     ParentMissingError,
@@ -116,12 +118,19 @@ def visit_function_called_nodes(function: FunctionDef):
 
         yield from visit_external_entity(inferred_node)
 
+        if isinstance(inferred_node, FunctionDef):
+            to_type = FunctionEntity
+        elif isinstance(inferred_node, ClassDef):
+            to_type = ClassEntity
+        elif isinstance(inferred_node, Module):
+            to_type = ModuleEntity
+
         function_qualified_name = function.qname()
         callee_qualified_name = inferred_node.qname()
         calls_rel = CallsRel(
             from_type=FunctionEntity,
             from_qualified_name=function_qualified_name,
-            to_type=FunctionEntity,
+            to_type=to_type,
             to_qualified_name=callee_qualified_name,
             arguments=arguments,
         )
