@@ -90,17 +90,20 @@ class Driver:
         # Add all entities to composer
         for entity_class in Entity.visit_subclasses():
             collection = self.mongo_db.get_collection(entity_class.type)
-            entities = collection.find()
-            graph_composer.add_entities(entities)
+            entity_collection = collection.find()
+            graph_composer.add_entity_collections(entity_collection)
 
         # Add all relationships to composer
         for relationship_class in Relationship.visit_subclasses():
             collection = self.mongo_db.get_collection(relationship_class.type)
-            relationships = collection.find()
-            graph_composer.add_relationships(relationships)
+            relationship_collection = collection.find()
+            graph_composer.add_relationship_collection(relationship_collection)
 
         # Compose graph
-        graph_composer.compose()
+        with self.neo_db.transaction:
+            for cypher in graph_composer.visit():
+                self.neo_db.cypher_query(cypher)
+                logger.debug(cypher)
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():

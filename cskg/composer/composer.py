@@ -13,25 +13,34 @@ CHUNK_SIZE = 1000
 
 class GraphComposer:
     def __init__(self):
-        self.entities: list[Iterable[dict[str, Any]]] = []
-        self.relationships: list[Iterable[dict[str, Any]]] = []
+        self.entity_collections: list[Iterable[dict[str, Any]]] = []
+        self.relationship_collections: list[Iterable[dict[str, Any]]] = []
 
-    def add_entities(self, entities: Iterable[dict[str, Any]]):
-        self.entities.append(entities)
+    def add_entity_collections(self, entities: Iterable[dict[str, Any]]):
+        self.entity_collections.append(entities)
 
-    def add_relationships(self, relationships: Iterable[dict[str, Any]]):
-        self.relationships.append(relationships)
+    def add_relationship_collection(self, relationships: Iterable[dict[str, Any]]):
+        self.relationship_collections.append(relationships)
 
-    def compose_entities(self):
-        for entities_iterable in self.entities:
-            for chunk in _chunk(entities_iterable, CHUNK_SIZE):
-                with db.transaction:
-                    for entity in chunk:
-                        cypher = self.compose_entity_cypher(Entity.from_dict(entity))
-                        logger.debug(cypher)
-                        db.cypher_query(cypher)
+    def visit(self):
+        yield from self.visit_entities()
+        yield from self.visit_relationships()
 
-    def compose_entity_cypher(self, entity: Entity):
+    def visit_entities(self):
+        for entities in self.entity_collections:
+            for entity in entities:
+                cypher = self.get_entity_cypher(Entity.from_dict(entity))
+                yield cypher
+
+    def visit_relationships(self):
+        for relationships in self.relationship_collections:
+            for relationship in relationships:
+                cypher = self.get_relationship_cypher(
+                    Relationship.from_dict(relationship)
+                )
+                yield cypher
+
+    def get_entity_cypher(self, entity: Entity):
         entity_type = "".join(map(lambda label: f":{label}", entity.labels))
         entity_properties = _get_dictionary_cypher(entity)
 
@@ -39,18 +48,7 @@ class GraphComposer:
             CREATE ({entity_type} {{ {entity_properties} }}) 
         """
 
-    def compose_relationships(self):
-        for relationships_iterable in self.relationships:
-            for chunk in _chunk(relationships_iterable, CHUNK_SIZE):
-                with db.transaction:
-                    for relationship in chunk:
-                        cypher = self.compose_relationship_cypher(
-                            Relationship.from_dict(relationship)
-                        )
-                        logger.debug(cypher)
-                        db.cypher_query(cypher)
-
-    def compose_relationship_cypher(self, relationship: Relationship):
+    def get_relationship_cypher(self, relationship: Relationship):
         relation_type = relationship.label
 
         from_ent_label = relationship.from_type.label
@@ -64,10 +62,6 @@ class GraphComposer:
             MATCH (a:{from_ent_label} {{qualified_name: "{from_ent_qname}"}}), (b:{to_ent_label} {{qualified_name: "{to_ent_qname}"}})
             CREATE (a)-[:{relation_type} {{ {relationship_properties} }}]->(b)
         """
-
-    def compose(self):
-        self.compose_entities()
-        self.compose_relationships()
 
 
 T = TypeVar("T")
