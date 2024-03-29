@@ -120,8 +120,8 @@ class Driver:
         # Compose graph
         with self.neo_db.transaction:
             for cypher in graph_composer.visit():
-                self.neo_db.cypher_query(cypher)
                 logger.debug(cypher)
+                self.neo_db.cypher_query(cypher)
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():
