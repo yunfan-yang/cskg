@@ -1,14 +1,8 @@
-from itertools import chain, islice
 import json
-from typing import Any, Iterable, TypeVar
-from loguru import logger
-from neomodel import db
+from typing import Any, Iterable
 
 from cskg.utils.entity import Entity
 from cskg.utils.relationship import Relationship
-
-
-CHUNK_SIZE = 1000
 
 
 class GraphComposer:
@@ -64,22 +58,6 @@ class GraphComposer:
         """
 
 
-T = TypeVar("T")
-
-
-def _chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
-    """
-    Splits an iterable into chunk of a specified size.
-
-    :param iterable: An iterable like a list or a generator.
-    :param batch_size: The size of each batch.
-    :return: Yields batches of the iterable.
-    """
-    iterator = iter(iterable)
-    for first in iterator:
-        yield chain([first], islice(iterator, size - 1))
-
-
 def _get_dictionary_cypher(dictionary: dict[str, Any]) -> str:
     dictionary = _exclude_fields_dict(dictionary, ["_id", "label", "extra_labels"])
 
@@ -89,7 +67,7 @@ def _get_dictionary_cypher(dictionary: dict[str, Any]) -> str:
             keypairs.append(f"{key}: '{value}'")
         elif value is None:
             keypairs.append(f"{key}: NULL")
-        elif isinstance(value, (list, tuple, set)):
+        elif isinstance(value, Iterable):
             keypairs.append(key + ": " + json.dumps(list(value)).replace("'", ""))
         elif isinstance(value, dict):
             keypairs.append(key + ": " + json.dumps(value).replace("'", ""))
