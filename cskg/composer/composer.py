@@ -36,11 +36,9 @@ class GraphComposer:
 
     def get_entity_cypher(self, entity: Entity):
         entity_type = "".join(map(lambda label: f":{label}", entity.labels))
-        entity_properties = _get_dictionary_cypher(entity)
+        entity_properties = _exclude_fields_dict(entity)
 
-        return f"""
-            CREATE ({entity_type} {{ {entity_properties} }}) 
-        """
+        return f"CREATE ({entity_type} $props)", {"props": entity_properties}
 
     def get_relationship_cypher(self, relationship: Relationship):
         relation_type = relationship.label
@@ -50,33 +48,43 @@ class GraphComposer:
         to_ent_label = relationship.to_type.label
         to_ent_qname = relationship.to_qualified_name
 
-        relationship_properties = _get_dictionary_cypher(relationship)
+        relationship_properties = _exclude_fields_dict(relationship)
 
-        return f"""
-            MATCH (a:{from_ent_label} {{qualified_name: "{from_ent_qname}"}}), (b:{to_ent_label} {{qualified_name: "{to_ent_qname}"}})
-            CREATE (a)-[:{relation_type} {{ {relationship_properties} }}]->(b)
-        """
-
-
-def _get_dictionary_cypher(dictionary: dict[str, Any]) -> str:
-    dictionary = _exclude_fields_dict(dictionary, ["_id", "label", "extra_labels"])
-
-    keypairs = []
-    for key, value in dictionary.items():
-        if isinstance(value, str):
-            keypairs.append(f"{key}: '{value}'")
-        elif value is None:
-            keypairs.append(f"{key}: NULL")
-        elif isinstance(value, Iterable):
-            keypairs.append(key + ": " + json.dumps(list(value)).replace("'", ""))
-        elif isinstance(value, dict):
-            keypairs.append(key + ": " + json.dumps(value).replace("'", ""))
-        elif isinstance(value, bool):
-            keypairs.append(f"{key}: {str(value).lower()}")
-        else:
-            keypairs.append(f"{key}: {value}")
-    return ", ".join(keypairs)
+        return (
+            f"""
+                MATCH (a:{from_ent_label} {{qualified_name: $from_ent_qname}}), (b:{to_ent_label} {{qualified_name: $to_ent_qname}})
+                CREATE (a)-[:{relation_type} $props]->(b)
+            """.strip(),
+            {
+                "props": relationship_properties,
+                "from_ent_qname": from_ent_qname,
+                "to_ent_qname": to_ent_qname,
+            },
+        )
 
 
-def _exclude_fields_dict(dict: dict[str, Any], fields: list[str]):
+# def _get_dictionary_cypher(dictionary: dict[str, Any]) -> str:
+#     dictionary = _exclude_fields_dict(dictionary, ["_id", "label", "extra_labels"])
+
+#     keypairs = []
+#     for key, value in dictionary.items():
+#         if isinstance(value, str):
+#             keypairs.append(f"{key}: '{value}'")
+#         elif value is None:
+#             keypairs.append(f"{key}: NULL")
+#         elif isinstance(value, Iterable):
+#             keypairs.append(key + ": " + json.dumps(list(value)).replace("'", ""))
+#         elif isinstance(value, dict):
+#             keypairs.append(key + ": " + json.dumps(value).replace("'", ""))
+#         elif isinstance(value, bool):
+#             keypairs.append(f"{key}: {str(value).lower()}")
+#         else:
+#             keypairs.append(f"{key}: {value}")
+#     return ", ".join(keypairs)
+
+
+def _exclude_fields_dict(
+    dict: dict[str, Any],
+    fields: list[str] = ["_id", "label", "extra_labels"],
+):
     return {key: dict.get(key) for key in dict if key not in fields}

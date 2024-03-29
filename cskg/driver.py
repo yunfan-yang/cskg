@@ -75,7 +75,7 @@ class Driver:
                 try:
                     colection = self.mongo_db.get_collection(component.type)
                     colection.insert_one(component, session=session)
-                    logger.info(component)
+                    logger.debug(component)
                 except DuplicateKeyError as e:
                     logger.warning(e)  # Ignore duplicate key error
 
@@ -119,9 +119,9 @@ class Driver:
 
         # Compose graph
         with self.neo_db.transaction:
-            for cypher in graph_composer.visit():
-                logger.debug(cypher)
-                self.neo_db.cypher_query(cypher)
+            for cypher, params in graph_composer.visit():
+                logger.debug(f"{cypher}\n{params}")
+                self.neo_db.cypher_query(cypher, params)
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():
