@@ -21,5 +21,5 @@ class SpeculativeGeneralityDetector(AbstractDetector):
         logger.debug(results)
 
         for result in results:
-            ents = self.response_to_ent(result)
+            ents = self.result_to_ent(result)
             logger.debug(ents)

@@ -15,7 +15,7 @@ driver_requests = Driver(
     neo4j_url=NEO4J_REQUESTS_URL,
     mongo_url=MONGO_REQUESTS_URL,
 )
-driver_requests.run(interpret=True, compose=True, detect=True)
+driver_requests.run(interpret=False, compose=False, detect=True)
 
 
 NEO4J_URL_TRANSFORMERS = os.environ.get("NEO4J_URL_TRANSFORMERS")

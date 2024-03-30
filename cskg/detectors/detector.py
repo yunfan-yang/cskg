@@ -14,7 +14,7 @@ class AbstractDetector(ABC, VisitSubclassesMixin, CreateInstanceMixin):
     @abstractmethod
     def detect(self): ...
 
-    def response_to_ent(self, nodes: list[Node]):
+    def result_to_ent(self, nodes: list[Node]):
         components = []
         for node in nodes:
             ent = GraphComponent.from_dict(dict(node))
