@@ -1,5 +1,6 @@
 from abc import ABC, ABCMeta
 from typing import Any, Self
+from neo4j.graph import Node as NeoNode
 
 from cskg.utils.mixins import VisitSubclassesMixin, CreateInstanceMixin
 
@@ -86,3 +87,7 @@ class GraphComponent(
         component_cls = cls.get_class(dict["type"])
         instance = component_cls.create_instance(**dict)
         return instance
+
+    @classmethod
+    def from_neo_node(cls, node: NeoNode) -> Self:
+        return cls.from_dict(dict(node))

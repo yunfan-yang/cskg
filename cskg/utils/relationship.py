@@ -59,6 +59,7 @@ class ContainsRel(Relationship):
 class TakesRel(Relationship):
     type = "takes_rel"
     label = "TAKES"
+    param_name: str
 
 
 class ReturnsRel(Relationship):

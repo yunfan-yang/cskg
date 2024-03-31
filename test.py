@@ -18,11 +18,11 @@ driver_requests = Driver(
 driver_requests.run(interpret=False, compose=False, detect=True)
 
 
-NEO4J_URL_TRANSFORMERS = os.environ.get("NEO4J_URL_TRANSFORMERS")
-MONGO_URL_TRANSFORMERS = os.environ.get("MONGO_URL_TRANSFORMERS")
-driver_transformers = Driver(
-    "targets/transformers",
-    neo4j_url=NEO4J_URL_TRANSFORMERS,
-    mongo_url=MONGO_URL_TRANSFORMERS,
-)
-driver_transformers.run(interpret=False, compose=False, detect=True)
+# NEO4J_URL_TRANSFORMERS = os.environ.get("NEO4J_URL_TRANSFORMERS")
+# MONGO_URL_TRANSFORMERS = os.environ.get("MONGO_URL_TRANSFORMERS")
+# driver_transformers = Driver(
+#     "targets/transformers",
+#     neo4j_url=NEO4J_URL_TRANSFORMERS,
+#     mongo_url=MONGO_URL_TRANSFORMERS,
+# )
+# driver_transformers.run(interpret=False, compose=False, detect=True)

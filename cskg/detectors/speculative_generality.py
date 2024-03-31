@@ -1,7 +1,6 @@
 from loguru import logger
 
 from cskg.detectors.detector import AbstractDetector
-from cskg.utils.entity import ClassEntity
 
 
 class SpeculativeGeneralityDetector(AbstractDetector):
