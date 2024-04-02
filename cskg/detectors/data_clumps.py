@@ -71,11 +71,12 @@ class DataClumpsDetector(AbstractDetector):
 
         results, meta = self.neo_db.cypher_query(query)
 
+        # Each result is a group of parameters belonging to a function, and each is a transaction itemset
         for result in results:
             f, ts = result
-
             takes_rels: list[TakesRel] = [GraphComponent.from_neo_node(t) for t in ts]
 
+            # Make transaction
             transaction = Transaction()
             for takes_rel in takes_rels:
                 item = Item(
@@ -84,7 +85,7 @@ class DataClumpsDetector(AbstractDetector):
                 )
                 transaction.append(item)
 
-            # Insert transactions into FP Growth tree
+            # Insert transaction into FP Growth tree
             self.insert_transaction(transaction)
 
     def insert_transaction(self, transaction: Transaction):
