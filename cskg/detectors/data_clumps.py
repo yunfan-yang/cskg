@@ -16,19 +16,19 @@ class Item(GraphComponent):
         param_name: str,
         class_qualified_name: str,
         level: int = 1,
-        frequency: int = 1,
+        support_count: int = 1,
         **kwargs,
     ):
         self.param_name: str
         self.class_qualified_name: str
         self.level: int
-        self.frequency: int
+        self.support_count: int
 
         super().__init__(
             param_name=param_name,
             class_qualified_name=class_qualified_name,
             level=level,
-            frequency=frequency,
+            support_count=support_count,
             **kwargs,
         )
 
@@ -112,7 +112,7 @@ class DataClumpsDetector(AbstractDetector):
                 ON CREATE
                     SET child += $child_item
                 ON MATCH
-                    SET child.frequency = child.frequency + 1
+                    SET child.support_count = child.support_count + 1
             """
             logger.debug(query)
             self.neo_db.cypher_query(query, {"child_item": item})
