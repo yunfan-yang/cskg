@@ -1,3 +1,4 @@
+from abc import ABC
 from collections import defaultdict
 from itertools import combinations
 from loguru import logger
@@ -53,7 +54,7 @@ class DataClumpsDetector(AbstractDetector):
             # Make transaction
             transaction = Transaction()
             for takes_rel in takes_rels:
-                item = FpTreeItem(
+                item = FpTreeNode(
                     param_name=takes_rel.param_name,
                     class_qualified_name=takes_rel.to_qualified_name,
                 )
@@ -91,7 +92,7 @@ class DataClumpsDetector(AbstractDetector):
             prev_item = item
 
     def create_fp_tree_root(self):
-        root = FpTreeItem(class_qualified_name="<<Root>>", param_name="root", level=0)
+        root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
         labels = "".join(map(lambda label: f":{label}", root.labels))
         query = f"""
             CREATE (root{labels} $root)
@@ -111,7 +112,7 @@ class DataClumpsDetector(AbstractDetector):
     def build_conditional_pattern_base(self):
         # Find all distinct items
         query = f"""
-            MATCH (n:{FpTreeItem.label})
+            MATCH (n:{FpTreeNode.label})
             WHERE n.class_qualified_name <> "{self.root.class_qualified_name}"
                 AND n.param_name <> "{self.root.param_name}"
             WITH DISTINCT {{class_qualified_name: n.class_qualified_name, param_name: n.param_name}} AS n
@@ -120,15 +121,15 @@ class DataClumpsDetector(AbstractDetector):
         results, meta = self.neo_db.cypher_query(query)
         for (n,) in results:
             # Query all paths leading to the item
-            cpb_item = FpTreeItem.from_neo_node(n)
+            cpb_item = FpTreeNode.from_neo_node(n)
 
 
             query = f"""
                 MATCH path = 
-                    (root:{FpTreeItem.label} {{
+                    (root:{FpTreeNode.label} {{
                         class_qualified_name: "{self.root.class_qualified_name}",
                         param_name: "{self.root.param_name}"
-                    }})-[:LINKS*]->(n:{FpTreeItem.label} {{
+                    }})-[:LINKS*]->(n:{FpTreeNode.label} {{
                         class_qualified_name: "{cpb_item.class_qualified_name}",
                         param_name: "{cpb_item.param_name}"
                     }})
@@ -137,7 +138,7 @@ class DataClumpsDetector(AbstractDetector):
             results, meta = self.neo_db.cypher_query(query)
             
 
-class Item(GraphComponent):
+class Item(GraphComponent, ABC):
     type = "item"
     label = "Item"
     extra_labels = (DataClumpsDetector.label,)
@@ -153,7 +154,7 @@ class Item(GraphComponent):
         )
 
 
-class FpTreeItem(Item):
+class FpTreeNode(Item):
     type = "fp_tree_item"
     label = "FpTreeItem"
 
@@ -182,7 +183,7 @@ class FpTreeItem(Item):
 class Transaction(list[Item]): ...
 
 
-class ConditionalFpTreeItem(Item):
+class ConditionalFpTreeNode(Item):
     type = "conditional_fp_tree_item"
     label = "ConditionalFpTreeItem"
 
