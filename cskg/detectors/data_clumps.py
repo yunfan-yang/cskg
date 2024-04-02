@@ -1,54 +1,8 @@
 from loguru import logger
 
 from cskg.detectors.detector import AbstractDetector
-from cskg.utils.entity import ClassEntity, Entity, FunctionEntity
 from cskg.utils.graph_component import GraphComponent
 from cskg.utils.relationship import TakesRel
-
-
-class Item(GraphComponent):
-    type = "item"
-    label = "Item"
-    extra_labels = ("DataClumps",)
-
-    def __init__(self, param_name: str, class_qualified_name: str, **kwargs):
-        self.param_name: str
-        self.class_qualified_name: str
-
-        super().__init__(
-            param_name=param_name,
-            class_qualified_name=class_qualified_name,
-            **kwargs,
-        )
-
-
-class FpTreeItem(Item):
-    type = "fp_tree_item"
-    label = "FpTreeItem"
-
-    def __init__(
-        self,
-        param_name: str,
-        class_qualified_name: str,
-        level: int = 1,
-        support_count: int = 1,
-        **kwargs,
-    ):
-        self.level: int
-        self.support_count: int
-        super().__init__(
-            param_name=param_name,
-            class_qualified_name=class_qualified_name,
-            level=level,
-            support_count=support_count,
-            **kwargs,
-        )
-
-    def __str__(self):
-        return f"Item: {self.class_qualified_name} - {self.param_name}"
-
-
-class Transaction(list[Item]): ...
 
 
 class DataClumpsDetector(AbstractDetector):
@@ -107,7 +61,7 @@ class DataClumpsDetector(AbstractDetector):
 
         self.build_conditional_pattern_base()
 
-    def insert_transaction(self, transaction: Transaction):
+    def insert_transaction(self, transaction: "Transaction"):
         # Insert transactions into FP Growth tree
         prev_item = self.root
 
@@ -172,3 +126,48 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN n
             """
             self.neo_db.cypher_query(query, {"item": item})
+
+
+class Item(GraphComponent):
+    type = "item"
+    label = "Item"
+    extra_labels = (DataClumpsDetector.label,)
+
+    def __init__(self, param_name: str, class_qualified_name: str, **kwargs):
+        self.param_name: str
+        self.class_qualified_name: str
+
+        super().__init__(
+            param_name=param_name,
+            class_qualified_name=class_qualified_name,
+            **kwargs,
+        )
+
+
+class FpTreeItem(Item):
+    type = "fp_tree_item"
+    label = "FpTreeItem"
+
+    def __init__(
+        self,
+        param_name: str,
+        class_qualified_name: str,
+        level: int = 1,
+        support_count: int = 1,
+        **kwargs,
+    ):
+        self.level: int
+        self.support_count: int
+        super().__init__(
+            param_name=param_name,
+            class_qualified_name=class_qualified_name,
+            level=level,
+            support_count=support_count,
+            **kwargs,
+        )
+
+    def __str__(self):
+        return f"Item: {self.class_qualified_name} - {self.param_name}"
+
+
+class Transaction(list[Item]): ...
