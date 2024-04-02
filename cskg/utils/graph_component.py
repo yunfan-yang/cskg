@@ -96,3 +96,6 @@ class GraphComponent(
     @classmethod
     def from_neo_node(cls, node: NeoNode) -> Self:
         return cls.from_dict(dict(node))
+
+    def __hash__(self) -> int:
+        return hash(self.__str__())
