@@ -1,4 +1,3 @@
-from abc import ABC
 from loguru import logger
 
 from cskg.detectors.detector import AbstractDetector
@@ -7,7 +6,9 @@ from cskg.utils.graph_component import GraphComponent
 from cskg.utils.relationship import TakesRel
 
 
-class Item(GraphComponent, ABC):
+class Item(GraphComponent):
+    type = "item"
+    label = "Item"
     extra_labels = ("DataClumps",)
 
     def __init__(self, param_name: str, class_qualified_name: str, **kwargs):
@@ -22,8 +23,8 @@ class Item(GraphComponent, ABC):
 
 
 class FpTreeItem(Item):
-    type = "fp_growth_tree_item"
-    label = "FpGrowthTreeItem"
+    type = "fp_tree_item"
+    label = "FpTreeItem"
 
     def __init__(
         self,
@@ -45,6 +46,7 @@ class FpTreeItem(Item):
 
     def __str__(self):
         return f"Item: {self.class_qualified_name} - {self.param_name}"
+
 
 
 class Transaction(list[Item]): ...
