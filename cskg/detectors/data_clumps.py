@@ -42,7 +42,10 @@ class DataClumpsDetector(AbstractDetector):
         self.clear_fp_growth_tree()
         self.create_root()
 
-        # Frequency Pattern Growth algorithm
+        # Build FP-growth tree
+        self.build_frequency_pattern_growth_tree()
+
+    def build_frequency_pattern_growth_tree(self):
         query = """
             // Step 1: Calculate class frequencies considering both class qualified_name and TAKES param_name
             MATCH (c:Class)<-[t:TAKES]-(f:Function)
