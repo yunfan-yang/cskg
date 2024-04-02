@@ -84,7 +84,12 @@ class GraphComponent(
 
     @classmethod
     def from_dict(cls, dict: dict[str, Any]) -> Self:
-        component_cls = cls.get_class(dict["type"])
+        # If the class is subclassed, use the subclass to create the instance
+        if cls != Self:
+            component_cls = cls
+        else:
+            component_cls = cls.get_class(dict["type"])
+
         instance = component_cls.create_instance(**dict)
         return instance
 

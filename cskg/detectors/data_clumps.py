@@ -48,11 +48,12 @@ class FpTreeItem(Item):
         return f"Item: {self.class_qualified_name} - {self.param_name}"
 
 
-
 class Transaction(list[Item]): ...
 
 
 class DataClumpsDetector(AbstractDetector):
+    label = "DataClumps"
+
     def detect(self):
         # Create root node of FP Growth tree
         self.clear_everything()
@@ -104,16 +105,14 @@ class DataClumpsDetector(AbstractDetector):
             # Insert transaction into FP Growth tree
             self.insert_transaction(transaction)
 
+        self.build_conditional_pattern_base()
+
     def insert_transaction(self, transaction: Transaction):
         # Insert transactions into FP Growth tree
         prev_item = self.root
 
         for item in transaction:
             item.level = prev_item.level + 1
-
-            logger.debug(prev_item)
-            logger.debug(item)
-
             labels = "".join(map(lambda label: f":{label}", item.labels))
             query = f"""
                 MATCH (parent{labels} {{
@@ -131,12 +130,11 @@ class DataClumpsDetector(AbstractDetector):
                 ON MATCH
                     SET child.support_count = child.support_count + 1
             """
-            logger.debug(query)
             self.neo_db.cypher_query(query, {"child_item": item})
             prev_item = item
 
     def create_fp_tree_root(self):
-        root = FpTreeItem(class_qualified_name="Root", param_name="root", level=0)
+        root = FpTreeItem(class_qualified_name="<<Root>>", param_name="root", level=0)
         labels = "".join(map(lambda label: f":{label}", root.labels))
         query = f"""
             CREATE (root{labels} $root)
@@ -146,12 +144,31 @@ class DataClumpsDetector(AbstractDetector):
         self.root = root
 
     def clear_everything(self):
-        query = """
-            MATCH (n:DataClumps)
+        query = f"""
+            MATCH (n:{self.label})
             DETACH DELETE n
         """
         self.neo_db.cypher_query(query)
         logger.debug("Cleared FP Growth tree")
 
     def build_conditional_pattern_base(self):
-        pass
+        # Find all distinct items
+        query = f"""
+            MATCH (n:{FpTreeItem.label})
+            WHERE n.class_qualified_name <> "{self.root.class_qualified_name}"
+                AND n.param_name <> "{self.root.param_name}"
+            WITH DISTINCT {{class_qualified_name: n.class_qualified_name, param_name: n.param_name}} AS n
+            RETURN n
+        """
+        results, meta = self.neo_db.cypher_query(query)
+        for result in results:
+            n = result[0]
+            item = Item.from_neo_node(n)
+            logger.debug(item)
+
+            labels = "".join(map(lambda label: f":{label}", item.labels))
+            query = f"""
+                CREATE (n{labels} $item)
+                RETURN n
+            """
+            self.neo_db.cypher_query(query, {"item": item})
