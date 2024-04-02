@@ -1,3 +1,4 @@
+from abc import ABC
 from loguru import logger
 
 from cskg.detectors.detector import AbstractDetector
@@ -6,10 +7,23 @@ from cskg.utils.graph_component import GraphComponent
 from cskg.utils.relationship import TakesRel
 
 
-class Item(GraphComponent):
-    type = "item"
-    label = "Item"
+class Item(GraphComponent, ABC):
     extra_labels = ("DataClumps",)
+
+    def __init__(self, param_name: str, class_qualified_name: str, **kwargs):
+        self.param_name: str
+        self.class_qualified_name: str
+
+        super().__init__(
+            param_name=param_name,
+            class_qualified_name=class_qualified_name,
+            **kwargs,
+        )
+
+
+class FpTreeItem(Item):
+    type = "fp_growth_tree_item"
+    label = "FpGrowthTreeItem"
 
     def __init__(
         self,
@@ -19,11 +33,8 @@ class Item(GraphComponent):
         support_count: int = 1,
         **kwargs,
     ):
-        self.param_name: str
-        self.class_qualified_name: str
         self.level: int
         self.support_count: int
-
         super().__init__(
             param_name=param_name,
             class_qualified_name=class_qualified_name,
@@ -32,6 +43,9 @@ class Item(GraphComponent):
             **kwargs,
         )
 
+    def __str__(self):
+        return f"Item: {self.class_qualified_name} - {self.param_name}"
+
 
 class Transaction(list[Item]): ...
 
@@ -39,8 +53,8 @@ class Transaction(list[Item]): ...
 class DataClumpsDetector(AbstractDetector):
     def detect(self):
         # Create root node of FP Growth tree
-        self.clear_fp_growth_tree()
-        self.create_root()
+        self.clear_nodes()
+        self.create_fp_tree_root()
 
         # Build FP-growth tree
         self.build_frequency_pattern_growth_tree()
@@ -79,7 +93,7 @@ class DataClumpsDetector(AbstractDetector):
             # Make transaction
             transaction = Transaction()
             for takes_rel in takes_rels:
-                item = Item(
+                item = FpTreeItem(
                     param_name=takes_rel.param_name,
                     class_qualified_name=takes_rel.to_qualified_name,
                 )
@@ -119,8 +133,8 @@ class DataClumpsDetector(AbstractDetector):
             self.neo_db.cypher_query(query, {"child_item": item})
             prev_item = item
 
-    def create_root(self):
-        root = Item(class_qualified_name="Root", param_name="root", level=0)
+    def create_fp_tree_root(self):
+        root = FpTreeItem(class_qualified_name="Root", param_name="root", level=0)
         labels = "".join(map(lambda label: f":{label}", root.labels))
         query = f"""
             CREATE (root{labels} $root)
@@ -129,10 +143,13 @@ class DataClumpsDetector(AbstractDetector):
         self.neo_db.cypher_query(query, {"root": root})
         self.root = root
 
-    def clear_fp_growth_tree(self):
+    def clear_nodes(self):
         query = """
             MATCH (n:DataClumps)
             DETACH DELETE n
         """
         self.neo_db.cypher_query(query)
         logger.debug("Cleared FP Growth tree")
+
+    def build_conditional_pattern_base(self):
+        pass
