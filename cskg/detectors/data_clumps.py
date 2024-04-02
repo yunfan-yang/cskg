@@ -1,4 +1,7 @@
+from collections import defaultdict
+from itertools import combinations
 from loguru import logger
+from neo4j.graph import Path
 
 from cskg.detectors.detector import AbstractDetector
 from cskg.utils.graph_component import GraphComponent
@@ -115,18 +118,24 @@ class DataClumpsDetector(AbstractDetector):
             RETURN n
         """
         results, meta = self.neo_db.cypher_query(query)
-        for result in results:
-            n = result[0]
-            item = Item.from_neo_node(n)
-            logger.debug(item)
+        for (n,) in results:
+            # Query all paths leading to the item
+            cpb_item = FpTreeItem.from_neo_node(n)
 
-            labels = "".join(map(lambda label: f":{label}", item.labels))
+
             query = f"""
-                CREATE (n{labels} $item)
-                RETURN n
+                MATCH path = 
+                    (root:{FpTreeItem.label} {{
+                        class_qualified_name: "{self.root.class_qualified_name}",
+                        param_name: "{self.root.param_name}"
+                    }})-[:LINKS*]->(n:{FpTreeItem.label} {{
+                        class_qualified_name: "{cpb_item.class_qualified_name}",
+                        param_name: "{cpb_item.param_name}"
+                    }})
+                RETURN path
             """
-            self.neo_db.cypher_query(query, {"item": item})
-
+            results, meta = self.neo_db.cypher_query(query)
+            
 
 class Item(GraphComponent):
     type = "item"
@@ -171,3 +180,23 @@ class FpTreeItem(Item):
 
 
 class Transaction(list[Item]): ...
+
+
+class ConditionalFpTreeItem(Item):
+    type = "conditional_fp_tree_item"
+    label = "ConditionalFpTreeItem"
+
+    def __init__(
+        self,
+        param_name: str,
+        class_qualified_name: str,
+        support_count: int = 1,
+        **kwargs,
+    ):
+        self.support_count: int
+        super().__init__(
+            param_name=param_name,
+            class_qualified_name=class_qualified_name,
+            support_count=support_count,
+            **kwargs,
+        )
