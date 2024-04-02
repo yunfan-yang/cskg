@@ -19,6 +19,7 @@ class DataClumpsDetector(AbstractDetector):
 
         # Build FP-growth tree
         self.build_frequency_pattern_growth_tree()
+        self.build_conditional_pattern_base()
 
     def build_frequency_pattern_growth_tree(self):
         query = """
@@ -62,8 +63,6 @@ class DataClumpsDetector(AbstractDetector):
 
             # Insert transaction into FP Growth tree
             self.insert_transaction(transaction)
-
-        self.build_conditional_pattern_base()
 
     def insert_transaction(self, transaction: "Transaction"):
         # Insert transactions into FP Growth tree
@@ -123,7 +122,6 @@ class DataClumpsDetector(AbstractDetector):
             # Query all paths leading to the item
             cpb_item = FpTreeNode.from_neo_node(n)
 
-
             query = f"""
                 MATCH path = 
                     (root:{FpTreeNode.label} {{
@@ -136,7 +134,7 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN path
             """
             results, meta = self.neo_db.cypher_query(query)
-            
+
 
 class Item(GraphComponent, ABC):
     type = "item"
