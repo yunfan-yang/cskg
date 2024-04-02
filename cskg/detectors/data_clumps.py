@@ -53,7 +53,7 @@ class Transaction(list[Item]): ...
 class DataClumpsDetector(AbstractDetector):
     def detect(self):
         # Create root node of FP Growth tree
-        self.clear_nodes()
+        self.clear_everything()
         self.create_fp_tree_root()
 
         # Build FP-growth tree
@@ -143,7 +143,7 @@ class DataClumpsDetector(AbstractDetector):
         self.neo_db.cypher_query(query, {"root": root})
         self.root = root
 
-    def clear_nodes(self):
+    def clear_everything(self):
         query = """
             MATCH (n:DataClumps)
             DETACH DELETE n
