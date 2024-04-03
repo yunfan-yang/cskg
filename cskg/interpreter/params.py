@@ -23,7 +23,7 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
     is_method = function_subtype in [FunctionType.METHOD, FunctionType.CLASSMETHOD]
     arg_annotations = arguments_obj.annotations
 
-    for index, param_assign_name in enumerate(arguments_obj.arguments):
+    for index, param_assign_name in enumerate(arguments_obj.args):
         # Skip method self/cls
         if is_method and index == 0:
             continue
