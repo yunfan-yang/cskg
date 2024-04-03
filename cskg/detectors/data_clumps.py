@@ -118,8 +118,8 @@ class DataClumpsDetector(AbstractDetector):
             WITH DISTINCT {{class_qualified_name: n.class_qualified_name, param_name: n.param_name}} AS n
             RETURN n
         """
-        paths, meta = self.neo_db.cypher_query(query)
-        for (n,) in paths:
+        results, meta = self.neo_db.cypher_query(query)
+        for index, (n,) in enumerate(results):
             # # Create Conditional FP Tree Node
             cpb_item = ConditionalFpTreeNode.from_neo_node(n)
             # query = f"""
@@ -137,6 +137,7 @@ class DataClumpsDetector(AbstractDetector):
                         class_qualified_name: "{cpb_item.class_qualified_name}",
                         param_name: "{cpb_item.param_name}"
                     }})
+                WHERE length(path) > 2
                 RETURN path
             """
             paths, meta = self.neo_db.cypher_query(query)
@@ -145,13 +146,28 @@ class DataClumpsDetector(AbstractDetector):
                 path: Path
 
                 # Insert path into Conditional Pattern Base
+                transaction = Transaction()
                 for node in path.nodes:
                     cpb_node = ConditionalFpTreeNode.from_neo_node(node)
-                    labels = "".join(map(lambda label: f":{label}", cpb_node.labels))
-                    query = f"""
-                        CREATE ({labels} $cpb_node)
-                    """
-                    self.neo_db.cypher_query(query, {"cpb_node": cpb_node})
+                    cpb_node.level = index + 1
+                    cpb_node.support_count = min(
+                        cpb_node.support_count,
+                        cpb_item.support_count,
+                    )
+                    transaction.append(cpb_node)
+
+                logger.debug(index)
+                logger.debug(transaction)
+                # Insert transaction into Conditional Pattern Base
+                self.insert_transaction(transaction)
+
+                # Remove under minimum support count
+                query = f"""
+                    MATCH (n:{ConditionalFpTreeNode.label})
+                    WHERE n.support_count < 3
+                    DETACH DELETE n
+                """
+                self.neo_db.cypher_query(query)
 
 
 class Item(GraphComponent, ABC):
