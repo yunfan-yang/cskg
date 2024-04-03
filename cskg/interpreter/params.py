@@ -2,6 +2,7 @@ from astroid import (
     AssignName,
     Arguments,
     FunctionDef,
+    Name,
 )
 from astroid.exceptions import NoDefault
 from loguru import logger
@@ -19,6 +20,7 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
     function_qname = function.qname()
     arguments_obj = function.args
     is_method = function_subtype in [FunctionType.METHOD, FunctionType.CLASSMETHOD]
+    arg_annotations = arguments_obj.annotations
 
     for index, param_assign_name in enumerate(arguments_obj.arguments):
         # Skip method self/cls
@@ -28,11 +30,26 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
         param_name = param_assign_name.name
         default_value = get_parameter_default_value(arguments_obj, param_assign_name)
 
-        inferred_type = get_variable_inferred_type(param_assign_name)
-        inferred_type_qname = get_variable_inferred_type_qname(param_assign_name)
+        inferred_type = arg_annotations[index]
+        inferred_type_qname = get_variable_inferred_type_qname(inferred_type)
+
+        if inferred_type and not inferred_type_qname:
+            inferred_type_qname = inferred_type.as_string()
+
+        logger.debug(
+            f"Visiting parameter: {param_name} with type: {inferred_type} {inferred_type_qname}"
+        )
 
         if inferred_type_qname:
-            yield from visit_external_entity(inferred_type)
+            if isinstance(inferred_type, Name):
+                yield ExternalClassEntity(
+                    name=inferred_type_qname,
+                    qualified_name=inferred_type_qname,
+                    file_path=None,
+                )
+            else:
+                yield from visit_external_entity(inferred_type)
+
             takes_rel = TakesRel(
                 from_type=FunctionEntity,
                 from_qualified_name=function_qname,
