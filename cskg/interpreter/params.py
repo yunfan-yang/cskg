@@ -1,8 +1,9 @@
 from astroid import (
     AssignName,
     Arguments,
+    ClassDef,
     FunctionDef,
-    Name,
+    Module,
 )
 from astroid.exceptions import NoDefault
 from loguru import logger
@@ -41,14 +42,14 @@ def visit_parameters(function: FunctionDef, function_subtype: FunctionType):
         )
 
         if inferred_type_qname:
-            if isinstance(inferred_type, Name):
+            if isinstance(inferred_type, (Module, ClassDef, FunctionDef)):
+                yield from visit_external_entity(inferred_type)
+            else:
                 yield ExternalClassEntity(
                     name=inferred_type_qname,
                     qualified_name=inferred_type_qname,
                     file_path=None,
                 )
-            else:
-                yield from visit_external_entity(inferred_type)
 
             takes_rel = TakesRel(
                 from_type=FunctionEntity,
