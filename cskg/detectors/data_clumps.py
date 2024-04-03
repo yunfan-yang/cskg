@@ -133,21 +133,21 @@ class DataClumpsDetector(AbstractDetector):
                     (root:{FpTreeNode.label} {{
                         class_qualified_name: "{self.root.class_qualified_name}",
                         param_name: "{self.root.param_name}"
-                    }})-[:LINKS*]->(n:{FpTreeNode.label} {{
+                    }})-[:LINKS*]->(end:{FpTreeNode.label} {{
                         class_qualified_name: "{fp_item.class_qualified_name}",
                         param_name: "{fp_item.param_name}"
                     }})
-                WHERE length(path) > 2
-                RETURN path, n
+                WHERE length(path) >= 4   # Has to be greater than 3, excluding root
+                RETURN path, end
             """
             paths, meta = self.neo_db.cypher_query(query)
 
-            for path, n in paths:
+            for path, end in paths:
                 # Assign type
                 path: Path
 
                 # Convert cfp_node
-                cfp_end = ConditionalFpTreeNode.from_neo_node(n)
+                cfp_end = ConditionalFpTreeNode.from_neo_node(end)
 
                 # Insert path into Conditional Pattern Base
                 transaction = Transaction()
@@ -170,6 +170,31 @@ class DataClumpsDetector(AbstractDetector):
             #     DETACH DELETE n
             # """
             # self.neo_db.cypher_query(query)
+
+            # Query for CFP Tree
+            query = f"""
+                MATCH path = 
+                    (root:{ConditionalFpTreeNode.label} {{
+                        level: {index + 1}
+                    }})-[:LINKS*]->(end:{ConditionalFpTreeNode.label} {{
+                        level: {index + 1}
+                    }})
+                WHERE length(path) >= 4   # Has to be greater than 3, excluding root
+                RETURN path, end
+            """
+            logger.debug(query)
+            paths, meta = self.neo_db.cypher_query(query)
+
+            patterns = []
+            for path, end in paths:
+                nodes = filter(
+                    lambda node: node["support_count"] >= 3,
+                    path.nodes[1:-1],
+                )
+                if len(nodes) > 0:
+                    patterns.append(list(nodes))
+
+            logger.debug(patterns)
 
 
 class Item(GraphComponent, ABC):
