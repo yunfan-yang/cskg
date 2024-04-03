@@ -117,15 +117,16 @@ class DataClumpsDetector(AbstractDetector):
             WITH DISTINCT {{class_qualified_name: n.class_qualified_name, param_name: n.param_name}} AS n
             RETURN n
         """
-        results, meta = self.neo_db.cypher_query(query)
-        for (n,) in results:
-            # Query all paths leading to the item
+        paths, meta = self.neo_db.cypher_query(query)
+        for (n,) in paths:
+            # # Create Conditional FP Tree Node
             cpb_item = ConditionalFpTreeNode.from_neo_node(n)
-            query = f"""
-                CREATE (cpb:{ConditionalFpTreeNode.label} $cpb_item)
-            """
-            self.neo_db.cypher_query(query, {"cpb_item": cpb_item})
+            # query = f"""
+            #     CREATE (cpb:{ConditionalFpTreeNode.label} $cpb_item)
+            # """
+            # self.neo_db.cypher_query(query, {"cpb_item": cpb_item})
 
+            # Query all paths leading to the item
             query = f"""
                 MATCH path = 
                     (root:{FpTreeNode.label} {{
@@ -137,7 +138,19 @@ class DataClumpsDetector(AbstractDetector):
                     }})
                 RETURN path
             """
-            results, meta = self.neo_db.cypher_query(query)
+            paths, meta = self.neo_db.cypher_query(query)
+
+            for (path,) in paths:
+                path: Path
+
+                # Insert path into Conditional Pattern Base
+                for node in path.nodes:
+                    cpb_node = ConditionalFpTreeNode.from_neo_node(node)
+                    labels = "".join(map(lambda label: f":{label}", cpb_node.labels))
+                    query = f"""
+                        CREATE ({labels} $cpb_node)
+                    """
+                    self.neo_db.cypher_query(query, {"cpb_node": cpb_node})
 
 
 class Item(GraphComponent, ABC):
