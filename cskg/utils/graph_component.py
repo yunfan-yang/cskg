@@ -85,11 +85,7 @@ class GraphComponent(
     @classmethod
     def from_dict(cls, dict: dict[str, Any]) -> Self:
         # If the class is subclassed, use the subclass to create the instance
-        if (
-            cls != GraphComponent
-            or not ABC in cls.__bases__
-            or not hasattr(cls, "type")
-        ):
+        if cls != GraphComponent and not ABC in cls.__bases__:
             component_cls = cls
         else:
             component_cls = cls.get_class(dict["type"])
