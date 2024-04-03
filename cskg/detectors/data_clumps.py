@@ -54,10 +54,11 @@ class DataClumpsDetector(AbstractDetector):
 
             # Make transaction
             transaction = Transaction()
-            for takes_rel in takes_rels:
+            for index, takes_rel in enumerate(takes_rels):
                 item = FpTreeNode(
                     param_name=takes_rel.param_name,
                     class_qualified_name=takes_rel.to_qualified_name,
+                    level=index + 1,
                 )
                 transaction.append(item)
 
@@ -66,29 +67,29 @@ class DataClumpsDetector(AbstractDetector):
 
     def insert_transaction(self, transaction: "Transaction"):
         # Insert transactions into FP Growth tree
-        prev_item = self.root
+        parent_item = self.root
 
-        for item in transaction:
-            item.level = prev_item.level + 1
-            labels = "".join(map(lambda label: f":{label}", item.labels))
+        for child_item in transaction:
+            parent_labels = "".join(map(lambda label: f":{label}", parent_item.labels))
+            child_labels = "".join(map(lambda label: f":{label}", child_item.labels))
             query = f"""
-                MATCH (parent{labels} {{
-                    class_qualified_name: "{prev_item.class_qualified_name}", 
-                    param_name: "{prev_item.param_name}",
-                    level: {prev_item.level}
+                MATCH (parent{parent_labels} {{
+                    class_qualified_name: "{parent_item.class_qualified_name}", 
+                    param_name: "{parent_item.param_name}",
+                    level: {parent_item.level}
                 }})
-                MERGE (parent)-[:LINKS]->(child{labels} {{
-                    class_qualified_name: "{item.class_qualified_name}", 
-                    param_name: "{item.param_name}",
-                    level: {item.level}
+                MERGE (parent)-[:LINKS]->(child{child_labels} {{
+                    class_qualified_name: "{child_item.class_qualified_name}", 
+                    param_name: "{child_item.param_name}",
+                    level: {child_item.level}
                 }})
                 ON CREATE
                     SET child += $child_item
                 ON MATCH
                     SET child.support_count = child.support_count + 1
             """
-            self.neo_db.cypher_query(query, {"child_item": item})
-            prev_item = item
+            self.neo_db.cypher_query(query, {"child_item": child_item})
+            parent_item = child_item
 
     def create_fp_tree_root(self):
         root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
