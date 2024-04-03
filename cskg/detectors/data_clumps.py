@@ -120,7 +120,11 @@ class DataClumpsDetector(AbstractDetector):
         results, meta = self.neo_db.cypher_query(query)
         for (n,) in results:
             # Query all paths leading to the item
-            cpb_item = FpTreeNode.from_neo_node(n)
+            cpb_item = ConditionalFpTreeNode.from_neo_node(n)
+            query = f"""
+                CREATE (cpb:{ConditionalFpTreeNode.label} $cpb_item)
+            """
+            self.neo_db.cypher_query(query, {"cpb_item": cpb_item})
 
             query = f"""
                 MATCH path = 
