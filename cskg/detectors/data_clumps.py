@@ -164,12 +164,12 @@ class DataClumpsDetector(AbstractDetector):
                 self.insert_transaction(transaction)
 
                 # Remove under minimum support count
-                # query = f"""
-                #     MATCH (n:{ConditionalFpTreeNode.label})
-                #     WHERE n.support_count < 3
-                #     DETACH DELETE n
-                # """
-                # self.neo_db.cypher_query(query)
+                query = f"""
+                    MATCH (n:{ConditionalFpTreeNode.label})
+                    WHERE n.support_count < 3
+                    DETACH DELETE n
+                """
+                self.neo_db.cypher_query(query)
 
 
 class Item(GraphComponent, ABC):
