@@ -26,7 +26,6 @@ class DataClumpsDetector(AbstractDetector):
             // Step 1: Calculate class frequencies considering both class qualified_name and TAKES param_name
             MATCH (c:Class)<-[t:TAKES]-(f:Function)
             WITH c, t.param_name AS param_name, COUNT(DISTINCT f) AS functions_count
-            WHERE functions_count >= 3
             WITH c, param_name, COUNT(*) AS freq
             ORDER BY freq DESC
 
@@ -137,7 +136,6 @@ class DataClumpsDetector(AbstractDetector):
                         class_qualified_name: "{fp_item.class_qualified_name}",
                         param_name: "{fp_item.param_name}"
                     }})
-                WHERE length(path) >= 4   # Has to be greater than 3, excluding root
                 RETURN path, end
             """
             paths, meta = self.neo_db.cypher_query(query)
@@ -163,14 +161,6 @@ class DataClumpsDetector(AbstractDetector):
                 # Insert transaction into Conditional Pattern Base
                 self.insert_transaction(transaction)
 
-            # Remove under minimum support count
-            # query = f"""
-            #     MATCH (n:{ConditionalFpTreeNode.label})
-            #     WHERE n.support_count < 3 AND n.level = {index + 1}
-            #     DETACH DELETE n
-            # """
-            # self.neo_db.cypher_query(query)
-
             # Query for CFP Tree
             query = f"""
                 MATCH path = 
@@ -179,22 +169,20 @@ class DataClumpsDetector(AbstractDetector):
                     }})-[:LINKS*]->(end:{ConditionalFpTreeNode.label} {{
                         level: {index + 1}
                     }})
-                WHERE length(path) >= 4   # Has to be greater than 3, excluding root
                 RETURN path, end
             """
-            logger.debug(query)
             paths, meta = self.neo_db.cypher_query(query)
 
             patterns = []
             for path, end in paths:
-                nodes = filter(
-                    lambda node: node["support_count"] >= 3,
-                    path.nodes[1:-1],
+                nodes = list(
+                    filter(lambda node: node["support_count"] >= 3, path.nodes[1:-1])
                 )
                 if len(nodes) > 0:
-                    patterns.append(list(nodes))
+                    patterns.append(nodes)
 
-            logger.debug(patterns)
+            for pattern in patterns:
+                logger.debug(pattern)
 
 
 class Item(GraphComponent, ABC):
