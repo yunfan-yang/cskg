@@ -15,12 +15,12 @@ class DataClumpsDetector(AbstractDetector):
 
     def detect(self):
         # Create root node of FP Growth tree
-        # self.clear_everything()
-        # self.create_index()
+        self.clear_everything()
+        self.create_index()
         self.create_fp_tree_root()
 
         # Build FP-growth tree
-        # self.build_fp_growth_tree()
+        self.build_fp_growth_tree()
         self.build_conditional_fp_tree()
 
     def build_fp_growth_tree(self):
@@ -86,16 +86,42 @@ class DataClumpsDetector(AbstractDetector):
             RETURN n
         """
         results, meta = self.neo_db.cypher_query(query)
-        bar = tqdm(
-            enumerate(results),
-            desc="Building Conditional FP Tree",
-            unit="nodes",
-        )
-        logger.debug(len(results))
-        for index, (n,) in bar:
+        for index, (n,) in enumerate(results):
             # Create Conditional FP Tree Node
             fp_item = FpTreeNode.from_neo_node(n)
-            logger.debug(fp_item)
+            query = f"""
+                MATCH path = 
+                    (root:{FpTreeNode.label} {{
+                        node_id: "{self.root.node_id}"
+                    }})-[:LINKS*]->(end:{FpTreeNode.label} {{
+                        class_qualified_name: "{fp_item.class_qualified_name}",
+                        param_name: "{fp_item.param_name}"
+                    }})
+                RETURN path, end
+            """
+            paths, meta = self.neo_db.cypher_query(query)
+            for path, end in paths:
+                # Assign type
+                path: Path
+
+                # Convert cfp_node
+                cfp_end = ConditionalFpTreeNode.from_neo_node(end)
+
+                # Insert path into Conditional Pattern Base
+                transaction = Transaction()
+                for node in path.nodes:
+                    cfp_node = ConditionalFpTreeNode.from_neo_node(node)
+                    cfp_node.level = index + 1
+                    cfp_node.support_count = min(
+                        cfp_node.support_count,
+                        cfp_end.support_count,
+                    )
+                    transaction.append(cfp_node)
+
+                # Insert transaction into Conditional Pattern Base
+                # self.insert_transaction(transaction)
+
+            continue
 
             # Query all paths leading to the item
             query = f"""
@@ -109,7 +135,7 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN path, end
             """
             paths, meta = self.neo_db.cypher_query(query)
-            for path, end in tqdm(paths, desc="Inserting Paths", unit="paths"):
+            for path, end in paths:
                 # Assign type
                 path: Path
 
@@ -130,6 +156,7 @@ class DataClumpsDetector(AbstractDetector):
                 # Insert transaction into Conditional Pattern Base
                 self.insert_transaction(transaction)
 
+            self.fix_labels()
             return
             # Query for CFP Tree
             query = f"""
@@ -222,15 +249,20 @@ class DataClumpsDetector(AbstractDetector):
             logger.error(e)
 
     def clear_everything(self):
+        condition = f"""
+            MATCH (n)
+            WHERE '{self.label}' IN labels(n) OR '{FpTreeNode.label}' IN labels(n) OR '{ConditionalFpTreeNode.label}' IN labels(n)
+        """
+
         query = f"""
-            MATCH (n:{self.label})
+            {condition}
             RETURN COUNT(n) AS count
         """
         results, meta = self.neo_db.cypher_query(query)
         count = results[0][0]
 
         query = f"""
-            MATCH (n:{self.label})
+            {condition}
             WITH n
             LIMIT 10000
             DETACH DELETE n
