@@ -112,64 +112,8 @@ class Driver:
                     logger.warning(e)  # Ignore duplicate key error
 
     def compose_graph(self):
-        # Drop everything in neo4j
-        clear_neo4j_database(self.neo_db, clear_constraints=True, clear_indexes=True)
-
-        # Create indexes for entities
-        for entity_class in Entity.visit_subclasses():
-            entity_type = entity_class.type
-            entity_label = entity_class.label
-            index_cypher = f"""
-                CREATE INDEX {entity_type}_qualified_name FOR (n:{entity_label}) ON (n.qualified_name)
-            """
-            logger.debug(index_cypher)
-
-            try:
-                self.neo_db.cypher_query(index_cypher)
-            except ClientError as e:
-                logger.error(e)
-                ...
-
-        # Instantiate graph composer
-        graph_composer = GraphComposer()
-
-        total_components = 0
-
-        # Add all entities to composer
-        for entity_class in Entity.visit_subclasses():
-            collection = self.mongo_db.get_collection(entity_class.type)
-
-            entity_count = collection.count_documents({})
-            total_components += entity_count
-
-            entity_collection_iter = collection.find()
-            graph_composer.add_entity_collections(entity_collection_iter)
-
-        # Add all relationships to composer
-        for relationship_class in Relationship.visit_subclasses():
-            collection = self.mongo_db.get_collection(relationship_class.type)
-
-            relationship_count = collection.count_documents({})
-            total_components += relationship_count
-
-            relationship_collection_iter = collection.find()
-            graph_composer.add_relationship_collection(relationship_collection_iter)
-
-        # Compose graph
-        bar = tqdm(total=total_components, desc="Composing graph", unit="components")
-        batch_size = 10000
-
-        with self.neo_db.transaction:
-            for cypher, params in graph_composer.visit():
-                logger.debug(f"{cypher}\n{params}")
-                self.neo_db.cypher_query(cypher, params)
-                bar.update(1)
-
-                if bar.n % batch_size == 0:
-                    self.neo_db.commit()
-                    self.neo_db.begin()
-                    bar.write(f"Batch committed ({bar.n}/{bar.total})")
-        bar.close()
+        graph_composer = GraphComposer(self.mongo_db, self.neo_db)
+        graph_composer.compose()
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():
