@@ -97,54 +97,6 @@ class DataClumpsDetector(AbstractDetector):
             )
             self.neo_db.cypher_query(query, {"items": items})
 
-    def create_fp_tree_root(self):
-        root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
-        labels = "".join(map(lambda label: f":{label}", root.labels))
-        query = f"""
-            CREATE (root{labels} $root)
-            RETURN root
-        """
-        self.neo_db.cypher_query(query, {"root": root})
-        self.root = root
-
-    def create_index(self):
-        query = f"""
-            CREATE INDEX {self.label}_class_qname_param_name_level 
-            FOR (n:{self.label}) 
-            ON (n.class_qualified_name, n.param_name, n.level)
-        """
-        try:
-            self.neo_db.cypher_query(query)
-        except ClientError as e:
-            logger.error(e)
-
-        query = f"""
-            CREATE INDEX {self.label}_node_id
-            FOR (n:{self.label})
-            ON (n.node_id)
-        """
-        try:
-            self.neo_db.cypher_query(query)
-        except ClientError as e:
-            logger.error(e)
-
-    def clear_everything(self):
-        query = f"""
-            MATCH (n:{self.label})
-            RETURN COUNT(n) AS count
-        """
-        results, meta = self.neo_db.cypher_query(query)
-        count = results[0][0]
-
-        for _ in tqdm(range(0, count, 10000), desc="Clearing"):
-            query = f"""
-                MATCH (n:{self.label})
-                WITH n
-                LIMIT 10000
-                DETACH DELETE n
-            """
-            self.neo_db.cypher_query(query)
-
     def build_conditional_fp_tree(self):
         # Find all distinct items
         query = f"""
@@ -220,6 +172,54 @@ class DataClumpsDetector(AbstractDetector):
 
             for pattern in patterns:
                 logger.debug(pattern)
+
+    def create_fp_tree_root(self):
+        root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
+        labels = "".join(map(lambda label: f":{label}", root.labels))
+        query = f"""
+            CREATE (root{labels} $root)
+            RETURN root
+        """
+        self.neo_db.cypher_query(query, {"root": root})
+        self.root = root
+
+    def create_index(self):
+        query = f"""
+            CREATE INDEX {self.label}_class_qname_param_name_level 
+            FOR (n:{self.label}) 
+            ON (n.class_qualified_name, n.param_name, n.level)
+        """
+        try:
+            self.neo_db.cypher_query(query)
+        except ClientError as e:
+            logger.error(e)
+
+        query = f"""
+            CREATE INDEX {self.label}_node_id
+            FOR (n:{self.label})
+            ON (n.node_id)
+        """
+        try:
+            self.neo_db.cypher_query(query)
+        except ClientError as e:
+            logger.error(e)
+
+    def clear_everything(self):
+        query = f"""
+            MATCH (n:{self.label})
+            RETURN COUNT(n) AS count
+        """
+        results, meta = self.neo_db.cypher_query(query)
+        count = results[0][0]
+
+        for _ in tqdm(range(0, count, 10000), desc="Clearing"):
+            query = f"""
+                MATCH (n:{self.label})
+                WITH n
+                LIMIT 10000
+                DETACH DELETE n
+            """
+            self.neo_db.cypher_query(query)
 
 
 class Item(GraphComponent, ABC):
