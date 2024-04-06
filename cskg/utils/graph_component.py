@@ -61,6 +61,10 @@ class GraphComponent(
     def labels(self):
         return iter((self.label,) + self.extra_labels)
 
+    @classmethod
+    def get_labels(cls):
+        return iter((cls.label,) + cls.extra_labels)
+
     def __setitem__(self, key, value):
         self.__setattr__(key, value)
 

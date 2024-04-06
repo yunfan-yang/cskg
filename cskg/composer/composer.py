@@ -73,21 +73,25 @@ class GraphComposer:
     def visit_entities(self):
         for entity_class in Entity.visit_subclasses():
             # Get entity collection
-            entity_label = entity_class.label
+            entity_labels = "".join(
+                map(lambda label: f":{label}", entity_class.get_labels())
+            )
+
             collection = self.mongo_db.get_collection(entity_class.type)
             entity_collection = collection.find(
                 {},
                 {"_id": False, "label": False, "extra_labels": False},
             )
 
+            query = f"""
+                UNWIND $entities AS entity
+                CREATE (n{entity_labels})
+                SET n = entity
+            """
+            logger.debug(query)
+
             # Bulk insert entities
             for entity_bulk in bulk(entity_collection, 10000):
-                logger.debug(type(entity_bulk))
-                query = f"""
-                    UNWIND $entities AS entity
-                    CREATE (n:{entity_label})
-                    SET n = entity
-                """
                 yield query, {"entities": entity_bulk}, len(entity_bulk)
 
     def visit_relationships(self):
@@ -131,14 +135,16 @@ class GraphComposer:
                     {"_id": False},
                 )
 
+                cypher = f"""
+                    UNWIND $relationships AS relationship
+                    MATCH (a:{from_label} {{qualified_name: relationship.from_qualified_name}}), (b:{to_label} {{qualified_name: relationship.to_qualified_name}})
+                    CREATE (a)-[t:{relationship_label}]->(b)
+                    SET t = relationship
+                """
+                logger.debug(cypher)
+
                 # Bulk insert relationships
                 for relationship in bulk(relationships, 5000):
-                    cypher = f"""
-                        UNWIND $relationships AS relationship
-                        MATCH (a:{from_label} {{qualified_name: relationship.from_qualified_name}}), (b:{to_label} {{qualified_name: relationship.to_qualified_name}})
-                        CREATE (a)-[t:{relationship_label}]->(b)
-                        SET t = relationship
-                    """
                     yield cypher, {"relationships": relationship}, len(relationship)
 
 
