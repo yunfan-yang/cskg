@@ -21,7 +21,7 @@ class DataClumpsDetector(AbstractDetector):
 
         # Build FP-growth tree
         self.build_fp_growth_tree()
-        # self.build_conditional_fp_tree()
+        self.build_conditional_fp_tree()
 
     def build_fp_growth_tree(self):
         query = f"""
@@ -70,36 +70,32 @@ class DataClumpsDetector(AbstractDetector):
             self.insert_transaction(transaction)
 
     def insert_transaction(self, transaction: "Transaction"):
-        # Insert transactions into FP Growth tree
-        parent_item = self.root
+        transaction.insert(0, self.root)
+
+        query = f"""
+            UNWIND $items AS item
+            MATCH (parent:{FpTreeNode.label} {{
+                node_id: item.parent.node_id
+            }})
+            MERGE (parent)-[:LINKS]->(child:{FpTreeNode.label} {{
+                class_qualified_name: item.child.class_qualified_name,
+                param_name: item.child.param_name,
+                level: item.child.level
+            }})
+            ON CREATE
+                SET child += item.child
+            ON MATCH
+                SET child.support_count = child.support_count + 1
+        """
 
         with self.neo_db.transaction:
-            for child_item in transaction:
-                parent_labels = "".join(
-                    map(lambda label: f":{label}", parent_item.labels)
+            items = list(
+                map(
+                    lambda item: {"parent": item[0], "child": item[1]},
+                    zip(transaction[:-1], transaction[1:]),
                 )
-                child_labels = "".join(
-                    map(lambda label: f":{label}", child_item.labels)
-                )
-                query = f"""
-                    MATCH (parent{parent_labels} {{
-                        class_qualified_name: "{parent_item.class_qualified_name}", 
-                        param_name: "{parent_item.param_name}",
-                        level: {parent_item.level}
-                    }})
-                    MERGE (parent)-[:LINKS]->(child{child_labels} {{
-                        class_qualified_name: "{child_item.class_qualified_name}", 
-                        param_name: "{child_item.param_name}",
-                        level: {child_item.level}
-                    }})
-                    ON CREATE
-                        SET child += $child_item
-                    ON MATCH
-                        SET child.support_count = child.support_count + 1
-                """
-                logger.debug(query)
-                self.neo_db.cypher_query(query, {"child_item": child_item})
-                parent_item = child_item
+            )
+            self.neo_db.cypher_query(query, {"items": items})
 
     def create_fp_tree_root(self):
         root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
@@ -113,7 +109,19 @@ class DataClumpsDetector(AbstractDetector):
 
     def create_index(self):
         query = f"""
-            CREATE INDEX {self.label}_class_qname_param_name_level FOR (n:{self.label}) ON (n.class_qualified_name, n.param_name, n.level)
+            CREATE INDEX {self.label}_class_qname_param_name_level 
+            FOR (n:{self.label}) 
+            ON (n.class_qualified_name, n.param_name, n.level)
+        """
+        try:
+            self.neo_db.cypher_query(query)
+        except ClientError as e:
+            logger.error(e)
+
+        query = f"""
+            CREATE INDEX {FpTreeNode.label}_node_id
+            FOR (n:{FpTreeNode.label})
+            ON (n.node_id)
         """
         try:
             self.neo_db.cypher_query(query)
@@ -150,7 +158,7 @@ class DataClumpsDetector(AbstractDetector):
             RETURN n
         """
         results, meta = self.neo_db.cypher_query(query)
-        for index, (n,) in enumerate(results):
+        for index, (n,) in tqdm(enumerate(results)):
             # Create Conditional FP Tree Node
             fp_item = FpTreeNode.from_neo_node(n)
             logger.debug(fp_item)
@@ -251,6 +259,9 @@ class FpTreeNode(Item):
             support_count=support_count,
             **kwargs,
         )
+
+    def node_id(self):
+        return f"{self.class_qualified_name}_{self.param_name}_{self.level}"
 
     def __str__(self):
         return f"Item: {self.class_qualified_name} - {self.param_name}"
