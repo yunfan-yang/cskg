@@ -1,26 +1,58 @@
-from glob import glob
 import os
+from glob import glob
 from typing import Generator
 from astroid import FunctionDef, Module, ClassDef, Lambda
+from pymongo.database import Database as MongoDatabase
 from astroid.manager import AstroidManager
 from loguru import logger
+from pymongo.errors import DuplicateKeyError
 from hashlib import md5
 from tqdm import tqdm
 
+from cskg.utils.entity import Entity
 from cskg.utils.graph_component import GraphComponent
 from cskg.interpreter.utils import remove_module_prefix
 from cskg.interpreter.nodes import visit_node
 
 
 class CodeInterpreter:
-    def __init__(self, folder_path):
+    def __init__(self, folder_path, mongo_db: MongoDatabase):
         self.folder_path = folder_path
         self.folder_abs_path = os.path.abspath(folder_path)
+        self.mongo_db = mongo_db
         self.manager = AstroidManager()
         self.manager.register_transform(Module, self.format_qname)
         self.manager.register_transform(ClassDef, self.format_qname)
         self.manager.register_transform(FunctionDef, self.format_qname)
         self.manager.register_transform(Lambda, self.format_lambda_name)
+
+        # Drop everything in mongo
+        for collection_name in self.mongo_db.list_collection_names():
+            self.mongo_db.drop_collection(collection_name)
+
+        # Create collections
+        for component_class in GraphComponent.visit_subclasses():
+            if component_class.type:
+                # Create collection
+                collection = self.mongo_db.create_collection(
+                    component_class.type,
+                    check_exists=False,
+                )
+
+                # Create index for entity classes
+                if issubclass(component_class, Entity):
+                    collection.create_index("qualified_name", unique=True)
+
+    def interpret(self):
+        # Insert components into mongo
+        with self.mongo_db.client.start_session() as session:
+            for component in self.visit():
+                try:
+                    colection = self.mongo_db.get_collection(component.type)
+                    colection.insert_one(component, session=session)
+                    logger.debug(component)
+                except DuplicateKeyError as e:
+                    logger.warning(e)  # Ignore duplicate key error
 
     def visit(self) -> Generator[GraphComponent, None, None]:
         python_files = glob(

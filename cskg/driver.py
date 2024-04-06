@@ -1,15 +1,8 @@
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError
 import neomodel
-from neomodel import clear_neo4j_database
-from neo4j.exceptions import ClientError
 from os.path import abspath
 from loguru import logger
-from tqdm import tqdm
 
-from cskg.utils.graph_component import GraphComponent
-from cskg.utils.entity import *
-from cskg.utils.relationship import *
 from cskg.interpreter.interpreter import CodeInterpreter
 from cskg.composer.composer import GraphComposer
 from cskg.detectors.detector import AbstractDetector
@@ -81,35 +74,8 @@ class Driver:
             logger.info("Detection done")
 
     def interpret_code(self):
-        # Drop everything in mongo
-        for collection_name in self.mongo_db.list_collection_names():
-            self.mongo_db.drop_collection(collection_name)
-
-        # Create collections
-        for component_class in GraphComponent.visit_subclasses():
-            if component_class.type:
-                # Create collection
-                collection = self.mongo_db.create_collection(
-                    component_class.type,
-                    check_exists=False,
-                )
-
-                # Create index for entity classes
-                if issubclass(component_class, Entity):
-                    collection.create_index("qualified_name", unique=True)
-
-        # Instantiate code interpreter
-        interpreter = CodeInterpreter(self.folder_path)
-
-        # Insert components into mongo
-        with self.mongo_client.start_session() as session:
-            for component in interpreter.visit():
-                try:
-                    colection = self.mongo_db.get_collection(component.type)
-                    colection.insert_one(component, session=session)
-                    logger.debug(component)
-                except DuplicateKeyError as e:
-                    logger.warning(e)  # Ignore duplicate key error
+        interpreter = CodeInterpreter(self.folder_path, self.mongo_db)
+        interpreter.interpret()
 
     def compose_graph(self):
         graph_composer = GraphComposer(self.mongo_db, self.neo_db)

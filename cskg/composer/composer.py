@@ -1,5 +1,4 @@
-import json
-from typing import Any, Iterable
+from typing import Iterable
 from pymongo.database import Database as MongoDatabase
 from loguru import logger
 from neo4j.exceptions import ClientError
