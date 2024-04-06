@@ -21,7 +21,7 @@ class DataClumpsDetector(AbstractDetector):
 
         # Build FP-growth tree
         self.build_fp_growth_tree()
-        self.build_conditional_fp_tree()
+        # self.build_conditional_fp_tree()
 
     def build_fp_growth_tree(self):
         query = f"""
@@ -44,7 +44,7 @@ class DataClumpsDetector(AbstractDetector):
             RETURN f, ts
         """
         results, meta = self.neo_db.cypher_query(query)
-        for result in tqdm(results):
+        for result in tqdm(results, desc="Building FP Growth Tree", unit="functions"):
             f, ts = result
             takes_rels: list[TakesRel] = [GraphComponent.from_neo_node(t) for t in ts]
             takes_rels = [
@@ -58,6 +58,8 @@ class DataClumpsDetector(AbstractDetector):
             )
 
             transaction = Transaction()
+            transaction.append(self.root)
+
             for index, takes_rel in enumerate(takes_rels):
                 item = FpTreeNode(
                     param_name=takes_rel.param_name,
@@ -69,33 +71,7 @@ class DataClumpsDetector(AbstractDetector):
             # Insert transaction into FP Growth tree
             self.insert_transaction(transaction)
 
-    def insert_transaction(self, transaction: "Transaction"):
-        transaction.insert(0, self.root)
-
-        query = f"""
-            UNWIND $items AS item
-            MATCH (parent:{FpTreeNode.label} {{
-                node_id: item.parent.node_id
-            }})
-            MERGE (parent)-[:LINKS]->(child:{FpTreeNode.label} {{
-                class_qualified_name: item.child.class_qualified_name,
-                param_name: item.child.param_name,
-                level: item.child.level
-            }})
-            ON CREATE
-                SET child += item.child
-            ON MATCH
-                SET child.support_count = child.support_count + 1
-        """
-
-        with self.neo_db.transaction:
-            items = list(
-                map(
-                    lambda item: {"parent": item[0], "child": item[1]},
-                    zip(transaction[:-1], transaction[1:]),
-                )
-            )
-            self.neo_db.cypher_query(query, {"items": items})
+        self.fix_labels()
 
     def build_conditional_fp_tree(self):
         # Find all distinct items
@@ -110,7 +86,12 @@ class DataClumpsDetector(AbstractDetector):
             RETURN n
         """
         results, meta = self.neo_db.cypher_query(query)
-        for index, (n,) in tqdm(enumerate(results)):
+        bar = tqdm(
+            enumerate(results),
+            desc="Building Conditional FP Tree",
+            unit="nodes",
+        )
+        for index, (n,) in bar:
             # Create Conditional FP Tree Node
             fp_item = FpTreeNode.from_neo_node(n)
             logger.debug(fp_item)
@@ -128,8 +109,7 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN path, end
             """
             paths, meta = self.neo_db.cypher_query(query)
-
-            for path, end in paths:
+            for path, end in tqdm(paths, desc="Inserting Paths", unit="paths"):
                 # Assign type
                 path: Path
 
@@ -161,7 +141,6 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN path, end
             """
             paths, meta = self.neo_db.cypher_query(query)
-
             patterns = []
             for path, end in paths:
                 nodes = list(
@@ -173,13 +152,47 @@ class DataClumpsDetector(AbstractDetector):
             for pattern in patterns:
                 logger.debug(pattern)
 
+    def insert_transaction(self, transaction: "Transaction"):
+        query = f"""
+            UNWIND $items AS item
+            MATCH (parent:{self.label} {{
+                node_id: item.parent.node_id
+            }})
+            MERGE (parent)-[:LINKS]->(child:{self.label} {{
+                class_qualified_name: item.child.class_qualified_name,
+                param_name: item.child.param_name,
+                level: item.child.level,
+                node_id: item.child.node_id
+            }})
+            ON CREATE
+                SET child += item.child
+            ON MATCH
+                SET child.support_count = child.support_count + 1
+        """
+        logger.debug(query)
+
+        with self.neo_db.transaction:
+            items = list(
+                map(
+                    lambda item: {"parent": item[0], "child": item[1]},
+                    zip(transaction[:-1], transaction[1:]),
+                )
+            )
+            self.neo_db.cypher_query(query, {"items": items})
+
     def create_fp_tree_root(self):
-        root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
-        labels = "".join(map(lambda label: f":{label}", root.labels))
+        root = FpTreeNode(
+            class_qualified_name="<<Root>>",
+            param_name="root",
+            level=0,
+            support_count=0,
+        )
+        labels = "".join(map(lambda label: f":{label}", root.get_labels()))
         query = f"""
             CREATE (root{labels} $root)
             RETURN root
         """
+        logger.debug(query)
         self.neo_db.cypher_query(query, {"root": root})
         self.root = root
 
@@ -212,35 +225,30 @@ class DataClumpsDetector(AbstractDetector):
         results, meta = self.neo_db.cypher_query(query)
         count = results[0][0]
 
+        query = f"""
+            MATCH (n:{self.label})
+            WITH n
+            LIMIT 10000
+            DETACH DELETE n
+        """
+        logger.debug(query)
         for _ in tqdm(range(0, count, 10000), desc="Clearing"):
-            query = f"""
-                MATCH (n:{self.label})
-                WITH n
-                LIMIT 10000
-                DETACH DELETE n
-            """
             self.neo_db.cypher_query(query)
 
+    def fix_labels(self):
+        query = f"""
+            MATCH (n:{self.label})
+            CALL apoc.create.addLabels(n, [n.label])
+            YIELD node
+            RETURN n
+        """
+        self.neo_db.cypher_query(query)
 
-class Item(GraphComponent, ABC):
-    type = "item"
-    label = "Item"
+
+class FpTreeNode(GraphComponent):
+    type = "fp_tree_node"
+    label = "FpTreeNode"
     extra_labels = (DataClumpsDetector.label,)
-
-    def __init__(self, param_name: str, class_qualified_name: str, **kwargs):
-        self.param_name: str
-        self.class_qualified_name: str
-
-        super().__init__(
-            param_name=param_name,
-            class_qualified_name=class_qualified_name,
-            **kwargs,
-        )
-
-
-class FpTreeNode(Item):
-    type = "fp_tree_item"
-    label = "FpTreeItem"
 
     def __init__(
         self,
@@ -250,6 +258,8 @@ class FpTreeNode(Item):
         support_count: int = 1,
         **kwargs,
     ):
+        self.param_name: str
+        self.class_qualified_name: str
         self.level: int
         self.support_count: int
         super().__init__(
@@ -259,17 +269,20 @@ class FpTreeNode(Item):
             support_count=support_count,
             **kwargs,
         )
+        self.__setitem__("node_id", self.node_id())
 
     def node_id(self):
-        return f"{self.class_qualified_name}_{self.param_name}_{self.level}"
+        return (
+            f"{self.label}_{self.class_qualified_name}_{self.param_name}_{self.level}"
+        )
 
     def __str__(self):
         return f"Item: {self.class_qualified_name} - {self.param_name}"
 
 
-class Transaction(list[Item]): ...
+class Transaction(list[FpTreeNode]): ...
 
 
 class ConditionalFpTreeNode(FpTreeNode):
-    type = "conditional_fp_tree_item"
-    label = "ConditionalFpTreeItem"
+    type = "conditional_fp_tree_node"
+    label = "ConditionalFpTreeNode"
