@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from itertools import combinations
+from neo4j.exceptions import ClientError
 from loguru import logger
 from neo4j.graph import Path
 from tqdm import tqdm
@@ -16,6 +16,7 @@ class DataClumpsDetector(AbstractDetector):
     def detect(self):
         # Create root node of FP Growth tree
         self.clear_everything()
+        self.create_index()
         self.create_fp_tree_root()
 
         # Build FP-growth tree
@@ -108,6 +109,15 @@ class DataClumpsDetector(AbstractDetector):
         """
         self.neo_db.cypher_query(query, {"root": root})
         self.root = root
+
+    def create_index(self):
+        query = f"""
+            CREATE INDEX {self.label}_class_qname_param_name_level FOR (n:{self.label}) ON (n.class_qualified_name, n.param_name, n.level)
+        """
+        try:
+            self.neo_db.cypher_query(query)
+        except ClientError as e:
+            logger.error(e)
 
     def clear_everything(self):
         query = f"""
