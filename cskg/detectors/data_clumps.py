@@ -3,6 +3,7 @@ from collections import defaultdict
 from itertools import combinations
 from loguru import logger
 from neo4j.graph import Path
+from tqdm import tqdm
 
 from cskg.detectors.detector import AbstractDetector
 from cskg.utils.graph_component import GraphComponent
@@ -19,39 +20,42 @@ class DataClumpsDetector(AbstractDetector):
 
         # Build FP-growth tree
         self.build_fp_growth_tree()
-        self.build_conditional_fp_tree()
+        # self.build_conditional_fp_tree()
 
     def build_fp_growth_tree(self):
-        query = """
-            // Step 1: Calculate class frequencies considering both class qualified_name and TAKES param_name
+        query = f"""
             MATCH (c:Class)<-[t:TAKES]-(f:Function)
-            WITH c, t.param_name AS param_name, COUNT(DISTINCT f) AS functions_count
-            WITH c, param_name, COUNT(*) AS freq
-            ORDER BY freq DESC
+            WITH c, t.param_name AS param_name, COUNT(DISTINCT f) AS frequency
+            WHERE frequency >= 2
+            RETURN c, param_name, frequency
+            ORDER BY frequency DESC
+        """
+        results, meta = self.neo_db.cypher_query(query)
+        freq_table = defaultdict(int)
+        for result in results:
+            c, param_name, frequency = result
+            freq_table[c["qualified_name"], param_name] = frequency
 
-            // Store frequencies in a way that can be used in later matching, including both qualified_name and param_name
-            WITH COLLECT({class: c, param_name: param_name, freq: freq}) AS classes_with_freqs
-
-            // Step 2: Match Functions and their Classes, bringing in frequency for sorting
+        query = f"""
             MATCH (f:Function)-[t:TAKES]->(c:Class)
-            WITH f, t, c, classes_with_freqs,
-                [x IN classes_with_freqs WHERE x.class = c AND x.param_name = t.param_name][0].freq AS freq
-            ORDER BY freq DESC
-
-            // Step 3: Collect relationships, ensuring classes are sorted by their frequency
-            WITH f, COLLECT(t) AS ts
-
+            WITH f, COLLECT(t) AS ts, COUNT(t) AS ts_count
+            WHERE ts_count >= 3
             RETURN f, ts
         """
-
         results, meta = self.neo_db.cypher_query(query)
-
-        # Each result is a group of parameters belonging to a function, and each is a transaction itemset
-        for result in results:
+        for result in tqdm(results):
             f, ts = result
             takes_rels: list[TakesRel] = [GraphComponent.from_neo_node(t) for t in ts]
+            takes_rels = [
+                t
+                for t in takes_rels
+                if freq_table[t.to_qualified_name, t.param_name] >= 2
+            ]
+            takes_rels.sort(
+                key=lambda t: freq_table[t.to_qualified_name, t.param_name],
+                reverse=True,
+            )
 
-            # Make transaction
             transaction = Transaction()
             for index, takes_rel in enumerate(takes_rels):
                 item = FpTreeNode(
@@ -68,27 +72,32 @@ class DataClumpsDetector(AbstractDetector):
         # Insert transactions into FP Growth tree
         parent_item = self.root
 
-        for child_item in transaction:
-            parent_labels = "".join(map(lambda label: f":{label}", parent_item.labels))
-            child_labels = "".join(map(lambda label: f":{label}", child_item.labels))
-            query = f"""
-                MATCH (parent{parent_labels} {{
-                    class_qualified_name: "{parent_item.class_qualified_name}", 
-                    param_name: "{parent_item.param_name}",
-                    level: {parent_item.level}
-                }})
-                MERGE (parent)-[:LINKS]->(child{child_labels} {{
-                    class_qualified_name: "{child_item.class_qualified_name}", 
-                    param_name: "{child_item.param_name}",
-                    level: {child_item.level}
-                }})
-                ON CREATE
-                    SET child += $child_item
-                ON MATCH
-                    SET child.support_count = child.support_count + 1
-            """
-            self.neo_db.cypher_query(query, {"child_item": child_item})
-            parent_item = child_item
+        with self.neo_db.transaction:
+            for child_item in transaction:
+                parent_labels = "".join(
+                    map(lambda label: f":{label}", parent_item.labels)
+                )
+                child_labels = "".join(
+                    map(lambda label: f":{label}", child_item.labels)
+                )
+                query = f"""
+                    MATCH (parent{parent_labels} {{
+                        class_qualified_name: "{parent_item.class_qualified_name}", 
+                        param_name: "{parent_item.param_name}",
+                        level: {parent_item.level}
+                    }})
+                    MERGE (parent)-[:LINKS]->(child{child_labels} {{
+                        class_qualified_name: "{child_item.class_qualified_name}", 
+                        param_name: "{child_item.param_name}",
+                        level: {child_item.level}
+                    }})
+                    ON CREATE
+                        SET child += $child_item
+                    ON MATCH
+                        SET child.support_count = child.support_count + 1
+                """
+                self.neo_db.cypher_query(query, {"child_item": child_item})
+                parent_item = child_item
 
     def create_fp_tree_root(self):
         root = FpTreeNode(class_qualified_name="<<Root>>", param_name="root", level=0)
