@@ -97,6 +97,7 @@ class DataClumpsDetector(AbstractDetector):
                     ON MATCH
                         SET child.support_count = child.support_count + 1
                 """
+                logger.debug(query)
                 self.neo_db.cypher_query(query, {"child_item": child_item})
                 parent_item = child_item
 
@@ -122,10 +123,19 @@ class DataClumpsDetector(AbstractDetector):
     def clear_everything(self):
         query = f"""
             MATCH (n:{self.label})
-            DETACH DELETE n
+            RETURN COUNT(n) AS count
         """
-        self.neo_db.cypher_query(query)
-        logger.debug("Cleared FP Growth tree")
+        results, meta = self.neo_db.cypher_query(query)
+        count = results[0][0]
+
+        for _ in tqdm(range(0, count, 10000), desc="Clearing"):
+            query = f"""
+                MATCH (n:{self.label})
+                WITH n
+                LIMIT 10000
+                DETACH DELETE n
+            """
+            self.neo_db.cypher_query(query)
 
     def build_conditional_fp_tree(self):
         # Find all distinct items
