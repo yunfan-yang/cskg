@@ -144,7 +144,7 @@ class GraphComposer:
                 logger.debug(cypher)
 
                 # Bulk insert relationships
-                for relationship in bulk(relationships, 5000):
+                for relationship in bulk(relationships, 10000):
                     yield cypher, {"relationships": relationship}, len(relationship)
 
 
