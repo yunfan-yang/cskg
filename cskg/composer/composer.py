@@ -1,6 +1,8 @@
 import json
 from typing import Any, Iterable
 
+from loguru import logger
+
 from cskg.utils.entity import Entity
 from cskg.utils.relationship import Relationship
 
@@ -21,10 +23,18 @@ class GraphComposer:
         yield from self.visit_relationships()
 
     def visit_entities(self):
-        for entities in self.entity_collections:
-            for entity in entities:
-                cypher = self.get_entity_cypher(Entity.from_dict(entity))
-                yield cypher
+        for entity_collection in self.entity_collections:
+            for entity_bulk in bulk(entity_collection, 1000):
+                logger.debug(type(entity_bulk))
+                first_entity = entity_bulk[0]
+                entity_label = first_entity["label"]
+
+                query = f"""
+                    UNWIND $entries AS entity
+                    CREATE (n:{entity_label})
+                    SET n = entity
+                """
+                yield query, {"entries": entity_bulk}
 
     def visit_relationships(self):
         for relationships in self.relationship_collections:
@@ -81,6 +91,20 @@ class GraphComposer:
 #         else:
 #             keypairs.append(f"{key}: {value}")
 #     return ", ".join(keypairs)
+
+
+def bulk(iter: Iterable, size: int):
+    it = iter.__iter__()
+    while True:
+        batch = []
+        try:
+            for _ in range(size):
+                batch.append(next(it))
+        except StopIteration:
+            if batch:
+                yield batch
+            break
+        yield batch
 
 
 def _exclude_fields_dict(
