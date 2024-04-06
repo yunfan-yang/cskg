@@ -119,8 +119,8 @@ class DataClumpsDetector(AbstractDetector):
             logger.error(e)
 
         query = f"""
-            CREATE INDEX {FpTreeNode.label}_node_id
-            FOR (n:{FpTreeNode.label})
+            CREATE INDEX {self.label}_node_id
+            FOR (n:{self.label})
             ON (n.node_id)
         """
         try:
@@ -270,21 +270,6 @@ class FpTreeNode(Item):
 class Transaction(list[Item]): ...
 
 
-class ConditionalFpTreeNode(Item):
+class ConditionalFpTreeNode(FpTreeNode):
     type = "conditional_fp_tree_item"
     label = "ConditionalFpTreeItem"
-
-    def __init__(
-        self,
-        param_name: str,
-        class_qualified_name: str,
-        support_count: int = 1,
-        **kwargs,
-    ):
-        self.support_count: int
-        super().__init__(
-            param_name=param_name,
-            class_qualified_name=class_qualified_name,
-            support_count=support_count,
-            **kwargs,
-        )
