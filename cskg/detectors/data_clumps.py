@@ -1,5 +1,6 @@
 from abc import ABC
 from collections import defaultdict
+from typing import Iterable
 from neo4j.exceptions import ClientError
 from loguru import logger
 from neo4j.graph import Path
@@ -76,7 +77,7 @@ class DataClumpsDetector(AbstractDetector):
                 transaction.append(item)
 
             # Insert transaction into FP Growth tree
-            self.insert_transaction(transaction)
+            self.insert_transaction(transaction, FpTreeNode.get_labels())
 
     def build_conditional_fp_tree(self):
         # Find all distinct items
@@ -132,7 +133,7 @@ class DataClumpsDetector(AbstractDetector):
                 logger.debug(transaction)
 
                 # Insert transaction into Conditional Pattern Base
-                self.insert_transaction(transaction)
+                self.insert_transaction(transaction, ConditionalFpTreeNode.get_labels())
 
         def query_cfp_tree(self):
             # Query for CFP Tree
@@ -157,13 +158,20 @@ class DataClumpsDetector(AbstractDetector):
             for pattern in patterns:
                 logger.debug(pattern)
 
-    def insert_transaction(self, transaction: "Transaction"):
+    def insert_transaction(
+        self, transaction: "Transaction", labels: Iterable[str] = None
+    ):
+        if not labels:
+            labels = [self.label]
+
+        labels_str = "".join(map(lambda label: f":{label}", labels))
+
         query = f"""
             UNWIND $items AS item
             MATCH (parent:{self.label} {{
                 node_id: item.parent.node_id
             }})
-            MERGE (parent)-[:LINKS]->(child:{self.label} {{
+            MERGE (parent)-[:LINKS]->(child{labels_str} {{
                 class_qualified_name: item.child.class_qualified_name,
                 param_name: item.child.param_name,
                 level: item.child.level,
@@ -173,9 +181,6 @@ class DataClumpsDetector(AbstractDetector):
                 SET child += item.child
             ON MATCH
                 SET child.support_count = child.support_count + 1
-            WITH child, item.child.label AS child_label
-            CALL apoc.create.addLabels(id(child), [child_label]) YIELD node
-            RETURN child
         """
         logger.debug(query)
 
