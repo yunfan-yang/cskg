@@ -15,13 +15,13 @@ class DataClumpsDetector(AbstractDetector):
 
     def detect(self):
         # Create root node of FP Growth tree
-        self.clear_everything()
-        self.create_index()
+        # self.clear_everything()
+        # self.create_index()
         self.create_fp_tree_root()
 
         # Build FP-growth tree
-        self.build_fp_growth_tree()
-        # self.build_conditional_fp_tree()
+        # self.build_fp_growth_tree()
+        self.build_conditional_fp_tree()
 
     def build_fp_growth_tree(self):
         query = f"""
@@ -91,6 +91,7 @@ class DataClumpsDetector(AbstractDetector):
             desc="Building Conditional FP Tree",
             unit="nodes",
         )
+        logger.debug(len(results))
         for index, (n,) in bar:
             # Create Conditional FP Tree Node
             fp_item = FpTreeNode.from_neo_node(n)
@@ -100,8 +101,7 @@ class DataClumpsDetector(AbstractDetector):
             query = f"""
                 MATCH path = 
                     (root:{FpTreeNode.label} {{
-                        class_qualified_name: "{self.root.class_qualified_name}",
-                        param_name: "{self.root.param_name}"
+                        node_id: "{self.root.node_id}"
                     }})-[:LINKS*]->(end:{FpTreeNode.label} {{
                         class_qualified_name: "{fp_item.class_qualified_name}",
                         param_name: "{fp_item.param_name}"
@@ -130,6 +130,7 @@ class DataClumpsDetector(AbstractDetector):
                 # Insert transaction into Conditional Pattern Base
                 self.insert_transaction(transaction)
 
+            return
             # Query for CFP Tree
             query = f"""
                 MATCH path = 
@@ -187,9 +188,12 @@ class DataClumpsDetector(AbstractDetector):
             level=0,
             support_count=0,
         )
-        labels = "".join(map(lambda label: f":{label}", root.get_labels()))
         query = f"""
-            CREATE (root{labels} $root)
+            MERGE (root:{self.label} {{node_id: $root.node_id}})
+            ON CREATE
+                SET root += $root
+            ON MATCH
+                SET root += $root
             RETURN root
         """
         logger.debug(query)
@@ -269,10 +273,7 @@ class FpTreeNode(GraphComponent):
             support_count=support_count,
             **kwargs,
         )
-        self.__setitem__("node_id", self.node_id())
-
-    def node_id(self):
-        return (
+        self.node_id = (
             f"{self.label}_{self.class_qualified_name}_{self.param_name}_{self.level}"
         )
 
