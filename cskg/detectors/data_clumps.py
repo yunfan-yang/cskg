@@ -29,7 +29,7 @@ class DataClumpsDetector(AbstractDetector):
 
         # Build FP-growth tree
         self.build_fp_growth_tree()
-        # self.build_conditional_fp_tree()
+        self.build_conditional_fp_tree()
 
     def build_fp_growth_tree(self):
         query = f"""
@@ -110,7 +110,7 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN path, end
             """
             paths, meta = self.neo_db.cypher_query(query)
-            for path, end in paths:
+            for path, end in tqdm(paths, desc="Inserting paths", unit="paths"):
                 # Assign type
                 path: Path
                 path_nodes = list(path.nodes)
@@ -135,7 +135,6 @@ class DataClumpsDetector(AbstractDetector):
                 # Insert transaction into Conditional Pattern Base
                 self.insert_transaction(transaction, ConditionalFpTreeNode.get_labels())
 
-        def query_cfp_tree(self):
             # Query for CFP Tree
             query = f"""
                 MATCH path = 
@@ -168,7 +167,7 @@ class DataClumpsDetector(AbstractDetector):
 
         query = f"""
             UNWIND $items AS item
-            MATCH (parent:{self.label} {{
+            MERGE (parent:{self.label} {{
                 node_id: item.parent.node_id
             }})
             MERGE (parent)-[:LINKS]->(child{labels_str} {{
