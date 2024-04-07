@@ -1,5 +1,6 @@
 from abc import ABC
 from collections import defaultdict
+from time import sleep
 from typing import Iterable
 from neo4j.exceptions import ClientError
 from loguru import logger
@@ -26,14 +27,14 @@ class DataClumpsDetector(AbstractDetector):
 
         # Create root node of FP Growth tree
         self.clear_conditional_fp_nodes()
-        self.clear_everything()
-        self.create_index()
-        self.create_fp_tree_root()
+        # self.clear_everything()
+        # self.create_index()
+        # self.create_fp_tree_root()
 
         # Build FP-growth tree
         self.get_frequency_table()
-        self.build_fp_growth_tree()
-        # self.build_conditional_fp_tree()
+        # self.build_fp_growth_tree()
+        self.build_conditional_fp_tree()
 
     def get_frequency_table(self):
         query = f"""
@@ -89,76 +90,59 @@ class DataClumpsDetector(AbstractDetector):
             unit="nodes",
         )
         for class_qualified_name, param_name in bar:
-            # Create root
-            cfp_root = ConditionalFpTreeNode(
-                class_qualified_name=self.root.class_qualified_name,
-                param_name=self.root.param_name,
-                support_count=0,
-            )
-            labels = "".join(
-                map(lambda label: f":{label}", ConditionalFpTreeNode.get_labels())
-            )
             query = f"""
-                CREATE (root{labels})
-                SET root = $root
+                MATCH path = (root:{FpTreeNode.label} {{
+                    node_id: "{self.root.node_id}"
+                }})-[:LINKS*]->(end:{FpTreeNode.label} {{
+                    class_qualified_name: "{class_qualified_name}",
+                    param_name: "{param_name}"
+                }})
+                WHERE end.support_count >= 2 AND length(path) >= 3
+                WITH collect(path) AS paths
+                CALL apoc.refactor.cloneSubgraphFromPaths(paths)
+                YIELD input, output, error
+                WITH collect(output) AS cloned_entities
+                UNWIND cloned_entities AS entity
+                WITH entity
+                CALL apoc.create.addLabels(entity, ["{ConditionalFpTreeNode.label}"])
+                YIELD node
+                RETURN node
             """
-            self.neo_db.cypher_query(query, {"root": cfp_root})
+            logger.debug(query)
+            self.neo_db.cypher_query(query)
 
-            # Query for all paths
             query = f"""
-                MATCH path =
-                    (root:{FpTreeNode.label} {{
-                        node_id: "{self.root.node_id}"
-                    }})-[:LINKS*]->(end:{FpTreeNode.label} {{
-                        class_qualified_name: "{class_qualified_name}",
-                        param_name: "{param_name}"
-                    }})
-                WHERE end.support_count >= 2
-                RETURN path, end
+                MATCH (parent:{ConditionalFpTreeNode.label})-[:LINKS]->(child:{ConditionalFpTreeNode.label})
+                WITH parent, SUM(child.support_count) AS total_support
+                SET parent.support_count = total_support
             """
-            paths, meta = self.neo_db.cypher_query(query)
-            for path, end in tqdm(paths, desc="Inserting paths", unit="paths"):
-                # Assign type
-                path: Path
-                path_nodes = list(path.nodes)
-                path_nodes[0] = cfp_root
+            self.neo_db.cypher_query(query)
 
-                # Insert path into Conditional Pattern Base
-                transaction = Transaction()
-                for index, node in enumerate(path_nodes):
-                    cfp_node = ConditionalFpTreeNode.from_neo_node(node)
-                    cfp_node.support_count = 1
-                    logger.debug(cfp_node)
-                    transaction.append(cfp_node)
+            # # # Query for CFP Tree
+            # query = f"""
+            #     MATCH path =
+            #         (root:{ConditionalFpTreeNode.label})-[:LINKS*]->(end:{ConditionalFpTreeNode.label})
+            #     RETURN path, end
+            # """
+            # paths, meta = self.neo_db.cypher_query(query)
+            # patterns = []
+            # for path, end in paths:
+            #     nodes = list(
+            #         filter(lambda node: node["support_count"] >= 3, path.nodes[1:-1])
+            #     )
+            #     if len(nodes) > 0:
+            #         patterns.append(nodes)
 
-                # Insert transaction into Conditional Pattern Base
-                self.insert_transaction(transaction, ConditionalFpTreeNode.get_labels())
-
-            # # Query for CFP Tree
-            query = f"""
-                MATCH path =
-                    (root:{ConditionalFpTreeNode.label})-[:LINKS*]->(end:{ConditionalFpTreeNode.label})
-                RETURN path, end
-            """
-            paths, meta = self.neo_db.cypher_query(query)
-            patterns = []
-            for path, end in paths:
-                nodes = list(
-                    filter(lambda node: node["support_count"] >= 3, path.nodes[1:-1])
-                )
-                if len(nodes) > 0:
-                    patterns.append(nodes)
-
-            for pattern in patterns:
-                logger.debug(pattern)
-                self.result_collection.insert_one(
-                    {
-                        "pattern": pattern,
-                        "support_count": min(
-                            map(lambda node: node["support_count"], pattern)
-                        ),
-                    }
-                )
+            # for pattern in patterns:
+            #     logger.debug(pattern)
+            #     self.result_collection.insert_one(
+            #         {
+            #             "pattern": pattern,
+            #             "support_count": min(
+            #                 map(lambda node: node["support_count"], pattern)
+            #             ),
+            #         }
+            #     )
 
             # Clear CFP Tree
             self.clear_conditional_fp_nodes()
@@ -206,7 +190,7 @@ class DataClumpsDetector(AbstractDetector):
     def create_fp_tree_root(self):
         labels = "".join(map(lambda label: f":{label}", self.root.labels))
         query = f"""
-            MERGE (root{labels} {{node_id: $root.node_id}})
+            MERGE (root:Root{labels} {{node_id: $root.node_id}})
             ON CREATE
                 SET root += $root
             ON MATCH
@@ -219,7 +203,7 @@ class DataClumpsDetector(AbstractDetector):
     def create_index(self):
         query = f"""
             CREATE INDEX {self.label}_class_qname_param_name
-            FOR (n:{self.label}) 
+            FOR (n:{self.label})
             ON (n.class_qualified_name, n.param_name)
         """
         try:
