@@ -1,5 +1,6 @@
 from abc import ABC
 from collections import defaultdict
+import math
 from time import sleep
 from typing import Iterable
 from neo4j.exceptions import ClientError
@@ -90,6 +91,7 @@ class DataClumpsDetector(AbstractDetector):
             unit="nodes",
         )
         for class_qualified_name, param_name in bar:
+            # Create conditional FP tree
             query = f"""
                 MATCH path = (root:{FpTreeNode.label} {{
                     node_id: "{self.root.node_id}"
@@ -111,6 +113,7 @@ class DataClumpsDetector(AbstractDetector):
             logger.debug(query)
             results, meta = self.neo_db.cypher_query(query)
 
+            # Propagate correct support counts
             query = f"""
                 MATCH (child:{ConditionalFpTreeNode.label})<-[:LINKS*]-(parent:{ConditionalFpTreeNode.label})
                 WHERE NOT (child)-[]->()
@@ -123,31 +126,29 @@ class DataClumpsDetector(AbstractDetector):
             if len(results) > 100:
                 sleep(5)
 
-            # # # Query for CFP Tree
-            # query = f"""
-            #     MATCH path =
-            #         (root:{ConditionalFpTreeNode.label})-[:LINKS*]->(end:{ConditionalFpTreeNode.label})
-            #     RETURN path, end
-            # """
-            # paths, meta = self.neo_db.cypher_query(query)
-            # patterns = []
-            # for path, end in paths:
-            #     nodes = list(
-            #         filter(lambda node: node["support_count"] >= 3, path.nodes[1:-1])
-            #     )
-            #     if len(nodes) > 0:
-            #         patterns.append(nodes)
+            # Query for frequent itemsets
+            query = f"""
+                MATCH path = (root:{ConditionalFpTreeNode.label})-[:LINKS*]->(end:{ConditionalFpTreeNode.label})
+                WHERE NOT (end)-[]->()
+                RETURN path
+            """
+            paths, _ = self.neo_db.cypher_query(query)
+            for (path,) in paths:
+                path: Path
+                itemset = [(class_qualified_name, param_name)]
+                frequency = math.inf
 
-            # for pattern in patterns:
-            #     logger.debug(pattern)
-            #     self.result_collection.insert_one(
-            #         {
-            #             "pattern": pattern,
-            #             "support_count": min(
-            #                 map(lambda node: node["support_count"], pattern)
-            #             ),
-            #         }
-            #     )
+                nodes = list(path.nodes)
+                interim_nodes = nodes[1:-1]
+                for node in interim_nodes:
+                    cfp_node = ConditionalFpTreeNode.from_neo_node(node)
+                    itemset.append((cfp_node.class_qualified_name, cfp_node.param_name))
+                    frequency = min(frequency, cfp_node.support_count)
+
+                if len(interim_nodes) > 1:
+                    self.result_collection.insert_one(
+                        {"itemset": itemset, "support_count": frequency}
+                    )
 
             # Clear CFP Tree
             self.clear_conditional_fp_nodes()
