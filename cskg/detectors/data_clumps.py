@@ -109,14 +109,19 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN node
             """
             logger.debug(query)
-            self.neo_db.cypher_query(query)
+            results, meta = self.neo_db.cypher_query(query)
 
             query = f"""
-                MATCH (parent:{ConditionalFpTreeNode.label})-[:LINKS]->(child:{ConditionalFpTreeNode.label})
-                WITH parent, SUM(child.support_count) AS total_support
-                SET parent.support_count = total_support
+                MATCH (child:{ConditionalFpTreeNode.label})<-[:LINKS*]-(parent:{ConditionalFpTreeNode.label})
+                WHERE NOT (child)-[]->()
+                WITH parent, SUM(child.support_count) AS support_count
+                SET parent.support_count = support_count
             """
+            logger.debug(query)
             self.neo_db.cypher_query(query)
+
+            if len(results) > 100:
+                sleep(5)
 
             # # # Query for CFP Tree
             # query = f"""
