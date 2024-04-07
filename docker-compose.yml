@@ -4,10 +4,12 @@ services:
     image: neo4j:latest
     environment:
       NEO4J_AUTH: neo4j/password
-      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4JLABS_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
       NEO4J_apoc_import_file_enabled: "true"
       NEO4J_apoc_export_file_enabled: "true"
-      NEO4JLABS_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_max__size: 4G
+      NEO4J_dbms_memory_pagecache_size: 2G
     ports:
       - "7474:7474" # HTTP
       - "7687:7687" # Bolt
@@ -21,10 +23,12 @@ services:
     image: neo4j:latest
     environment:
       NEO4J_AUTH: neo4j/password
-      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4JLABS_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
       NEO4J_apoc_import_file_enabled: "true"
       NEO4J_apoc_export_file_enabled: "true"
-      NEO4JLABS_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_max__size: 4G
+      NEO4J_dbms_memory_pagecache_size: 2G
     ports:
       - "7475:7474" # HTTP
       - "7688:7687" # Bolt
