@@ -18,7 +18,6 @@ class DataClumpsDetector(AbstractDetector):
         self.root = FpTreeNode(
             class_qualified_name="<<Root>>",
             param_name="root",
-            level=0,
             support_count=0,
         )
         self.result_collection = self.mongo_db.get_collection("data_clumps")
@@ -27,13 +26,13 @@ class DataClumpsDetector(AbstractDetector):
 
         # Create root node of FP Growth tree
         self.clear_conditional_fp_nodes()
-        # self.clear_everything()
-        # self.create_index()
-        # self.create_fp_tree_root()
+        self.clear_everything()
+        self.create_index()
+        self.create_fp_tree_root()
 
         # Build FP-growth tree
         self.get_frequency_table()
-        # self.build_fp_growth_tree()
+        self.build_fp_growth_tree()
         self.build_conditional_fp_tree()
 
     def get_frequency_table(self):
@@ -73,11 +72,10 @@ class DataClumpsDetector(AbstractDetector):
             transaction = Transaction()
             transaction.append(self.root)
 
-            for index, takes_rel in enumerate(takes_rels):
+            for takes_rel in takes_rels:
                 item = FpTreeNode(
                     param_name=takes_rel.param_name,
                     class_qualified_name=takes_rel.to_qualified_name,
-                    level=index + 1,
                 )
                 transaction.append(item)
 
@@ -95,7 +93,6 @@ class DataClumpsDetector(AbstractDetector):
             cfp_root = ConditionalFpTreeNode(
                 class_qualified_name=self.root.class_qualified_name,
                 param_name=self.root.param_name,
-                level=0,
                 support_count=0,
             )
             labels = "".join(
@@ -130,8 +127,6 @@ class DataClumpsDetector(AbstractDetector):
                 transaction = Transaction()
                 for index, node in enumerate(path_nodes):
                     cfp_node = ConditionalFpTreeNode.from_neo_node(node)
-                    logger.debug(cfp_node.node_id)
-                    cfp_node.level = index + 1
                     cfp_node.support_count = 1
                     logger.debug(cfp_node)
                     transaction.append(cfp_node)
@@ -184,7 +179,6 @@ class DataClumpsDetector(AbstractDetector):
             MERGE (parent)-[:LINKS]->(child{labels_str} {{
                 class_qualified_name: item.child.class_qualified_name,
                 param_name: item.child.param_name,
-                level: item.child.level,
                 node_id: item.child.node_id
             }})
             ON CREATE
@@ -195,12 +189,11 @@ class DataClumpsDetector(AbstractDetector):
         logger.debug(query)
 
         with self.neo_db.transaction:
-            items = list(
-                map(
-                    lambda item: {"parent": item[0], "child": item[1]},
-                    zip(transaction[:-1], transaction[1:]),
-                )
-            )
+            items = []
+            for parent, child in zip(transaction[:-1], transaction[1:]):
+                child.node_id = f"{parent.node_id}_{child.node_id}"
+                items.append({"parent": parent, "child": child})
+
             self.neo_db.cypher_query(query, {"items": items})
 
     def create_fp_tree_root(self):
@@ -218,9 +211,9 @@ class DataClumpsDetector(AbstractDetector):
 
     def create_index(self):
         query = f"""
-            CREATE INDEX {self.label}_class_qname_param_name_level 
+            CREATE INDEX {self.label}_class_qname_param_name
             FOR (n:{self.label}) 
-            ON (n.class_qualified_name, n.param_name, n.level)
+            ON (n.class_qualified_name, n.param_name)
         """
         try:
             self.neo_db.cypher_query(query)
@@ -240,23 +233,17 @@ class DataClumpsDetector(AbstractDetector):
     def clear_everything(self):
         query = f"""
             MATCH (n: {self.label})
-            RETURN COUNT(n) AS count
-        """
-        results, meta = self.neo_db.cypher_query(query)
-        count = results[0][0]
-
-        if count == 0:
-            return
-
-        query = f"""
-            MATCH (n: {self.label})
-            WITH n
-            LIMIT 10000
-            DETACH DELETE n
+            CALL {{ WITH n DETACH DELETE n }}
+            IN TRANSACTIONS OF 5000 rows
         """
         logger.debug(query)
-        for _ in tqdm(range(0, count, 10000), desc="Clearing"):
-            self.neo_db.cypher_query(query)
+        self.neo_db.cypher_query(query)
+
+        # Drop indexes and constraints
+        query = f"""
+            CALL apoc.schema.assert({{}}, {{}})
+        """
+        self.neo_db.cypher_query(query)
 
     def clear_conditional_fp_nodes(self):
         query = f"""
@@ -275,7 +262,6 @@ class FpTreeNode(GraphComponent):
         self,
         param_name: str,
         class_qualified_name: str,
-        level: int = 1,
         support_count: int = 1,
         **kwargs,
     ):
@@ -286,13 +272,10 @@ class FpTreeNode(GraphComponent):
         super().__init__(
             param_name=param_name,
             class_qualified_name=class_qualified_name,
-            level=level,
             support_count=support_count,
             **kwargs,
         )
-        self.node_id = (
-            f"{self.label}_{self.class_qualified_name}_{self.param_name}_{self.level}"
-        )
+        self.node_id = f"{self.type}_{self.class_qualified_name}_{self.param_name}"
 
 
 class Transaction(list[FpTreeNode]): ...
