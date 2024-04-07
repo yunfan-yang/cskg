@@ -33,7 +33,7 @@ class DataClumpsDetector(AbstractDetector):
         # Build FP-growth tree
         self.get_frequency_table()
         self.build_fp_growth_tree()
-        self.build_conditional_fp_tree()
+        # self.build_conditional_fp_tree()
 
     def get_frequency_table(self):
         query = f"""
@@ -171,30 +171,37 @@ class DataClumpsDetector(AbstractDetector):
 
         labels_str = "".join(map(lambda label: f":{label}", labels))
 
+        rels = []
+        for parent, child in zip(transaction[:-1], transaction[1:]):
+            child.node_id = f"{parent.node_id}_{child.node_id}"
+            rels.append(
+                {"parent_node_id": parent.node_id, "child_node_id": child.node_id}
+            )
+
+        # Create nodes
         query = f"""
             UNWIND $items AS item
-            MATCH (parent:{self.label} {{
-                node_id: item.parent.node_id
-            }})
-            MERGE (parent)-[:LINKS]->(child{labels_str} {{
-                class_qualified_name: item.child.class_qualified_name,
-                param_name: item.child.param_name,
-                node_id: item.child.node_id
+            MERGE (node{labels_str} {{
+                node_id: item.node_id
             }})
             ON CREATE
-                SET child += item.child
+                SET node += item
             ON MATCH
-                SET child.support_count = child.support_count + 1
+                SET node.support_count = node.support_count + 1
         """
-        logger.debug(query)
+        self.neo_db.cypher_query(query, {"items": transaction})
 
-        with self.neo_db.transaction:
-            items = []
-            for parent, child in zip(transaction[:-1], transaction[1:]):
-                child.node_id = f"{parent.node_id}_{child.node_id}"
-                items.append({"parent": parent, "child": child})
-
-            self.neo_db.cypher_query(query, {"items": items})
+        # Create relationships
+        query = f"""
+            UNWIND $rels AS rel
+            MATCH (parent:{self.label} {{
+                node_id: rel.parent_node_id
+            }}), (child:{self.label} {{
+                node_id: rel.child_node_id
+            }})
+            MERGE (parent)-[:LINKS]->(child)
+        """
+        self.neo_db.cypher_query(query, {"rels": rels})
 
     def create_fp_tree_root(self):
         labels = "".join(map(lambda label: f":{label}", self.root.labels))
