@@ -34,15 +34,16 @@ class Driver:
 
         # Connect to mongo
         try:
-            mongo_client = MongoClient(self.mongo_url)
-            mongo_db = mongo_client.code_interpreter
-            self.mongo_client = mongo_client
-            self.mongo_db = mongo_db
+            self.mongo_client = MongoClient(self.mongo_url)
+            self.code_interpreter_db = self.mongo_client.get_database(
+                "code_interpreter"
+            )
+            self.code_smells_db = self.mongo_client.get_database("code_smells")
 
             host_port = f"{self.mongo_client.HOST}:{self.mongo_client.PORT}"
             version = self.mongo_client.server_info()["version"]
 
-            self.mongo_db.command("dbstats")
+            self.code_interpreter_db.command("dbstats")
             self.is_mongo_connected = True
 
             logger.info(f"Connected to mongo database at {host_port}")
@@ -74,16 +75,16 @@ class Driver:
             logger.info("Detection done")
 
     def interpret_code(self):
-        interpreter = CodeInterpreter(self.folder_path, self.mongo_db)
+        interpreter = CodeInterpreter(self.folder_path, self.code_interpreter_db)
         interpreter.interpret()
 
     def compose_graph(self):
-        graph_composer = GraphComposer(self.mongo_db, self.neo_db)
+        graph_composer = GraphComposer(self.code_interpreter_db, self.neo_db)
         graph_composer.compose()
 
     def detect_smells(self):
         for detector_class in AbstractDetector.visit_subclasses():
-            detector = detector_class.create_instance(self.neo_db)
+            detector = detector_class.create_instance(self.code_smells_db, self.neo_db)
             detector.detect()
 
     def __del__(self):

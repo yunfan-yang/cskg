@@ -21,6 +21,7 @@ class DataClumpsDetector(AbstractDetector):
             level=0,
             support_count=0,
         )
+        self.result_collection = self.mongo_db.get_collection("data_clumps")
 
         # Create root node of FP Growth tree
         self.clear_everything()
@@ -136,12 +137,13 @@ class DataClumpsDetector(AbstractDetector):
                 self.insert_transaction(transaction, ConditionalFpTreeNode.get_labels())
 
             # Query for CFP Tree
+            level = index + 1
             query = f"""
                 MATCH path = 
                     (root:{ConditionalFpTreeNode.label} {{
-                        level: {index + 1}
+                        level: {level}
                     }})-[:LINKS*]->(end:{ConditionalFpTreeNode.label} {{
-                        level: {index + 1}
+                        level: {level}
                     }})
                 RETURN path, end
             """
@@ -156,6 +158,23 @@ class DataClumpsDetector(AbstractDetector):
 
             for pattern in patterns:
                 logger.debug(pattern)
+                self.result_collection.insert_one(
+                    {
+                        "pattern": pattern,
+                        "support_count": min(
+                            map(lambda node: node["support_count"], pattern)
+                        ),
+                    }
+                )
+
+            # Clear CFP Tree
+            query = f"""
+                MATCH (n:{ConditionalFpTreeNode.label})
+                WHERE n.level = {level}
+                DETACH DELETE n
+            """
+            logger.debug(query)
+            self.neo_db.cypher_query(query)
 
     def insert_transaction(
         self, transaction: "Transaction", labels: Iterable[str] = None
@@ -272,9 +291,8 @@ class FpTreeNode(GraphComponent):
             support_count=support_count,
             **kwargs,
         )
-        self.node_id = (
-            f"{self.label}_{self.class_qualified_name}_{self.param_name}_{self.level}"
-        )
+        if not hasattr(self, "node_id"):
+            self.node_id = f"{self.label}_{self.class_qualified_name}_{self.param_name}_{self.level}"
 
 
 class Transaction(list[FpTreeNode]): ...
