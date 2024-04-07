@@ -1,7 +1,5 @@
-from abc import ABC
 from collections import defaultdict
 import math
-from time import sleep
 from typing import Iterable
 from neo4j.exceptions import ClientError
 from loguru import logger
@@ -28,13 +26,13 @@ class DataClumpsDetector(AbstractDetector):
 
         # Create root node of FP Growth tree
         self.clear_conditional_fp_nodes()
-        # self.clear_everything()
-        # self.create_index()
-        # self.create_fp_tree_root()
+        self.clear_everything()
+        self.create_index()
+        self.create_fp_tree_root()
 
         # Build FP-growth tree
         self.get_frequency_table()
-        # self.build_fp_growth_tree()
+        self.build_fp_growth_tree()
         self.build_conditional_fp_tree()
 
     def get_frequency_table(self):
@@ -111,7 +109,7 @@ class DataClumpsDetector(AbstractDetector):
                 RETURN node
             """
             logger.debug(query)
-            results, meta = self.neo_db.cypher_query(query)
+            self.neo_db.cypher_query(query)
 
             # Propagate correct support counts
             query = f"""
@@ -276,9 +274,9 @@ class FpTreeNode(GraphComponent):
         self.node_id = f"{self.type}_{self.class_qualified_name}_{self.param_name}"
 
 
-class Transaction(list[FpTreeNode]): ...
-
-
 class ConditionalFpTreeNode(FpTreeNode):
     type = "conditional_fp_tree_node"
     label = "ConditionalFpTreeNode"
+
+
+class Transaction(list[FpTreeNode]): ...
