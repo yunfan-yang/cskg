@@ -123,9 +123,6 @@ class DataClumpsDetector(AbstractDetector):
             logger.debug(query)
             self.neo_db.cypher_query(query)
 
-            if len(results) > 100:
-                sleep(5)
-
             # Query for frequent itemsets
             query = f"""
                 MATCH path = (root:{ConditionalFpTreeNode.label})-[:LINKS*]->(end:{ConditionalFpTreeNode.label})
@@ -147,7 +144,11 @@ class DataClumpsDetector(AbstractDetector):
 
                 if len(interim_nodes) > 1:
                     self.result_collection.insert_one(
-                        {"itemset": itemset, "support_count": frequency}
+                        {
+                            "itemset": itemset,
+                            "support_count": frequency,
+                            "size": len(itemset),
+                        }
                     )
 
             # Clear CFP Tree
