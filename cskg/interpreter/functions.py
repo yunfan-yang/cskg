@@ -114,7 +114,7 @@ def visit_function_called_nodes(function: FunctionDef):
         called_func = call.func  # What is being called
         inferred_node = get_inferred_type(called_func)
         if not isinstance(inferred_node, LocalsDictNodeNG):
-            logger.error(f"Could not infer function call (soft): {called_func}")
+            # logger.error(f"Could not infer function call (soft): {called_func}")
             continue
 
         yield from visit_external_entity(inferred_node)

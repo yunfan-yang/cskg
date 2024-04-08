@@ -66,8 +66,13 @@ class CodeInterpreter:
             for file in files:
                 if str(file).endswith(".py"):  # Only handles python file
                     file_path = os.path.join(root, file)
-                    modules.append(self.manager.ast_from_file(file_path))
                     logger.debug(f"Ast from file: {file_path}")
+                    try:
+                        module = self.manager.ast_from_file(file_path)
+                        modules.append(module)
+                    except Exception as e:
+                        logger.error(f"Failed to parse file: {file_path}")
+                        logger.error(e)
                     bar.update(1)
                     bar.write(f"File: {file_path}")
         bar.close()
