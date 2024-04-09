@@ -38,6 +38,26 @@ services:
       - $HOME/neo4j_requests/import:/var/lib/neo4j/import
       - $HOME/neo4j_requests/plugins:/plugins
 
+  neo4j_pytorch:
+    image: neo4j:latest
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4JLABS_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_dbms_memory_heap_max__size: 4G
+      NEO4J_dbms_memory_pagecache_size: 2G
+    ports:
+      - "7476:7474" # HTTP
+      - "7689:7687" # Bolt
+    volumes:
+      - $HOME/neo4j_pytorch/data:/data
+      - $HOME/neo4j_pytorch/logs:/logs
+      - $HOME/neo4j_pytorch/import:/var/lib/neo4j/import
+      - $HOME/neo4j_pytorch/plugins:/plugins
+
+
   mongo_requests:
     image: mongo
     restart: always
@@ -54,6 +74,17 @@ services:
     restart: always
     ports:
       - 27018:27017
+    expose:
+      - "27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  mongo_pytorch:
+    image: mongo
+    restart: always
+    ports:
+      - 27019:27017
     expose:
       - "27017"
     environment:

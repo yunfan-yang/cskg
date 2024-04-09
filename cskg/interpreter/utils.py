@@ -49,6 +49,9 @@ def get_inferred_types(
         return inferred_types
     except InferenceError or StopIteration:
         return []
+    except Exception:
+        logger.error(f"Failed to get inferred types for {node_or_lambda}")
+        return []
 
 
 @overload

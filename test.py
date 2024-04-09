@@ -18,11 +18,21 @@ load_dotenv()
 # driver_requests.run(interpret=False, compose=False, detect=True)
 
 
-NEO4J_URL_TRANSFORMERS = os.environ.get("NEO4J_URL_TRANSFORMERS")
-MONGO_URL_TRANSFORMERS = os.environ.get("MONGO_URL_TRANSFORMERS")
+# NEO4J_URL_TRANSFORMERS = os.environ.get("NEO4J_URL_TRANSFORMERS")
+# MONGO_URL_TRANSFORMERS = os.environ.get("MONGO_URL_TRANSFORMERS")
+# driver_transformers = Driver(
+#     "targets/transformers",
+#     neo4j_url=NEO4J_URL_TRANSFORMERS,
+#     mongo_url=MONGO_URL_TRANSFORMERS,
+# )
+# driver_transformers.run(interpret=False, compose=False, detect=False)
+
+
+NEO4J_URL_PYTORCH = os.environ.get("NEO4J_URL_PYTORCH")
+MONGO_URL_PYTORCH = os.environ.get("MONGO_URL_PYTORCH")
 driver_transformers = Driver(
-    "targets/transformers",
-    neo4j_url=NEO4J_URL_TRANSFORMERS,
-    mongo_url=MONGO_URL_TRANSFORMERS,
+    "targets/pytorch",
+    neo4j_url=NEO4J_URL_PYTORCH,
+    mongo_url=MONGO_URL_PYTORCH,
 )
-driver_transformers.run(interpret=True, compose=True, detect=True)
+driver_transformers.run(interpret=False, compose=False, detect=True)

@@ -45,15 +45,14 @@ class CodeInterpreter:
 
     def interpret(self):
         # Insert components into mongo
-        with self.mongo_db.client.start_session() as session:
-            for component in self.visit():
-                try:
-                    colection = self.mongo_db.get_collection(component.type)
-                    colection.insert_one(component, session=session)
-                    logger.debug(component)
-                except DuplicateKeyError as e:
-                    logger.warning(e)  # Ignore duplicate key error
-
+        for component in self.visit():
+            try:
+                colection = self.mongo_db.get_collection(component.type)
+                colection.insert_one(component)
+                logger.debug(component)
+            except DuplicateKeyError as e:
+                pass
+                
     def visit(self) -> Generator[GraphComponent, None, None]:
         python_files = glob(
             os.path.join(self.folder_abs_path, "**", "*.py"), recursive=True
